@@ -153,7 +153,7 @@ format: piclist (optional, default: piclist)
 }
 ```
 
-### 文件删除
+### 文件删除（理论兼容piclist但实际测试不行）
 
 **请求**
 
