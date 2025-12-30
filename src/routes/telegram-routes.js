@@ -54,8 +54,16 @@ function sendJSON(res, code, obj) {
  */
 async function handleTelegram(req, res, requestPath, telegramService, appRoot, logger) {
   try {
-    // GET /telegram -> 页面
+    // GET /telegram -> 多账号管理页面
     if (req.method === 'GET' && (requestPath === '/telegram' || requestPath === '/telegram/')) {
+      const html = fs.readFileSync(path.join(appRoot, 'public', 'telegram-multi-account.html'), 'utf8');
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(html);
+      return;
+    }
+    
+    // GET /telegram/legacy -> 原单账号页面
+    if (req.method === 'GET' && requestPath === '/telegram/legacy') {
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end(getTelegramPageHTML(appRoot, logger));
       return;
@@ -65,10 +73,11 @@ async function handleTelegram(req, res, requestPath, telegramService, appRoot, l
     if (req.method === 'POST' && requestPath === '/telegram/api/start') {
       const body = await parseJsonBody(req);
       const phone = String(body.phone || '').trim();
+      const accountId = body.accountId || null;
       if (!phone) return sendJSON(res, 400, { success: false, message: '缺少 phone' });
 
       try {
-        const result = await telegramService.sendCode(phone);
+        const result = await telegramService.sendCode(phone, accountId);
         return sendJSON(res, 200, result);
       } catch (e) {
         logger('ERROR', 'Telegram 发送验证码失败', e && (e.stack || e.message));
@@ -79,10 +88,10 @@ async function handleTelegram(req, res, requestPath, telegramService, appRoot, l
     // API: POST /telegram/api/verify （校验验证码 / 2FA）
     if (req.method === 'POST' && requestPath === '/telegram/api/verify') {
       const body = await parseJsonBody(req);
-      const { stateId, code, password } = body || {};
+      const { stateId, code, password, accountId } = body || {};
       
       try {
-        const result = await telegramService.verify(stateId, code, password);
+        const result = await telegramService.verify(stateId, code, password, accountId);
         return sendJSON(res, 200, result);
       } catch (e) {
         logger('ERROR', 'Telegram 验证失败', e && (e.stack || e.message));
@@ -93,10 +102,10 @@ async function handleTelegram(req, res, requestPath, telegramService, appRoot, l
     // API: POST /telegram/api/logout
     if (req.method === 'POST' && requestPath === '/telegram/api/logout') {
       const body = await parseJsonBody(req);
-      const { stateId } = body || {};
+      const { stateId, accountId } = body || {};
       
       try {
-        await telegramService.logout(stateId);
+        await telegramService.logout(stateId, accountId);
         return sendJSON(res, 200, { success: true, message: '已注销' });
       } catch (e) {
         logger('ERROR', 'Telegram 注销失败', e && (e.stack || e.message));
@@ -104,10 +113,14 @@ async function handleTelegram(req, res, requestPath, telegramService, appRoot, l
       }
     }
 
-    // API: GET /telegram/api/health
-    if (req.method === 'GET' && requestPath === '/telegram/api/health') {
+    // API: GET /telegram/api/health （支持查询参数 accountId）
+    if (req.method === 'GET' && requestPath.startsWith('/telegram/api/health')) {
       try {
-        const health = await telegramService.getHealth();
+        const url = require('url');
+        const parsed = url.parse(req.url, true);
+        const accountId = parsed.query.accountId || null;
+        
+        const health = await telegramService.getHealth(accountId);
         return sendJSON(res, 200, { success: true, ...health });
       } catch (e) {
         logger('ERROR', 'Telegram 健康检查失败', e && (e.stack || e.message));
@@ -115,14 +128,14 @@ async function handleTelegram(req, res, requestPath, telegramService, appRoot, l
       }
     }
 
-    // API: POST /telegram/api/sendNow { to, message }
+    // API: POST /telegram/api/sendNow { to, message, accountId }
     if (req.method === 'POST' && requestPath === '/telegram/api/sendNow') {
       const body = await parseJsonBody(req);
-      const { to, message } = body || {};
+      const { to, message, accountId } = body || {};
       if (!to || !message) return sendJSON(res, 400, { success: false, message: '缺少 to 或 message' });
       
       try {
-        await telegramService.sendNow(to, message);
+        await telegramService.sendNow(to, message, accountId);
         return sendJSON(res, 200, { success: true });
       } catch (e) {
         logger('ERROR', 'Telegram 即时发送失败', e && (e.stack || e.message));
@@ -130,16 +143,110 @@ async function handleTelegram(req, res, requestPath, telegramService, appRoot, l
       }
     }
 
-    // 任务 API（/telegram/api/tasks, /telegram/api/tasks/:id）
-    if (requestPath === '/telegram/api/tasks' && req.method === 'GET') {
-      const tasks = telegramService.getTasks();
+    // ========== 账号管理 API ==========
+    
+    // GET /telegram/api/accounts - 获取所有账号
+    if (requestPath === '/telegram/api/accounts' && req.method === 'GET') {
+      try {
+        const accounts = await telegramService.getAllAccountsHealth();
+        return sendJSON(res, 200, { success: true, accounts });
+      } catch (e) {
+        logger('ERROR', 'Telegram 获取账号列表失败', e && (e.stack || e.message));
+        return sendJSON(res, 500, { success: false, message: e && e.message ? e.message : '获取账号列表失败' });
+      }
+    }
+    
+    // POST /telegram/api/accounts - 添加新账号
+    if (requestPath === '/telegram/api/accounts' && req.method === 'POST') {
+      const body = await parseJsonBody(req);
+      const { phone, name } = body || {};
+      if (!phone) return sendJSON(res, 400, { success: false, message: '缺少 phone' });
+      
+      try {
+        const account = telegramService.addAccount(phone, name);
+        return sendJSON(res, 200, { success: true, account });
+      } catch (e) {
+        logger('ERROR', 'Telegram 添加账号失败', e && (e.stack || e.message));
+        return sendJSON(res, 400, { success: false, message: e && e.message ? e.message : '添加账号失败' });
+      }
+    }
+    
+    // PUT /telegram/api/accounts/:id - 更新账号
+    if (requestPath.startsWith('/telegram/api/accounts/') && req.method === 'PUT') {
+      const id = requestPath.split('/').pop();
+      const body = await parseJsonBody(req);
+      
+      try {
+        const account = telegramService.updateAccount(id, body);
+        if (!account) {
+          return sendJSON(res, 404, { success: false, message: '账号不存在' });
+        }
+        return sendJSON(res, 200, { success: true, account });
+      } catch (e) {
+        logger('ERROR', 'Telegram 更新账号失败', e && (e.stack || e.message));
+        return sendJSON(res, 400, { success: false, message: e && e.message ? e.message : '更新账号失败' });
+      }
+    }
+    
+    // DELETE /telegram/api/accounts/:id - 删除账号
+    if (requestPath.startsWith('/telegram/api/accounts/') && req.method === 'DELETE') {
+      const id = requestPath.split('/').pop();
+      
+      try {
+        const success = telegramService.removeAccount(id);
+        if (!success) {
+          return sendJSON(res, 404, { success: false, message: '账号不存在' });
+        }
+        return sendJSON(res, 200, { success: true });
+      } catch (e) {
+        logger('ERROR', 'Telegram 删除账号失败', e && (e.stack || e.message));
+        return sendJSON(res, 400, { success: false, message: e && e.message ? e.message : '删除账号失败' });
+      }
+    }
+    
+    // POST /telegram/api/accounts/:id/switch - 切换活跃账号
+    if (requestPath.match(/^\/telegram\/api\/accounts\/[^/]+\/switch$/) && req.method === 'POST') {
+      const id = requestPath.split('/')[4];
+      
+      try {
+        const success = telegramService.switchAccount(id);
+        if (!success) {
+          return sendJSON(res, 404, { success: false, message: '账号不存在' });
+        }
+        return sendJSON(res, 200, { success: true });
+      } catch (e) {
+        logger('ERROR', 'Telegram 切换账号失败', e && (e.stack || e.message));
+        return sendJSON(res, 400, { success: false, message: e && e.message ? e.message : '切换账号失败' });
+      }
+    }
+
+    // ========== 任务 API ==========
+    
+    // GET /telegram/api/tasks（支持查询参数 accountId）
+    if (requestPath.startsWith('/telegram/api/tasks') && req.method === 'GET') {
+      const url = require('url');
+      const parsed = url.parse(req.url, true);
+      const accountId = parsed.query.accountId || null;
+      
+      const tasks = telegramService.getTasks(accountId);
       return sendJSON(res, 200, { success: true, tasks });
     }
     
     if (requestPath === '/telegram/api/tasks' && req.method === 'POST') {
       const body = await parseJsonBody(req);
-      if (!body.to || !body.message) {
-        return sendJSON(res, 400, { success: false, message: '缺少 to 或 message' });
+      const taskType = String(body.type || 'send').toLowerCase();
+      
+      // 根据任务类型进行不同的验证
+      if (taskType === 'listen') {
+        // 监听任务：需要 channel
+        if (!body.channel) {
+          return sendJSON(res, 400, { success: false, message: '缺少 channel（监听频道）' });
+        }
+      } else {
+        // 发送任务：需要 to 和 message
+        if (!body.to || !body.message) {
+          return sendJSON(res, 400, { success: false, message: '缺少 to 或 message（发送任务）' });
+        }
       }
       
       try {
@@ -167,6 +274,25 @@ async function handleTelegram(req, res, requestPath, telegramService, appRoot, l
       }
     }
     
+    // POST /telegram/api/runTask { taskId, accountId }  立刻执行一次
+    if (requestPath === '/telegram/api/runTask' && req.method === 'POST') {
+      const body = await parseJsonBody(req);
+      if (!body.taskId) {
+        return sendJSON(res, 400, { success: false, message: '缺少 taskId' });
+      }
+
+      try {
+        const result = await telegramService.runTaskNow(body.taskId, body.accountId || null);
+        if (!result.success) {
+          return sendJSON(res, 400, { success: false, message: result.message });
+        }
+        return sendJSON(res, 200, { success: true, message: result.message });
+      } catch (e) {
+        logger('ERROR', 'Telegram 执行任务失败', e && (e.stack || e.message));
+        return sendJSON(res, 400, { success: false, message: e && e.message ? e.message : '执行任务失败' });
+      }
+    }
+
     if (requestPath.startsWith('/telegram/api/tasks/') && req.method === 'DELETE') {
       const id = requestPath.split('/').pop();
       

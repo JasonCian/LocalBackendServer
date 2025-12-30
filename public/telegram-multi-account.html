@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Telegram 多账号管理 · 本地轻量级后端</title>
+  <style>
+    :root {
+      --bg: #0f1220; --bg2: #101526; --fg: #e6e9ef; --muted: #9aa0aa;
+      --primary: #6aa0ff; --accent: #7a5cff; --card: #141a2f; --border: #1f2740;
+      --success: #7fd77f; --error: #ff6b6b; --warn: #ffd93d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 20px;
+      background: radial-gradient(1200px 600px at 20% 0%, #0a0d1a, #0f1220);
+      color: var(--fg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+    }
+    .container { max-width: 1400px; margin: 0 auto; }
+    header { margin-bottom: 28px; }
+    h1 { font-size: 2em; margin: 0 0 8px; }
+    .subtitle { color: var(--muted); margin: 0; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
+    .tab { padding: 10px 20px; background: none; border: none; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; }
+    .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .tab:hover { color: var(--fg); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 20px; }
+    .card h2 { margin: 0 0 14px; font-size: 1.1em; }
+    .form-row { display: grid; gap: 6px; margin-bottom: 12px; }
+    label { display: block; color: var(--muted); font-size: 0.9em; }
+    input, select, textarea { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: #0d1224; color: var(--fg); font-size: 0.95em; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); background: #101526; }
+    .buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+    button { padding: 10px 14px; border: none; border-radius: 8px; background: linear-gradient(135deg, var(--primary), var(--accent)); color: var(--fg); cursor: pointer; font-size: 0.95em; }
+    button.secondary { background: #2a3150; }
+    button.danger { background: linear-gradient(135deg, var(--error), #d94444); }
+    button:hover { opacity: 0.9; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .status-box { padding: 12px; border-radius: 8px; margin-bottom: 14px; white-space: pre-wrap; font-family: ui-monospace, monospace; font-size: 0.85em; background: #0d1224; border: 1px solid var(--border); max-height: 200px; overflow-y: auto; }
+    .status-box.loading { color: var(--warn); }
+    .status-box.success { color: var(--success); border-color: var(--success); }
+    .status-box.error { color: var(--error); border-color: var(--error); }
+    .account-list { list-style: none; margin: 0; padding: 0; }
+    .account-item { background: #0d1224; border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+    .account-item.active { border-color: var(--primary); background: linear-gradient(135deg, rgba(106, 160, 255, 0.1), rgba(122, 92, 255, 0.1)); }
+    .account-info { flex: 1; }
+    .account-name { font-weight: 600; font-size: 1.05em; }
+    .account-meta { font-size: 0.85em; color: var(--muted); margin-top: 4px; }
+    .account-actions { display: flex; gap: 6px; }
+    .account-actions button { padding: 6px 12px; font-size: 0.85em; }
+    .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; }
+    .badge.active { background: var(--primary); color: #0f1220; }
+    .badge.connected { background: var(--success); color: #0f1220; }
+    .badge.disconnected { background: var(--error); color: #fff; }
+    .badge.authorized { background: var(--success); color: #0f1220; }
+    .badge.unauthorized { background: var(--muted); color: #0f1220; }
+    .task-item { background: #0d1224; border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+    .task-item.disabled { opacity: 0.6; }
+    .task-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+    .task-title { font-weight: 600; }
+    .task-meta { font-size: 0.85em; color: var(--muted); }
+    .task-info { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; font-size: 0.9em; }
+    .task-info-item { color: var(--muted); }
+    .task-info-item code { background: #141a2f; padding: 2px 4px; border-radius: 4px; color: var(--fg); }
+    .empty { text-align: center; color: var(--muted); padding: 20px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📱 Telegram 多账号管理</h1>
+      <p class="subtitle">支持多账号登录 · 独立会话 · 任务关联</p>
+    </header>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('accounts')">账号管理</button>
+      <button class="tab" onclick="switchTab('send-tasks')">📤 发送任务</button>
+      <button class="tab" onclick="switchTab('listen-tasks')">📡 监听任务</button>
+      <button class="tab" onclick="switchTab('send')">即时发送</button>
+    </div>
+
+    <!-- 账号管理 -->
+    <div id="tab-accounts" class="tab-content active">
+      <div class="card">
+        <h2>➕ 添加新账号</h2>
+        <div style="display: grid; grid-template-columns: 2fr 2fr 1fr; gap: 10px;">
+          <div class="form-row">
+            <label for="new-phone">手机号</label>
+            <input id="new-phone" type="text" placeholder="+8613800138000" />
+          </div>
+          <div class="form-row">
+            <label for="new-account-name">账号名称</label>
+            <input id="new-account-name" type="text" placeholder="个人账号/工作账号" />
+          </div>
+          <div class="form-row">
+            <label>&nbsp;</label>
+            <button onclick="addAccount()">添加账号</button>
+          </div>
+        </div>
+        <div class="status-box" id="add-account-status" style="display: none; margin-top: 10px;"></div>
+      </div>
+
+      <div class="card">
+        <h2>📋 账号列表</h2>
+        <ul class="account-list" id="accounts-list">
+          <li class="empty">暂无账号，请先添加</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 发送任务 -->
+    <div id="tab-send-tasks" class="tab-content">
+      <div class="card">
+        <h2>➕ 新增发送任务</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+          <div class="form-row">
+            <label for="send-task-account">关联账号</label>
+            <select id="send-task-account">
+              <option value="" disabled selected>请选择账号</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label for="send-task-cron">Cron 表达式</label>
+            <input id="send-task-cron" type="text" placeholder="0 8 * * *" value="0 0 11 * *" />
+          </div>
+          <div class="form-row">
+            <label for="send-task-to">接收人</label>
+            <input id="send-task-to" type="text" placeholder="@username" />
+          </div>
+          <div class="form-row">
+            <label for="send-task-message">消息</label>
+            <input id="send-task-message" type="text" placeholder="/sign" />
+          </div>
+        </div>
+        <div class="buttons">
+          <label style="display: flex; align-items: center; gap: 6px;">
+            <input id="send-task-enabled" type="checkbox" checked />
+            <span style="color: var(--muted); font-size: 0.9em;">启用</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 6px;">
+            <input id="send-task-runonce" type="checkbox" />
+            <span style="color: var(--muted); font-size: 0.9em;">仅运行一次</span>
+          </label>
+          <button onclick="addSendTask()" style="margin-left: auto;">添加任务</button>
+        </div>
+        <div class="status-box" id="add-send-task-status" style="display: none; margin-top: 10px;"></div>
+      </div>
+
+      <div class="card">
+        <h2>⏰ 发送任务列表</h2>
+        <ul class="account-list" id="send-tasks-list">
+          <li class="empty">暂无发送任务</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 监听任务 -->
+    <div id="tab-listen-tasks" class="tab-content">
+      <div class="card">
+        <h2>➕ 新增监听任务</h2>
+        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 10px; margin-bottom: 10px;">
+          <div class="form-row">
+            <label for="listen-task-account">关联账号</label>
+            <select id="listen-task-account">
+              <option value="" disabled selected>请选择账号</option>
+            </select>
+          </div>
+          <div class="form-row">
+            <label for="listen-task-channel">频道/用户名或ID</label>
+            <input id="listen-task-channel" type="text" placeholder="@channelname 或 用户ID" />
+          </div>
+        </div>
+        <div class="buttons">
+          <label style="display: flex; align-items: center; gap: 6px;">
+            <input id="listen-task-enabled" type="checkbox" checked />
+            <span style="color: var(--muted); font-size: 0.9em;">启用</span>
+          </label>
+          <button onclick="addListenTask()" style="margin-left: auto;">添加监听</button>
+        </div>
+        <div class="status-box" id="add-listen-task-status" style="display: none; margin-top: 10px;"></div>
+      </div>
+
+      <div class="card">
+        <h2>📡 监听任务列表</h2>
+        <ul class="account-list" id="listen-tasks-list">
+          <li class="empty">暂无监听任务</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 即时发送 -->
+    <div id="tab-send" class="tab-content">
+      <div class="card">
+        <h2>📤 即时发送消息</h2>
+        <div class="form-row">
+          <label for="send-account">使用账号</label>
+          <select id="send-account">
+            <option value="" disabled selected>请选择账号</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label for="send-to">接收人</label>
+          <input id="send-to" type="text" placeholder="@username 或 ID" />
+        </div>
+        <div class="form-row">
+          <label for="send-message">消息内容</label>
+          <textarea id="send-message" rows="6" placeholder="输入要发送的消息"></textarea>
+        </div>
+        <div class="buttons">
+          <button onclick="sendNow()">发送消息</button>
+        </div>
+        <div class="status-box" id="send-status" style="display: none; margin-top: 12px;"></div>
+      </div>
+    </div>
+
+    <!-- 登录模态框 -->
+    <div id="login-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center;">
+      <div style="background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 24px; max-width: 500px; width: 90%;">
+        <h2 style="margin: 0 0 16px;">🔐 登录账号</h2>
+        <div id="login-code-form">
+          <div class="form-row">
+            <label for="login-code">验证码</label>
+            <input id="login-code" type="text" placeholder="输入验证码" />
+          </div>
+        </div>
+        <div id="login-password-form" style="display: none;">
+          <div class="form-row">
+            <label for="login-password">二步密码</label>
+            <input id="login-password" type="password" placeholder="输入二步密码" />
+          </div>
+        </div>
+        <div class="buttons" style="margin-top: 16px;">
+          <button onclick="verifyLogin()">提交</button>
+          <button class="secondary" onclick="closeLoginModal()">取消</button>
+        </div>
+        <div class="status-box" id="login-modal-status" style="display: none; margin-top: 12px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let accounts = [];
+    let tasks = [];
+    let currentLoginAccountId = null;
+    let currentLoginStateId = null;
+
+    async function fetchAPI(path, method = 'GET', body = null) {
+      const opts = { method, headers: { 'Content-Type': 'application/json' } };
+      if (body) opts.body = JSON.stringify(body);
+      const res = await fetch(path, opts);
+      return res.json();
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+      document.getElementById(`tab-${tab}`).classList.add('active');
+      
+      if (tab === 'accounts') loadAccounts();
+      if (tab === 'tasks') loadTasks();
+    }
+
+    async function loadAccounts() {
+      try {
+        const data = await fetchAPI('/telegram/api/accounts');
+        if (data.success) {
+          accounts = data.accounts;
+          renderAccounts();
+          updateAccountSelects();
+        }
+      } catch (e) {
+        console.error('Load accounts failed:', e);
+      }
+    }
+
+    function renderAccounts() {
+      const list = document.getElementById('accounts-list');
+      if (accounts.length === 0) {
+        list.innerHTML = '<li class="empty">暂无账号，请先添加</li>';
+        return;
+      }
+
+      list.innerHTML = accounts.map(acc => {
+        const health = acc.health || {};
+        return `
+          <li class="account-item ${acc.active ? 'active' : ''}">
+            <div class="account-info">
+              <div class="account-name">
+                ${escapeHtml(acc.name || acc.phone)}
+                ${acc.active ? '<span class="badge active">活跃</span>' : ''}
+              </div>
+              <div class="account-meta">
+                手机: ${escapeHtml(acc.phone)} | 
+                状态: <span class="badge ${health.authorized ? 'authorized' : 'unauthorized'}">${health.authorized ? '已授权' : '未授权'}</span> | 
+                连接: <span class="badge ${health.connected ? 'connected' : 'disconnected'}">${health.connected ? '已连接' : '未连接'}</span>
+              </div>
+            </div>
+            <div class="account-actions">
+              ${!acc.active ? `<button class="secondary" onclick="switchAccount('${escapeAttr(acc.id)}')">设为活跃</button>` : ''}
+              ${!health.authorized ? `<button onclick="loginAccount('${escapeAttr(acc.id)}', '${escapeAttr(acc.phone)}')">登录</button>` : ''}
+              ${health.authorized ? `<button class="secondary" onclick="logoutAccount('${escapeAttr(acc.id)}')">注销</button>` : ''}
+              <button class="secondary" onclick="editAccountName('${escapeAttr(acc.id)}', '${escapeAttr(acc.name || acc.phone)}')">改名</button>
+              <button class="danger" onclick="deleteAccount('${escapeAttr(acc.id)}')">删除</button>
+            </div>
+          </li>
+        `;
+      }).join('');
+    }
+
+    function updateAccountSelects() {
+      const selects = [
+        document.getElementById('send-task-account'),
+        document.getElementById('listen-task-account'),
+        document.getElementById('send-account')
+      ];
+      selects.forEach(sel => {
+        if (!sel) return;
+        if (accounts.length === 0) {
+          sel.innerHTML = '<option value="" disabled selected>请先添加账号</option>';
+          return;
+        }
+        sel.innerHTML = accounts
+          .map(acc => `<option value="${escapeAttr(acc.id)}">${escapeHtml(acc.name || acc.phone)}</option>`)
+          .join('');
+        sel.value = accounts[0].id; // 默认选中第一个账号
+      });
+    }
+
+    async function addAccount() {
+      const phone = document.getElementById('new-phone').value.trim();
+      const name = document.getElementById('new-account-name').value.trim();
+      if (!phone) { alert('请输入手机号'); return; }
+
+      showStatus('add-account-status', '添加中...', 'loading');
+      try {
+        const data = await fetchAPI('/telegram/api/accounts', 'POST', { phone, name });
+        if (data.success) {
+          showStatus('add-account-status', '账号添加成功！现在可以登录此账号。', 'success');
+          document.getElementById('new-phone').value = '';
+          document.getElementById('new-account-name').value = '';
+          await loadAccounts();
+        } else {
+          showStatus('add-account-status', '失败: ' + (data.message || 'unknown'), 'error');
+        }
+      } catch (e) {
+        showStatus('add-account-status', '错误: ' + e.message, 'error');
+      }
+    }
+
+    async function deleteAccount(accountId) {
+      if (!confirm('确认删除此账号？会话和数据将被永久删除。')) return;
+
+      try {
+        const data = await fetchAPI(`/telegram/api/accounts/${accountId}`, 'DELETE');
+        if (data.success) {
+          await loadAccounts();
+        } else {
+          alert('删除失败: ' + (data.message || 'unknown'));
+        }
+      } catch (e) {
+        alert('错误: ' + e.message);
+      }
+    }
+
+    async function switchAccount(accountId) {
+      try {
+        const data = await fetchAPI(`/telegram/api/accounts/${accountId}/switch`, 'POST');
+        if (data.success) {
+          await loadAccounts();
+        } else {
+          alert('切换失败: ' + (data.message || 'unknown'));
+        }
+      } catch (e) {
+        alert('错误: ' + e.message);
+      }
+    }
+
+    async function editAccountName(accountId, currentName) {
+      const newName = prompt('输入新的账号名称:', currentName);
+      if (newName === null || newName.trim() === '') return;
+
+      try {
+        const data = await fetchAPI(`/telegram/api/accounts/${accountId}`, 'PUT', { name: newName });
+        if (data.success) {
+          await loadAccounts();
+        } else {
+          alert('更新失败: ' + (data.message || 'unknown'));
+        }
+      } catch (e) {
+        alert('错误: ' + e.message);
+      }
+    }
+
+    async function loginAccount(accountId, phone) {
+      try {
+        const data = await fetchAPI('/telegram/api/start', 'POST', { phone, accountId });
+        if (data.success) {
+          currentLoginAccountId = accountId;
+          currentLoginStateId = data.stateId;
+          
+          let msg = `验证码已发送至 ${phone}\nstateId: ${data.stateId}`;
+          if (data.debugCode) msg += `\n调试验证码: ${data.debugCode}`;
+          if (data.mode === 'real') msg += '\n（真实模式：从官方 Telegram 客户端获取验证码）';
+          
+          showStatus('login-modal-status', msg, 'success');
+          document.getElementById('login-modal').style.display = 'flex';
+          document.getElementById('login-code-form').style.display = 'block';
+          document.getElementById('login-password-form').style.display = 'none';
+        } else {
+          alert('发送验证码失败: ' + (data.message || 'unknown'));
+        }
+      } catch (e) {
+        alert('错误: ' + e.message);
+      }
+    }
+
+    async function verifyLogin() {
+      if (!currentLoginStateId || !currentLoginAccountId) {
+        alert('会话已过期');
+        return;
+      }
+
+      const code = document.getElementById('login-code').value.trim();
+      const password = document.getElementById('login-password').value;
+
+      showStatus('login-modal-status', '验证中...', 'loading');
+      try {
+        const data = await fetchAPI('/telegram/api/verify', 'POST', {
+          stateId: currentLoginStateId,
+          code,
+          password,
+          accountId: currentLoginAccountId
+        });
+
+        if (data.success) {
+          if (data.authorized) {
+            showStatus('login-modal-status', '登录成功！', 'success');
+            setTimeout(() => {
+              closeLoginModal();
+              loadAccounts();
+            }, 1000);
+          } else if (data.needPassword) {
+            showStatus('login-modal-status', '验证码正确。\n请输入二步密码。', 'success');
+            document.getElementById('login-password-form').style.display = 'block';
+          }
+        } else {
+          showStatus('login-modal-status', '失败: ' + (data.message || 'unknown'), 'error');
+        }
+      } catch (e) {
+        showStatus('login-modal-status', '错误: ' + e.message, 'error');
+      }
+    }
+
+    async function logoutAccount(accountId) {
+      if (!confirm('确认注销此账号的登录状态？')) return;
+
+      try {
+        const data = await fetchAPI('/telegram/api/logout', 'POST', { accountId });
+        if (data.success) {
+          await loadAccounts();
+        } else {
+          alert('注销失败: ' + (data.message || 'unknown'));
+        }
+      } catch (e) {
+        alert('错误: ' + e.message);
+      }
+    }
+
+    function closeLoginModal() {
+      document.getElementById('login-modal').style.display = 'none';
+      document.getElementById('login-code').value = '';
+      document.getElementById('login-password').value = '';
+      document.getElementById('login-modal-status').style.display = 'none';
+      currentLoginAccountId = null;
+      currentLoginStateId = null;
+    }
+
+    async function loadTasks() {
+      try {
+        const data = await fetchAPI('/telegram/api/tasks');
+        if (data.success) {
+          tasks = data.tasks;
+          renderSendTasks();
+          renderListenTasks();
+        }
+      } catch (e) {
+        console.error('Load tasks failed:', e);
+      }
+    }
+
+    function renderSendTasks() {
+      const sendTasks = tasks.filter(t => t.type === 'send' || !t.type); // 兼容旧数据
+      const list = document.getElementById('send-tasks-list');
+      if (sendTasks.length === 0) {
+        list.innerHTML = '<li class="empty">暂无发送任务</li>';
+        return;
+      }
+
+      list.innerHTML = sendTasks.map(t => {
+        const account = accounts.find(a => a.id === t.accountId);
+        const accountName = account ? account.name : '未指定（请编辑账号）';
+        
+        return `
+          <li class="task-item ${t.enabled ? '' : 'disabled'}">
+            <div class="task-header">
+              <div class="task-title">${escapeHtml(t.message)} → ${escapeHtml(t.to)}</div>
+              <span class="task-meta">${t.enabled ? '启用' : '禁用'}</span>
+            </div>
+            <div class="task-info">
+              <div class="task-info-item"><strong>账号:</strong> <code>${escapeHtml(accountName)}</code></div>
+              <div class="task-info-item"><strong>Cron:</strong> <code>${escapeHtml(t.cron)}</code></div>
+              <div class="task-info-item"><strong>ID:</strong> <code>${escapeHtml(t.id.slice(0,8))}...</code></div>
+              <div class="task-info-item"><strong>一次性:</strong> ${t.runOnce ? '是' : '否'}</div>
+            </div>
+            <div class="buttons">
+              <label style="display:flex; align-items:center; gap:6px;">
+                <input type="checkbox" ${t.enabled ? 'checked' : ''} onchange="toggleSendTaskEnabled('${escapeAttr(t.id)}', this.checked)" />
+                <span style="color: var(--muted); font-size: 0.85em;">启用</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:6px;">
+                <input type="checkbox" ${t.runOnce ? 'checked' : ''} onchange="toggleSendTaskRunOnce('${escapeAttr(t.id)}', this.checked)" />
+                <span style="color: var(--muted); font-size: 0.85em;">仅运行一次</span>
+              </label>
+              <button class="secondary" onclick="runTaskNow('${escapeAttr(t.id)}', '${escapeAttr(t.to)}', '${escapeAttr(t.message)}', '${escapeAttr(t.accountId || '')}')">⚡ 执行一次</button>
+              <button class="secondary" onclick="editTaskAccount('${escapeAttr(t.id)}', '${escapeAttr(t.accountId || '')}')">改账号</button>
+              <button class="secondary" onclick="editTaskCron('${escapeAttr(t.id)}', '${escapeAttr(t.cron)}')">改Cron</button>
+              <button class="secondary" onclick="deleteTask('${escapeAttr(t.id)}')">删除</button>
+            </div>
+          </li>
+        `;
+      }).join('');
+    }
+
+    function renderListenTasks() {
+      const listenTasks = tasks.filter(t => t.type === 'listen');
+      const list = document.getElementById('listen-tasks-list');
+      if (listenTasks.length === 0) {
+        list.innerHTML = '<li class="empty">暂无监听任务</li>';
+        return;
+      }
+
+      list.innerHTML = listenTasks.map(t => {
+        const account = accounts.find(a => a.id === t.accountId);
+        const accountName = account ? account.name : '未指定（请编辑账号）';
+        
+        return `
+          <li class="task-item ${t.enabled ? '' : 'disabled'}">
+            <div class="task-header">
+              <div class="task-title">📡 监听 ${escapeHtml(t.channel)}</div>
+              <span class="task-meta">${t.enabled ? '监听中' : '已停止'}</span>
+            </div>
+            <div class="task-info">
+              <div class="task-info-item"><strong>账号:</strong> <code>${escapeHtml(accountName)}</code></div>
+              <div class="task-info-item"><strong>频道:</strong> <code>${escapeHtml(t.channel)}</code></div>
+              <div class="task-info-item"><strong>ID:</strong> <code>${escapeHtml(t.id.slice(0,8))}...</code></div>
+            </div>
+            <div class="buttons">
+              <label style="display:flex; align-items:center; gap:6px;">
+                <input type="checkbox" ${t.enabled ? 'checked' : ''} onchange="toggleListenTaskEnabled('${escapeAttr(t.id)}', this.checked)" />
+                <span style="color: var(--muted); font-size: 0.85em;">启用</span>
+              </label>
+              <button class="secondary" onclick="editListenTaskAccount('${escapeAttr(t.id)}', '${escapeAttr(t.accountId || '')}')">改账号</button>
+              <button class="secondary" onclick="editListenTaskChannel('${escapeAttr(t.id)}', '${escapeAttr(t.channel)}')">改频道</button>
+              <button class="secondary" onclick="deleteTask('${escapeAttr(t.id)}')">删除</button>
+            </div>
+          </li>
+        `;
+      }).join('');
+    }
+
+    async function addSendTask() {
+      if (accounts.length === 0) { alert('请先添加账号'); return; }
+
+      const accountId = document.getElementById('send-task-account').value || null;
+      const cron = document.getElementById('send-task-cron').value.trim();
+      const to = document.getElementById('send-task-to').value.trim();
+      const message = document.getElementById('send-task-message').value.trim();
+      const enabled = document.getElementById('send-task-enabled').checked;
+      const runOnce = document.getElementById('send-task-runonce').checked;
+
+      if (!cron || !to || !message) { alert('请填写所有字段'); return; }
+
+      showStatus('add-send-task-status', '添加中...', 'loading');
+      try {
+        const data = await fetchAPI('/telegram/api/tasks', 'POST', { type: 'send', accountId, cron, to, message, enabled, runOnce });
+        if (data.success) {
+          showStatus('add-send-task-status', '任务已添加！', 'success');
+          document.getElementById('send-task-cron').value = '0 0 11 * *';
+          document.getElementById('send-task-to').value = '';
+          document.getElementById('send-task-message').value = '';
+          document.getElementById('send-task-enabled').checked = true;
+          document.getElementById('send-task-runonce').checked = false;
+          await loadTasks();
+        } else {
+          showStatus('add-send-task-status', '失败: ' + (data.message || 'unknown'), 'error');
+        }
+      } catch (e) {
+        showStatus('add-send-task-status', '错误: ' + e.message, 'error');
+      }
+    }
+
+    async function addListenTask() {
+      if (accounts.length === 0) { alert('请先添加账号'); return; }
+
+      const accountId = document.getElementById('listen-task-account').value || null;
+      const channel = document.getElementById('listen-task-channel').value.trim();
+      const enabled = document.getElementById('listen-task-enabled').checked;
+
+      if (!channel) { alert('请输入频道/用户'); return; }
+
+      showStatus('add-listen-task-status', '添加中...', 'loading');
+      try {
+        const data = await fetchAPI('/telegram/api/tasks', 'POST', { type: 'listen', accountId, channel, enabled });
+        if (data.success) {
+          showStatus('add-listen-task-status', '监听任务已添加！', 'success');
+          document.getElementById('listen-task-channel').value = '';
+          document.getElementById('listen-task-enabled').checked = true;
+          await loadTasks();
+        } else {
+          showStatus('add-listen-task-status', '失败: ' + (data.message || 'unknown'), 'error');
+        }
+      } catch (e) {
+        showStatus('add-listen-task-status', '错误: ' + e.message, 'error');
+      }
+    }
+
+    async function addTask() {
+      // 兼容旧代码，如果还有地方调用此函数
+      // 默认添加发送任务
+      await addSendTask();
+    }
+
+    async function toggleSendTaskEnabled(taskId, enabled) {
+      try {
+        await fetchAPI(`/telegram/api/tasks/${taskId}`, 'PUT', { enabled });
+        await loadTasks();
+      } catch (e) {
+        alert('错误: ' + e.message);
+      }
+    }
+
+    async function toggleSendTaskRunOnce(taskId, runOnce) {
+      try {
+        await fetchAPI(`/telegram/api/tasks/${taskId}`, 'PUT', { runOnce });
+        await loadTasks();
+      } catch (e) {
+        alert('错误: ' + e.message);
+      }
+    }
+
+    async function toggleListenTaskEnabled(taskId, enabled) {
+      try {
+        await fetchAPI(`/telegram/api/tasks/${taskId}`, 'PUT', { enabled });
+        await loadTasks();
+      } catch (e) {
+        alert('错误: ' + e.message);
+      }
+    }
+
+    async function toggleTaskEnabled(taskId, enabled) {
+      // 兼容旧代码
+      await toggleSendTaskEnabled(taskId, enabled);
+    }
+
+    async function toggleTaskRunOnce(taskId, runOnce) {
+      // 兼容旧代码
+      await toggleSendTaskRunOnce(taskId, runOnce);
+    }
+
+    async function editTaskAccount(taskId, currentAccountId) {
+      if (accounts.length === 0) {
+        alert('请先添加账号');
+        return;
+      }
+
+      const accountOptions = accounts.map(a => a.name || a.phone);
+      const accountValues = accounts.map(a => a.id);
+      
+      let message = '请选择新的关联账号：\n\n';
+      accountOptions.forEach((opt, idx) => {
+        const current = accountValues[idx] === currentAccountId ? ' ← 当前' : '';
+        message += `${idx}. ${opt}${current}\n`;
+      });
+      
+      const input = prompt(message + '\n请输入序号 (0-' + (accountOptions.length - 1) + '):');
+      if (input === null) return;
+      
+      const index = parseInt(input);
+      if (isNaN(index) || index < 0 || index >= accountValues.length) {
+        alert('无效的选择');
+        return;
+      }
+      
+      const newAccountId = accountValues[index];
+      
+      try {
+        const data = await fetchAPI(`/telegram/api/tasks/${taskId}`, 'PUT', { accountId: newAccountId });
+        if (data.success) {
+          await loadTasks();
+        } else {
+          alert('更新失败: ' + (data.message || 'unknown'));
+        }
+      } catch (e) {
+        alert('错误: ' + e.message);
+      }
+    }
+
+    async function editTaskCron(taskId, currentCron) {
+      const newCron = prompt('编辑 Cron 表达式:\n\n格式示例：\n0 0 11 * * (每天11:00)\n0 */2 * * * (每2小时)\n\n当前值:', currentCron);
+      if (newCron === null || newCron.trim() === '') return;
+      
+      try {
+        const data = await fetchAPI(`/telegram/api/tasks/${taskId}`, 'PUT', { cron: newCron.trim() });
+        if (data.success) {
+          await loadTasks();
+        } else {
+          alert('更新失败: ' + (data.message || 'unknown'));
+        }
+      } catch (e) {
+        alert('错误: ' + e.message);
+      }
+    }
+
+    async function editListenTaskAccount(taskId, currentAccountId) {
+      if (accounts.length === 0) {
+        alert('请先添加账号');
+        return;
+      }
+
+      const accountOptions = accounts.map(a => a.name || a.phone);
+      const accountValues = accounts.map(a => a.id);
+      
+      let message = '请选择新的关联账号：\n\n';
+      accountOptions.forEach((opt, idx) => {
+        const current = accountValues[idx] === currentAccountId ? ' ← 当前' : '';
+        message += `${idx}. ${opt}${current}\n`;
+      });
+      
+      const input = prompt(message + '\n请输入序号 (0-' + (accountOptions.length - 1) + '):');
+      if (input === null) return;
+      
+      const index = parseInt(input);
+      if (isNaN(index) || index < 0 || index >= accountValues.length) {
+        alert('无效的选择');
+        return;
+      }
+      
+      const newAccountId = accountValues[index];
+      
+      try {
+        const data = await fetchAPI(`/telegram/api/tasks/${taskId}`, 'PUT', { accountId: newAccountId });
+        if (data.success) {
+          await loadTasks();
+        } else {
+          alert('更新失败: ' + (data.message || 'unknown'));
+        }
+      } catch (e) {
+        alert('错误: ' + e.message);
+      }
+    }
+
+    async function editListenTaskChannel(taskId, currentChannel) {
+      const newChannel = prompt('编辑监听频道:\n\n格式示例：\n@username (用户)\n@channelname (频道)\n123456789 (ID)\n\n当前值:', currentChannel);
+      if (newChannel === null || newChannel.trim() === '') return;
+      
+      try {
+        const data = await fetchAPI(`/telegram/api/tasks/${taskId}`, 'PUT', { channel: newChannel.trim() });
+        if (data.success) {
+          await loadTasks();
+        } else {
+          alert('更新失败: ' + (data.message || 'unknown'));
+        }
+      } catch (e) {
+        alert('错误: ' + e.message);
+      }
+    }
+
+    async function runTaskNow(taskId, to, message, accountId) {
+      const confirmMsg = `立即执行一次？\n\n收件人: ${to}\n消息: ${message}`;
+      if (!confirm(confirmMsg)) return;
+      
+      try {
+        const data = await fetchAPI('/telegram/api/runTask', 'POST', { 
+          taskId, 
+          accountId: accountId || null 
+        });
+        if (data.success) {
+          alert(`已发送至 ${to}`);
+        } else {
+          alert('执行失败: ' + (data.message || 'unknown'));
+        }
+      } catch (e) {
+        alert('错误: ' + e.message);
+      }
+    }
+
+    async function deleteTask(taskId) {
+      if (!confirm('确认删除此任务？')) return;
+
+      try {
+        await fetchAPI(`/telegram/api/tasks/${taskId}`, 'DELETE');
+        await loadTasks();
+      } catch (e) {
+        alert('错误: ' + e.message);
+      }
+    }
+
+    async function sendNow() {
+      if (accounts.length === 0) { alert('请先添加账号'); return; }
+
+      const accountId = document.getElementById('send-account').value || null;
+      const to = document.getElementById('send-to').value.trim();
+      const message = document.getElementById('send-message').value.trim();
+
+      if (!to || !message) { alert('请填写接收人和消息'); return; }
+
+      showStatus('send-status', '发送中...', 'loading');
+      try {
+        const data = await fetchAPI('/telegram/api/sendNow', 'POST', { accountId, to, message });
+        if (data.success) {
+          showStatus('send-status', '消息已发送！', 'success');
+          document.getElementById('send-message').value = '';
+        } else {
+          showStatus('send-status', '失败: ' + (data.message || 'unknown'), 'error');
+        }
+      } catch (e) {
+        showStatus('send-status', '错误: ' + e.message, 'error');
+      }
+    }
+
+    function showStatus(elemId, msg, status) {
+      const elem = document.getElementById(elemId);
+      elem.textContent = msg;
+      elem.style.display = 'block';
+      elem.className = `status-box ${status}`;
+    }
+
+    function escapeHtml(s) {
+      const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+      return String(s).replace(/[&<>"']/g, c => map[c]);
+    }
+
+    function escapeAttr(s) {
+      return String(s).replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+    }
+
+    // 初始化
+    (async () => {
+      await loadAccounts();
+      await loadTasks();
+      setInterval(loadAccounts, 30000); // 每30秒刷新状态
+    })();
+  </script>
+</body>
+</html>

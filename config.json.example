@@ -26,8 +26,15 @@
     "tasksFile": "./data/telegram-tasks.json"
     },
   "notifications": [
-    { "type": "dingtalk", "url": "https://oapi.dingtalk.com/robot/send?access_token=********" },
-    { "type": "feishu", "url": "https://open.feishu.cn/open-apis/bot/v2/hook/********" }
+    {
+      "type": "dingtalk",
+      "format": "markdown",
+      "url": "https://oapi.dingtalk.com/robot/send?access_token=********"
+    },
+    {
+      "type": "feishu",
+      "url": "https://open.feishu.cn/open-apis/bot/v2/hook/********"
+    }
   ],
   "projectName": "本地轻量级后端自用服务器"
 }

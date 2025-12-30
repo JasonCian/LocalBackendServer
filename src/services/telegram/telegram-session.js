@@ -10,6 +10,11 @@
 const fs = require('fs');
 const path = require('path');
 
+// 简单延迟函数
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 // 尝试加载可选依赖
 let TelegramClient, StringSession, Api;
 try {
@@ -325,6 +330,103 @@ class TelegramSession {
         lastName: me.lastName
       }
     };
+  }
+
+  /**
+   * 等待并获取第一条回复（非自己发送）
+   * 
+   * @param {string} to - 会话对象（用户名/ID）
+   * @param {number|bigint} sinceId - 起始消息 ID（只取大于此 ID 的消息）
+   * @param {number|bigint} selfId - 自己的 ID，用于排除自身消息
+   * @param {number} timeoutMs - 超时时间
+   * @returns {Promise<Object|null>} 回复消息或 null
+   */
+  async waitForFirstReply(to, sinceId, selfId, timeoutMs = 3000) {
+    if (!this.enabledReal || !this.client) return null;
+    await this.ensureConnected();
+
+    const deadline = Date.now() + timeoutMs;
+
+    const pickReply = async () => {
+      for await (const msg of this.client.iterMessages(String(to), { limit: 20 })) {
+        if (sinceId && msg.id && msg.id <= sinceId) {
+          // 后续都更旧，可以停止
+          break;
+        }
+        if (msg.out) continue; // 排除自己发送
+        if (selfId && msg.senderId && String(msg.senderId) === String(selfId)) continue;
+        return msg;
+      }
+      return null;
+    };
+
+    while (Date.now() < deadline) {
+      const reply = await pickReply();
+      if (reply) return reply;
+      await delay(400);
+    }
+
+    return null;
+  }
+  
+  /**
+   * 监听频道/聊天消息（实时）
+   * 
+   * @param {string|number} channelId - 频道 ID、用户名或聊天 ID
+   * @param {Function} onMessage - 消息回调函数 (msg) => void
+   * @param {Function} stopCondition - 停止条件函数 () => boolean，返回 true 时停止监听
+   * @returns {Promise<void>}
+   */
+  async monitorChannel(channelId, onMessage, stopCondition) {
+    if (!this.enabledReal || !this.client) {
+      return; // 模拟模式不支持监听
+    }
+
+    try {
+      await this.ensureConnected();
+      
+      const entity = await this.client.getEntity(String(channelId));
+      if (!entity) {
+        console.error('无法获取频道实体:', channelId);
+        return;
+      }
+
+      let lastMessageId = 0;
+      const pollInterval = 2000; // 2秒轮询一次
+
+      while (!stopCondition || !stopCondition()) {
+        try {
+          // 获取最新消息
+          const messages = [];
+          for await (const msg of this.client.iterMessages(entity, { limit: 30 })) {
+            if (!msg.id || msg.id <= lastMessageId) break;
+            messages.push(msg);
+          }
+
+          // 从旧到新处理消息
+          messages.reverse();
+          for (const msg of messages) {
+            if (msg.id > lastMessageId) {
+              lastMessageId = msg.id;
+              // 调用回调处理消息
+              if (onMessage) {
+                try {
+                  onMessage(msg);
+                } catch (e) {
+                  console.error('消息回调执行失败:', e.message);
+                }
+              }
+            }
+          }
+        } catch (e) {
+          console.error('监听消息时出错:', e.message);
+        }
+
+        await delay(pollInterval);
+      }
+    } catch (e) {
+      console.error('监听频道失败:', e.message);
+    }
   }
 }
 

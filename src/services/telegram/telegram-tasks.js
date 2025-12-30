@@ -45,6 +45,9 @@ class TelegramTaskManager {
     this.tasks = [];
     this.scheduled = new Map(); // taskId -> cron job
     
+    // 监听任务的已处理消息ID（去重）
+    this.listenedMessageIds = new Map(); // listenTaskId -> Set<messageId>
+    
     // 加载任务
     this.loadTasks();
     
@@ -87,7 +90,18 @@ class TelegramTaskManager {
    * @param {Function} executeCallback - 执行回调函数
    */
   scheduleTask(task, executeCallback) {
-    if (!cron || !task.enabled) return;
+    // 如果任务被禁用，不进行调度（但清理可能存在的旧调度）
+    if (!task.enabled) {
+      if (this.scheduled.has(task.id)) {
+        try {
+          this.scheduled.get(task.id).stop();
+        } catch (_) {}
+        this.scheduled.delete(task.id);
+      }
+      return;
+    }
+
+    if (!cron) return;
     
     const cronExpr = String(task.cron || '');
     if (!cron.validate(cronExpr)) {
@@ -160,34 +174,76 @@ class TelegramTaskManager {
   /**
    * 获取所有任务
    * 
+   * @param {string} accountId - 可选，筛选特定账号的任务
    * @returns {Array} 任务列表
    */
-  getTasks() {
+  getTasks(accountId) {
+    if (accountId) {
+      return this.tasks.filter(t => t.accountId === accountId);
+    }
     return this.tasks;
   }
-  
+
+  /**
+   * 获取单个任务
+   * 
+   * @param {string} taskId - 任务 ID
+   * @returns {Object|null} 任务对象或 null
+   */
+  getTask(taskId) {
+    return this.tasks.find(t => t.id === taskId) || null;
+  }
+
   /**
    * 创建新任务
+   * 支持两种类型：
+   * - send: 定时发送消息 {type:'send', cron, to, message, accountId, enabled, runOnce}
+   * - listen: 监听频道消息 {type:'listen', channel, accountId, enabled}
    * 
-   * @param {Object} taskData - 任务数据 {cron, to, message, enabled, runOnce}
+   * @param {Object} taskData - 任务数据
    * @param {Function} executeCallback - 执行回调函数
+   * @param {Function} startListenCallback - 启动监听回调函数
    * @returns {Object} 创建的任务
    */
-  createTask(taskData, executeCallback) {
-    const task = {
-      id: makeTaskId(),
-      cron: String(taskData.cron || '* * * * *'),
-      to: String(taskData.to || '').trim(),
-      message: String(taskData.message || '').trim(),
-      enabled: taskData.enabled !== false,
-      runOnce: taskData.runOnce === true
-    };
+  createTask(taskData, executeCallback, startListenCallback) {
+    const taskType = String(taskData.type || 'send').toLowerCase();
+    
+    let task;
+    
+    if (taskType === 'listen') {
+      // 监听任务
+      task = {
+        id: makeTaskId(),
+        type: 'listen',
+        channel: String(taskData.channel || '').trim(),
+        enabled: taskData.enabled !== false,
+        accountId: taskData.accountId || null
+      };
+      
+      // 初始化此任务的消息ID集合
+      this.listenedMessageIds.set(task.id, new Set());
+    } else {
+      // 发送任务（默认）
+      task = {
+        id: makeTaskId(),
+        type: 'send',
+        cron: String(taskData.cron || '* * * * *'),
+        to: String(taskData.to || '').trim(),
+        message: String(taskData.message || '').trim(),
+        enabled: taskData.enabled !== false,
+        runOnce: taskData.runOnce === true,
+        accountId: taskData.accountId || null
+      };
+    }
     
     this.tasks.push(task);
     this.saveTasks();
     
-    if (executeCallback) {
+    // 启动任务
+    if (task.type === 'send' && executeCallback) {
       this.scheduleTask(task, executeCallback);
+    } else if (task.type === 'listen' && startListenCallback && task.enabled) {
+      startListenCallback(task);
     }
     
     return task;
@@ -198,35 +254,92 @@ class TelegramTaskManager {
    * 
    * @param {string} taskId - 任务 ID
    * @param {Object} updates - 更新数据
-   * @param {Function} executeCallback - 执行回调函数
+   * @param {Function} executeCallback - 执行回调函数（仅用于 send 任务）
+   * @param {Function} startListenCallback - 启动监听回调函数（仅用于 listen 任务）
    * @returns {Object|null} 更新后的任务或 null
    */
-  updateTask(taskId, updates, executeCallback) {
+  updateTask(taskId, updates, executeCallback, startListenCallback) {
     const idx = this.tasks.findIndex(x => x.id === taskId);
     if (idx < 0) return null;
     
+    const original = this.tasks[idx];
     const updated = {
-      ...this.tasks[idx],
-      ...updates,
-      runOnce: updates.runOnce === true ? true : this.tasks[idx].runOnce
+      ...original,
+      ...updates
     };
     
     this.tasks[idx] = updated;
     this.saveTasks();
     
-    // 重新调度该任务
-    if (this.scheduled.has(taskId)) {
-      try {
-        this.scheduled.get(taskId).stop();
-      } catch (_) {}
-      this.scheduled.delete(taskId);
+    // 处理 send 任务的调度更新
+    if (updated.type === 'send' || !updated.type) {
+      // 停止旧的调度
+      if (this.scheduled.has(taskId)) {
+        try {
+          this.scheduled.get(taskId).stop();
+        } catch (_) {}
+        this.scheduled.delete(taskId);
+      }
+      
+      // 重新调度该任务
+      if (executeCallback) {
+        this.scheduleTask(updated, executeCallback);
+      }
     }
     
-    if (executeCallback) {
-      this.scheduleTask(updated, executeCallback);
+    // 处理 listen 任务的启动/停止
+    if (updated.type === 'listen') {
+      if (updated.enabled && startListenCallback) {
+        startListenCallback(updated);
+      }
     }
     
     return updated;
+  }
+  
+  /**
+   * 标记消息为已处理（用于监听任务去重）
+   * 
+   * @param {string} listenTaskId - 监听任务 ID
+   * @param {number|string} messageId - 消息 ID
+   * @returns {boolean} 是否为新消息（未处理过）
+   */
+  markMessageAsProcessed(listenTaskId, messageId) {
+    if (!this.listenedMessageIds.has(listenTaskId)) {
+      this.listenedMessageIds.set(listenTaskId, new Set());
+    }
+    
+    const msgIdSet = this.listenedMessageIds.get(listenTaskId);
+    const isNew = !msgIdSet.has(messageId);
+    
+    if (isNew) {
+      msgIdSet.add(messageId);
+    }
+    
+    return isNew;
+  }
+  
+  /**
+   * 获取监听任务的已处理消息数量
+   * 
+   * @param {string} listenTaskId - 监听任务 ID
+   * @returns {number}
+   */
+  getProcessedMessageCount(listenTaskId) {
+    return this.listenedMessageIds.has(listenTaskId) 
+      ? this.listenedMessageIds.get(listenTaskId).size
+      : 0;
+  }
+  
+  /**
+   * 清除监听任务的消息记录
+   * 
+   * @param {string} listenTaskId - 监听任务 ID
+   */
+  clearProcessedMessages(listenTaskId) {
+    if (this.listenedMessageIds.has(listenTaskId)) {
+      this.listenedMessageIds.get(listenTaskId).clear();
+    }
   }
   
   /**
@@ -239,15 +352,21 @@ class TelegramTaskManager {
     const idx = this.tasks.findIndex(x => x.id === taskId);
     if (idx < 0) return false;
     
+    const task = this.tasks[idx];
     this.tasks.splice(idx, 1);
     this.saveTasks();
     
-    // 停止调度
+    // 停止 send 任务的调度
     if (this.scheduled.has(taskId)) {
       try {
         this.scheduled.get(taskId).stop();
       } catch (_) {}
       this.scheduled.delete(taskId);
+    }
+    
+    // 清理 listen 任务的消息记录
+    if (task.type === 'listen') {
+      this.listenedMessageIds.delete(taskId);
     }
     
     return true;
