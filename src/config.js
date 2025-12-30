@@ -82,9 +82,17 @@ function loadConfig(appRoot, logger) {
     // 忽略外部配置加载错误
   }
 
-  // 确保通知配置是数组
-  if (!Array.isArray(config.notifications)) {
-    config.notifications = [];
+  // 确保 services 存在
+  if (!config.services) {
+    config.services = {};
+  }
+  
+  // 确保 notifications 是数组
+  if (!config.services.notifications) {
+    config.services.notifications = [];
+  }
+  if (!Array.isArray(config.services.notifications)) {
+    config.services.notifications = [];
   }
 
   // 验证必需的配置字段
@@ -119,8 +127,8 @@ function getConfigSummary(config) {
     cors: config.cors ? '启用' : '禁用',
     showIndex: config.showIndex ? '启用' : '禁用',
     markdown: config.markdown?.enabled ? '启用' : '禁用',
-    telegram: config.telegram?.enabled ? '启用' : '禁用',
-    notifications: config.notifications.length
+    telegram: config.services?.telegram?.enabled ? '启用' : '禁用',
+    notifications: (config.services?.notifications || []).length
   };
   
   return JSON.stringify(summary, null, 2);

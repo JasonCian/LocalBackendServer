@@ -180,6 +180,12 @@
   </div>
 
   <script>
+    // 从当前页面URL获取API基础路径
+    // 如果访问 /tg，则 API_BASE = /tg
+    // 如果访问 /tg/，则 API_BASE = /tg
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    const API_BASE = pathParts.length > 0 ? '/' + pathParts[0] : '/telegram';
+    
     let accounts = [];
     let tasks = [];
     let currentLoginAccountId = null;
@@ -220,7 +226,7 @@
 
     async function loadAccounts() {
       try {
-        const data = await fetchAPI('/telegram/api/accounts');
+        const data = await fetchAPI(`${API_BASE}/api/accounts`);
         if (data.success) {
           accounts = data.accounts;
           renderAccounts();
@@ -291,7 +297,7 @@
 
       showStatus('add-account-status', '添加中...', 'loading');
       try {
-        const data = await fetchAPI('/telegram/api/accounts', 'POST', { phone, name });
+        const data = await fetchAPI(`${API_BASE}/api/accounts`, 'POST', { phone, name });
         if (data.success) {
           showStatus('add-account-status', '账号添加成功！现在可以登录此账号。', 'success');
           document.getElementById('new-phone').value = '';
@@ -309,7 +315,7 @@
       if (!confirm('确认删除此账号？会话和数据将被永久删除。')) return;
 
       try {
-        const data = await fetchAPI(`/telegram/api/accounts/${accountId}`, 'DELETE');
+        const data = await fetchAPI(`${API_BASE}/api/accounts/${accountId}`, 'DELETE');
         if (data.success) {
           await loadAccounts();
         } else {
@@ -322,7 +328,7 @@
 
     async function switchAccount(accountId) {
       try {
-        const data = await fetchAPI(`/telegram/api/accounts/${accountId}/switch`, 'POST');
+        const data = await fetchAPI(`${API_BASE}/api/accounts/${accountId}/switch`, 'POST');
         if (data.success) {
           await loadAccounts();
         } else {
@@ -338,7 +344,7 @@
       if (newName === null || newName.trim() === '') return;
 
       try {
-        const data = await fetchAPI(`/telegram/api/accounts/${accountId}`, 'PUT', { name: newName });
+        const data = await fetchAPI(`${API_BASE}/api/accounts/${accountId}`, 'PUT', { name: newName });
         if (data.success) {
           await loadAccounts();
         } else {
@@ -351,7 +357,7 @@
 
     async function loginAccount(accountId, phone) {
       try {
-        const data = await fetchAPI('/telegram/api/start', 'POST', { phone, accountId });
+        const data = await fetchAPI(`${API_BASE}/api/start`, 'POST', { phone, accountId });
         if (data.success) {
           currentLoginAccountId = accountId;
           currentLoginStateId = data.stateId;
@@ -383,7 +389,7 @@
 
       showStatus('login-modal-status', '验证中...', 'loading');
       try {
-        const data = await fetchAPI('/telegram/api/verify', 'POST', {
+        const data = await fetchAPI(`${API_BASE}/api/verify`, 'POST', {
           stateId: currentLoginStateId,
           code,
           password,
@@ -413,7 +419,7 @@
       if (!confirm('确认注销此账号的登录状态？')) return;
 
       try {
-        const data = await fetchAPI('/telegram/api/logout', 'POST', { accountId });
+        const data = await fetchAPI(`${API_BASE}/api/logout`, 'POST', { accountId });
         if (data.success) {
           await loadAccounts();
         } else {
@@ -435,7 +441,7 @@
 
     async function loadTasks() {
       try {
-        const data = await fetchAPI('/telegram/api/tasks');
+        const data = await fetchAPI(`${API_BASE}/api/tasks`);
         if (data.success) {
           tasks = data.tasks;
           renderSendTasks();
@@ -540,7 +546,7 @@
 
       showStatus('add-send-task-status', '添加中...', 'loading');
       try {
-        const data = await fetchAPI('/telegram/api/tasks', 'POST', { type: 'send', accountId, cron, to, message, enabled, runOnce });
+        const data = await fetchAPI(`${API_BASE}/api/tasks`, 'POST', { type: 'send', accountId, cron, to, message, enabled, runOnce });
         if (data.success) {
           showStatus('add-send-task-status', '任务已添加！', 'success');
           document.getElementById('send-task-cron').value = '0 0 11 * *';
@@ -568,7 +574,7 @@
 
       showStatus('add-listen-task-status', '添加中...', 'loading');
       try {
-        const data = await fetchAPI('/telegram/api/tasks', 'POST', { type: 'listen', accountId, channel, enabled });
+        const data = await fetchAPI(`${API_BASE}/api/tasks`, 'POST', { type: 'listen', accountId, channel, enabled });
         if (data.success) {
           showStatus('add-listen-task-status', '监听任务已添加！', 'success');
           document.getElementById('listen-task-channel').value = '';
@@ -590,7 +596,7 @@
 
     async function toggleSendTaskEnabled(taskId, enabled) {
       try {
-        await fetchAPI(`/telegram/api/tasks/${taskId}`, 'PUT', { enabled });
+        await fetchAPI(`${API_BASE}/api/tasks/${taskId}`, 'PUT', { enabled });
         await loadTasks();
       } catch (e) {
         alert('错误: ' + e.message);
@@ -599,7 +605,7 @@
 
     async function toggleSendTaskRunOnce(taskId, runOnce) {
       try {
-        await fetchAPI(`/telegram/api/tasks/${taskId}`, 'PUT', { runOnce });
+        await fetchAPI(`${API_BASE}/api/tasks/${taskId}`, 'PUT', { runOnce });
         await loadTasks();
       } catch (e) {
         alert('错误: ' + e.message);
@@ -608,7 +614,7 @@
 
     async function toggleListenTaskEnabled(taskId, enabled) {
       try {
-        await fetchAPI(`/telegram/api/tasks/${taskId}`, 'PUT', { enabled });
+        await fetchAPI(`${API_BASE}/api/tasks/${taskId}`, 'PUT', { enabled });
         await loadTasks();
       } catch (e) {
         alert('错误: ' + e.message);
@@ -652,7 +658,7 @@
       const newAccountId = accountValues[index];
       
       try {
-        const data = await fetchAPI(`/telegram/api/tasks/${taskId}`, 'PUT', { accountId: newAccountId });
+        const data = await fetchAPI(`${API_BASE}/api/tasks/${taskId}`, 'PUT', { accountId: newAccountId });
         if (data.success) {
           await loadTasks();
         } else {
@@ -668,7 +674,7 @@
       if (newCron === null || newCron.trim() === '') return;
       
       try {
-        const data = await fetchAPI(`/telegram/api/tasks/${taskId}`, 'PUT', { cron: newCron.trim() });
+        const data = await fetchAPI(`${API_BASE}/api/tasks/${taskId}`, 'PUT', { cron: newCron.trim() });
         if (data.success) {
           await loadTasks();
         } else {
@@ -706,7 +712,7 @@
       const newAccountId = accountValues[index];
       
       try {
-        const data = await fetchAPI(`/telegram/api/tasks/${taskId}`, 'PUT', { accountId: newAccountId });
+        const data = await fetchAPI(`${API_BASE}/api/tasks/${taskId}`, 'PUT', { accountId: newAccountId });
         if (data.success) {
           await loadTasks();
         } else {
@@ -722,7 +728,7 @@
       if (newChannel === null || newChannel.trim() === '') return;
       
       try {
-        const data = await fetchAPI(`/telegram/api/tasks/${taskId}`, 'PUT', { channel: newChannel.trim() });
+        const data = await fetchAPI(`${API_BASE}/api/tasks/${taskId}`, 'PUT', { channel: newChannel.trim() });
         if (data.success) {
           await loadTasks();
         } else {
@@ -738,7 +744,7 @@
       if (!confirm(confirmMsg)) return;
       
       try {
-        const data = await fetchAPI('/telegram/api/runTask', 'POST', { 
+        const data = await fetchAPI(`${API_BASE}/api/runTask`, 'POST', { 
           taskId, 
           accountId: accountId || null 
         });
@@ -756,7 +762,7 @@
       if (!confirm('确认删除此任务？')) return;
 
       try {
-        await fetchAPI(`/telegram/api/tasks/${taskId}`, 'DELETE');
+        await fetchAPI(`${API_BASE}/api/tasks/${taskId}`, 'DELETE');
         await loadTasks();
       } catch (e) {
         alert('错误: ' + e.message);
@@ -774,7 +780,7 @@
 
       showStatus('send-status', '发送中...', 'loading');
       try {
-        const data = await fetchAPI('/telegram/api/sendNow', 'POST', { accountId, to, message });
+        const data = await fetchAPI(`${API_BASE}/api/sendNow`, 'POST', { accountId, to, message });
         if (data.success) {
           showStatus('send-status', '消息已发送！', 'success');
           document.getElementById('send-message').value = '';

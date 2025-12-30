@@ -391,7 +391,18 @@ class TelegramSession {
         return;
       }
 
+      // 初始化时获取最新消息ID，避免重复通知历史消息
       let lastMessageId = 0;
+      try {
+        const latestMessages = await this.client.getMessages(entity, { limit: 1 });
+        if (latestMessages && latestMessages.length > 0 && latestMessages[0].id) {
+          lastMessageId = latestMessages[0].id;
+          console.log(`[监听] ${channelId} 初始消息ID: ${lastMessageId}`);
+        }
+      } catch (e) {
+        console.error('获取初始消息ID失败:', e.message);
+      }
+      
       const pollInterval = 2000; // 2秒轮询一次
 
       while (!stopCondition || !stopCondition()) {

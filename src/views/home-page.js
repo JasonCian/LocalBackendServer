@@ -98,7 +98,9 @@ function generateHomePage(config) {
         <div class="info-card">
           <h3>🔌 服务挂载</h3>
           <ul>
-            <li>• <a href="/telegram">/telegram</a> — Telegram（自动签到）</li>
+            ${config.services && config.services.telegram && config.services.telegram.enabled ? `<li>• <a href="${config.services.telegram.mount || '/telegram'}">${config.services.telegram.mount || '/telegram'}</a> — Telegram（多账号、自动签到）</li>` : ''}
+            ${config.services && config.services.powershellHistory && config.services.powershellHistory.enabled ? `<li>• <a href="${config.services.powershellHistory.mount || '/powershell'}">${config.services.powershellHistory.mount || '/powershell'}</a> — PowerShell 命令历史管理</li>` : ''}
+            ${(!config.services?.telegram?.enabled && !config.services?.powershellHistory?.enabled) ? '<li class="empty">暂无启用的服务</li>' : ''}
           </ul>
         </div>
         <div class="info-card">

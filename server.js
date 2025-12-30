@@ -37,31 +37,50 @@ const { generateHomePage } = require('./src/views/home-page');
 // 导入服务
 const { notifyAll } = require('./src/services/notification-service');
 const TelegramService = require('./src/services/telegram/telegram-service');
+const PowerShellHistoryService = require('./src/services/powershell-history/powershell-history');
 
 // 导入路由处理器
 const { handleFileRequest } = require('./src/routes/file-routes');
 const { handleUpload } = require('./src/routes/upload-routes');
 const { handleDelete } = require('./src/routes/delete-routes');
 const { handleTelegram } = require('./src/routes/telegram-routes');
+const { handlePowerShellHistory } = require('./src/routes/powershell-history-routes');
 
 // 加载配置
 const config = loadConfig(appRoot, appendLog);
 
 // 初始化 Telegram 服务（如果启用）
 let telegramService = null;
-if (config.telegram && config.telegram.enabled) {
+if (config.services && config.services.telegram && config.services.telegram.enabled) {
   try {
     telegramService = new TelegramService(
-      config.telegram,
+      config.services.telegram,
       appRoot,
       appendLog,
       async (title, detail) => {
-        await notifyAll(config.notifications, title, detail, appendLog);
+        await notifyAll(config.services.notifications, title, detail, appendLog);
       }
     );
     appendLog('INFO', 'Telegram 服务初始化成功');
   } catch (e) {
     appendLog('ERROR', 'Telegram 服务初始化失败', e && (e.stack || e.message));
+  }
+}
+
+// 初始化 PowerShell History 服务（如果启用）
+let psHistoryService = null;
+if (config.services && config.services.powershellHistory && config.services.powershellHistory.enabled) {
+  try {
+    psHistoryService = new PowerShellHistoryService(
+      config.services.powershellHistory,
+      appRoot,
+      appendLog
+    );
+    // 启动实时监听
+    psHistoryService.start();
+    appendLog('INFO', 'PowerShell History 服务初始化成功，已启动实时监听');
+  } catch (e) {
+    appendLog('ERROR', 'PowerShell History 服务初始化失败', e && (e.stack || e.message));
   }
 }
 
@@ -110,13 +129,27 @@ const server = http.createServer((req, res) => {
   }
 
   // Telegram 服务路由（可配置）
-  const telegramMount = config.telegram && config.telegram.mount ? config.telegram.mount : '/telegram';
+  const telegramMount = config.services && config.services.telegram && config.services.telegram.mount ? config.services.telegram.mount : '/telegram';
   if (requestPath && requestPath.startsWith(telegramMount)) {
     if (telegramService) {
-      handleTelegram(req, res, requestPath, telegramService, appRoot, appendLog);
+      handleTelegram(req, res, requestPath, telegramService, appRoot, appendLog, telegramMount);
     } else {
       res.writeHead(503, { 'Content-Type': 'application/json; charset=utf-8' });
       res.end(JSON.stringify({ success: false, message: 'Telegram 服务未启用' }));
+    }
+    return;
+  }
+  
+  // PowerShell History 服务路由（可配置）
+  const psHistoryMount = config.services && config.services.powershellHistory && config.services.powershellHistory.mount 
+    ? config.services.powershellHistory.mount 
+    : '/powershell';
+  if (requestPath && requestPath.startsWith(psHistoryMount)) {
+    if (psHistoryService) {
+      handlePowerShellHistory(req, res, requestPath, psHistoryService, appendLog, psHistoryMount);
+    } else {
+      res.writeHead(503, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ success: false, message: 'PowerShell History 服务未启用' }));
     }
     return;
   }
@@ -183,7 +216,7 @@ server.listen(config.port, config.host, () => {
   console.log('');
   
   // 发送启动通知
-  notifyAll(config.notifications, '服务器启动', `${projectName} 在 ${timestamp} 启动成功`, appendLog).catch(() => {});
+  notifyAll(config.services.notifications, '服务器启动', `${projectName} 在 ${timestamp} 启动成功`, appendLog).catch(() => {});
 });
 
 /**

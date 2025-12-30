@@ -104,6 +104,15 @@ if ($LASTEXITCODE -ne 0) {
 & $nssmExe set $ServiceName AppRotateSeconds 86400
 & $nssmExe set $ServiceName AppRotateBytes 10485760
 
+# 提示：PowerShell 历史监听需要在 config.json 中配置 historyPath
+Write-Host "提示: 如需监听 PowerShell 命令历史，请在 config.json 中配置："
+Write-Host '  "services": {'
+Write-Host '    "powershellHistory": {'
+Write-Host '      "historyPath": "C:\\Users\\您的用户名\\AppData\\Roaming\\Microsoft\\Windows\\PowerShell\\PSReadLine\\ConsoleHost_history.txt"'
+Write-Host '    }'
+Write-Host '  }'
+Write-Host ""
+
 # 启动
 Write-Host "启动服务..."
 & $nssmExe start $ServiceName

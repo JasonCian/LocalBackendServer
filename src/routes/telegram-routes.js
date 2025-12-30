@@ -51,11 +51,12 @@ function sendJSON(res, code, obj) {
  * @param {Object} telegramService - Telegram 服务实例
  * @param {string} appRoot - 应用根目录
  * @param {Function} logger - 日志函数
+ * @param {string} mountPath - 挂载路径（默认 /telegram）
  */
-async function handleTelegram(req, res, requestPath, telegramService, appRoot, logger) {
+async function handleTelegram(req, res, requestPath, telegramService, appRoot, logger, mountPath = '/telegram') {
   try {
     // GET /telegram -> 多账号管理页面
-    if (req.method === 'GET' && (requestPath === '/telegram' || requestPath === '/telegram/')) {
+    if (req.method === 'GET' && (requestPath === mountPath || requestPath === mountPath + '/')) {
       const html = fs.readFileSync(path.join(appRoot, 'public', 'telegram-multi-account.html'), 'utf8');
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end(html);
@@ -63,14 +64,14 @@ async function handleTelegram(req, res, requestPath, telegramService, appRoot, l
     }
     
     // GET /telegram/legacy -> 原单账号页面
-    if (req.method === 'GET' && requestPath === '/telegram/legacy') {
+    if (req.method === 'GET' && requestPath === `${mountPath}/legacy`) {
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end(getTelegramPageHTML(appRoot, logger));
       return;
     }
 
     // API: POST /telegram/api/start （发送验证码）
-    if (req.method === 'POST' && requestPath === '/telegram/api/start') {
+    if (req.method === 'POST' && requestPath === `${mountPath}/api/start`) {
       const body = await parseJsonBody(req);
       const phone = String(body.phone || '').trim();
       const accountId = body.accountId || null;
@@ -86,7 +87,7 @@ async function handleTelegram(req, res, requestPath, telegramService, appRoot, l
     }
 
     // API: POST /telegram/api/verify （校验验证码 / 2FA）
-    if (req.method === 'POST' && requestPath === '/telegram/api/verify') {
+    if (req.method === 'POST' && requestPath === `${mountPath}/api/verify`) {
       const body = await parseJsonBody(req);
       const { stateId, code, password, accountId } = body || {};
       
@@ -100,7 +101,7 @@ async function handleTelegram(req, res, requestPath, telegramService, appRoot, l
     }
 
     // API: POST /telegram/api/logout
-    if (req.method === 'POST' && requestPath === '/telegram/api/logout') {
+    if (req.method === 'POST' && requestPath === `${mountPath}/api/logout`) {
       const body = await parseJsonBody(req);
       const { stateId, accountId } = body || {};
       
@@ -114,7 +115,7 @@ async function handleTelegram(req, res, requestPath, telegramService, appRoot, l
     }
 
     // API: GET /telegram/api/health （支持查询参数 accountId）
-    if (req.method === 'GET' && requestPath.startsWith('/telegram/api/health')) {
+    if (req.method === 'GET' && requestPath.startsWith(`${mountPath}/api/health`)) {
       try {
         const url = require('url');
         const parsed = url.parse(req.url, true);
@@ -129,7 +130,7 @@ async function handleTelegram(req, res, requestPath, telegramService, appRoot, l
     }
 
     // API: POST /telegram/api/sendNow { to, message, accountId }
-    if (req.method === 'POST' && requestPath === '/telegram/api/sendNow') {
+    if (req.method === 'POST' && requestPath === `${mountPath}/api/sendNow`) {
       const body = await parseJsonBody(req);
       const { to, message, accountId } = body || {};
       if (!to || !message) return sendJSON(res, 400, { success: false, message: '缺少 to 或 message' });
@@ -146,7 +147,7 @@ async function handleTelegram(req, res, requestPath, telegramService, appRoot, l
     // ========== 账号管理 API ==========
     
     // GET /telegram/api/accounts - 获取所有账号
-    if (requestPath === '/telegram/api/accounts' && req.method === 'GET') {
+    if (requestPath === `${mountPath}/api/accounts` && req.method === 'GET') {
       try {
         const accounts = await telegramService.getAllAccountsHealth();
         return sendJSON(res, 200, { success: true, accounts });
@@ -157,7 +158,7 @@ async function handleTelegram(req, res, requestPath, telegramService, appRoot, l
     }
     
     // POST /telegram/api/accounts - 添加新账号
-    if (requestPath === '/telegram/api/accounts' && req.method === 'POST') {
+    if (requestPath === `${mountPath}/api/accounts` && req.method === 'POST') {
       const body = await parseJsonBody(req);
       const { phone, name } = body || {};
       if (!phone) return sendJSON(res, 400, { success: false, message: '缺少 phone' });
@@ -172,7 +173,7 @@ async function handleTelegram(req, res, requestPath, telegramService, appRoot, l
     }
     
     // PUT /telegram/api/accounts/:id - 更新账号
-    if (requestPath.startsWith('/telegram/api/accounts/') && req.method === 'PUT') {
+    if (requestPath.startsWith(`${mountPath}/api/accounts/`) && req.method === 'PUT') {
       const id = requestPath.split('/').pop();
       const body = await parseJsonBody(req);
       
@@ -189,7 +190,7 @@ async function handleTelegram(req, res, requestPath, telegramService, appRoot, l
     }
     
     // DELETE /telegram/api/accounts/:id - 删除账号
-    if (requestPath.startsWith('/telegram/api/accounts/') && req.method === 'DELETE') {
+    if (requestPath.startsWith(`${mountPath}/api/accounts/`) && req.method === 'DELETE') {
       const id = requestPath.split('/').pop();
       
       try {
@@ -205,7 +206,8 @@ async function handleTelegram(req, res, requestPath, telegramService, appRoot, l
     }
     
     // POST /telegram/api/accounts/:id/switch - 切换活跃账号
-    if (requestPath.match(/^\/telegram\/api\/accounts\/[^/]+\/switch$/) && req.method === 'POST') {
+    const switchPattern = new RegExp(`^${mountPath.replace(/\//g, '\\/')}\\/api\\/accounts\\/[^\\/]+\\/switch$`);
+    if (requestPath.match(switchPattern) && req.method === 'POST') {
       const id = requestPath.split('/')[4];
       
       try {
@@ -223,7 +225,7 @@ async function handleTelegram(req, res, requestPath, telegramService, appRoot, l
     // ========== 任务 API ==========
     
     // GET /telegram/api/tasks（支持查询参数 accountId）
-    if (requestPath.startsWith('/telegram/api/tasks') && req.method === 'GET') {
+    if (requestPath.startsWith(`${mountPath}/api/tasks`) && req.method === 'GET') {
       const url = require('url');
       const parsed = url.parse(req.url, true);
       const accountId = parsed.query.accountId || null;
@@ -232,7 +234,7 @@ async function handleTelegram(req, res, requestPath, telegramService, appRoot, l
       return sendJSON(res, 200, { success: true, tasks });
     }
     
-    if (requestPath === '/telegram/api/tasks' && req.method === 'POST') {
+    if (requestPath === `${mountPath}/api/tasks` && req.method === 'POST') {
       const body = await parseJsonBody(req);
       const taskType = String(body.type || 'send').toLowerCase();
       
@@ -258,7 +260,7 @@ async function handleTelegram(req, res, requestPath, telegramService, appRoot, l
       }
     }
     
-    if (requestPath.startsWith('/telegram/api/tasks/') && req.method === 'PUT') {
+    if (requestPath.startsWith(`${mountPath}/api/tasks/`) && req.method === 'PUT') {
       const id = requestPath.split('/').pop();
       const body = await parseJsonBody(req);
       
@@ -275,7 +277,7 @@ async function handleTelegram(req, res, requestPath, telegramService, appRoot, l
     }
     
     // POST /telegram/api/runTask { taskId, accountId }  立刻执行一次
-    if (requestPath === '/telegram/api/runTask' && req.method === 'POST') {
+    if (requestPath === `${mountPath}/api/runTask` && req.method === 'POST') {
       const body = await parseJsonBody(req);
       if (!body.taskId) {
         return sendJSON(res, 400, { success: false, message: '缺少 taskId' });
@@ -293,7 +295,7 @@ async function handleTelegram(req, res, requestPath, telegramService, appRoot, l
       }
     }
 
-    if (requestPath.startsWith('/telegram/api/tasks/') && req.method === 'DELETE') {
+    if (requestPath.startsWith(`${mountPath}/api/tasks/`) && req.method === 'DELETE') {
       const id = requestPath.split('/').pop();
       
       try {

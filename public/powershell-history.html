@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PowerShell 命令历史管理 · 本地轻量级后端</title>
+  <link rel="stylesheet" href="/css/powershell-history.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🖥️ PowerShell 命令历史管理</h1>
+      <p class="subtitle">隐私保护 · 去重优化 · 快捷指令管理</p>
+    </header>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('dashboard')">📊 仪表盘</button>
+      <button class="tab" onclick="switchTab('history')">📜 历史查看</button>
+      <button class="tab" onclick="switchTab('rules')">⚙️ 过滤规则</button>
+      <button class="tab" onclick="switchTab('shortcuts')">⚡ 快捷指令</button>
+    </div>
+
+    <!-- 仪表盘 -->
+    <div id="tab-dashboard" class="tab-content active">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-total">-</div>
+          <div class="stat-label">总命令数</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-records">-</div>
+          <div class="stat-label">已记录</div>
+        </div>
+        <div class="stat-card warning">
+          <div class="stat-value" id="stat-masked">-</div>
+          <div class="stat-label">已掩盖</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-shortcuts">-</div>
+          <div class="stat-label">快捷指令</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>🔥 热门快捷指令</h2>
+        <div id="top-shortcuts" class="shortcuts-simple-list">
+          <div class="empty">暂无数据</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>📋 规则状态</h2>
+        <div id="rules-status" class="rules-simple-list">
+          <div class="empty">暂无规则</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <button onclick="cleanHistory()" class="btn-primary btn-large">
+          🧹 立即清理历史
+        </button>
+        <p class="hint">将应用所有过滤规则清理PowerShell历史文件（操作前会自动备份）</p>
+      </div>
+    </div>
+
+    <!-- 历史查看 -->
+    <div id="tab-history" class="tab-content">
+      <div class="card">
+        <div class="toolbar">
+          <input type="text" id="history-search" placeholder="搜索命令..." class="search-input" />
+          <button onclick="loadHistory()">🔄 刷新</button>
+          <label for="history-limit">显示数量：</label>
+          <select id="history-limit" onchange="loadHistory()">
+            <option value="100">最近100条</option>
+            <option value="500">最近500条</option>
+            <option value="1000">最近1000条</option>
+            <option value="">全部</option>
+          </select>
+        </div>
+        <div id="history-list" class="history-list">
+          <div class="empty">加载中...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 过滤规则 -->
+    <div id="tab-rules" class="tab-content">
+      <div class="card">
+        <h2>⚡ 快速预设</h2>
+        <p class="subtitle">一键添加常见隐私规则，无需复杂配置</p>
+        <div class="preset-buttons">
+          <button onclick="addPresetRule('password')" class="preset-btn">🔐 密码/Token</button>
+          <button onclick="addPresetRule('email')" class="preset-btn">📧 邮箱地址</button>
+          <button onclick="addPresetRule('ip')" class="preset-btn">🌐 IP地址</button>
+          <button onclick="addPresetRule('ssh')" class="preset-btn">🔑 SSH/RDP连接</button>
+          <button onclick="addPresetRule('apikey')" class="preset-btn">🎫 API密钥</button>
+          <button onclick="addPresetRule('creditcard')" class="preset-btn">💳 信用卡号</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>➕ 自定义规则</h2>
+        <p class="subtitle">高级选项：创建自己的隐私规则</p>
+        <div class="form-grid">
+          <div class="form-row">
+            <label for="rule-name">规则名称</label>
+            <input type="text" id="rule-name" placeholder="例: 隐藏内网IP" />
+          </div>
+          <div class="form-row">
+            <label for="rule-template">要掩盖的内容</label>
+            <select id="rule-template">
+              <option value="">-- 请选择匹配方式 --</option>
+              <option value="keyword">关键字匹配（简单）</option>
+              <option value="pattern">正则表达式（高级）</option>
+            </select>
+          </div>
+        </div>
+        
+        <!-- 关键字匹配模式 -->
+        <div id="keyword-mode" style="display: none;">
+          <div class="form-grid">
+            <div class="form-row">
+              <label>关键字（用|分隔多个）</label>
+              <input type="text" id="rule-keywords" placeholder="例: password|passwd|pwd|secret" />
+            </div>
+            <div class="form-row">
+              <label>匹配方式</label>
+              <select id="rule-keyword-type">
+                <option value="whole">完整词匹配</option>
+                <option value="partial">包含匹配</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 正则模式 -->
+        <div id="regex-mode">
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="rule-pattern">正则表达式</label>
+              <input type="text" id="rule-pattern" placeholder="例: (password)\s*[=:]\s*([^\s]+)" />
+            </div>
+            <div class="form-row">
+              <label for="rule-target">掩盖哪一部分</label>
+              <select id="rule-target">
+                <option value="0">整个匹配部分</option>
+                <option value="1">第1个括号内容</option>
+                <option value="2">第2个括号内容</option>
+                <option value="3">第3个括号内容</option>
+              </select>
+            </div>
+          </div>
+          <div class="hint-box">
+            💡 <strong>说明</strong>：正则表达式中用 <code>()</code> 括号标记部分。掩盖目标选择要隐藏的部分。
+            <br/>例：<code>(password)\s*[=:]\s*([^\s]+)</code> 有2个括号，选择第2个可只掩盖密码值
+          </div>
+        </div>
+        
+        <div class="form-grid">
+          <div class="form-row">
+            <label for="rule-maskMode">掩盖强度</label>
+            <select id="rule-maskMode">
+              <option value="weak">弱 - 用 * 保留位数（password=***）</option>
+              <option value="strong" selected>强 - 用 [MASKED] 隐藏（password=[MASKED]）</option>
+            </select>
+          </div>
+        </div>
+        <div class="buttons">
+          <label class="checkbox-label">
+            <input type="checkbox" id="rule-enabled" checked />
+            <span>启用此规则</span>
+          </label>
+          <button onclick="addCustomRule()" class="btn-primary">✓ 添加自定义规则</button>
+        </div>
+        <div class="status-box status-hidden" id="add-rule-status"></div>
+      </div>
+
+      <div class="card">
+        <h2>⚙️ 规则列表</h2>
+        <div id="rules-list" class="rules-list">
+          <div class="empty">暂无规则</div>
+        </div>
+        <div class="card rule-legend" style="margin-top: 20px; padding: 12px 16px; background: rgba(100, 150, 200, 0.05); border-left: 3px solid var(--anonymous-primary, #6db3f2);">
+          <h3 style="margin-bottom: 12px;">📖 掩盖强度说明</h3>
+          <div class="legend-items" style="display: grid; gap: 10px; font-size: 0.9em;">
+            <div>
+              <span class="badge info">弱掩盖</span> 保留字符位数，用 * 替换<br/>
+              <code style="background: rgba(0,0,0,0.1); padding: 2px 4px;">password=secret123</code> → <code>password=*************</code>
+            </div>
+            <div>
+              <span class="badge primary">强掩盖</span> 用 [MASKED] 替换整段<br/>
+              <code style="background: rgba(0,0,0,0.1); padding: 2px 4px;">password=secret123</code> → <code>password=[MASKED]</code>
+            </div>
+            <div>
+              <span class="badge muted">掩盖目标</span> 0=整个正则匹配；1/2/...=指定捕获分组<br/>
+              例如：正则 <code>(pwd)\s*=\s*([^\s]+)</code>，掩盖目标=2 只掩盖密码值部分
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>🧪 规则测试</h2>
+        <div class="form-grid">
+          <div class="form-row">
+            <label for="test-command">测试命令</label>
+            <input type="text" id="test-command" placeholder="输入要测试的命令" />
+          </div>
+          <div class="form-row">
+            <label for="test-rule-id">选择规则</label>
+            <select id="test-rule-id">
+              <option value="">请选择规则</option>
+            </select>
+          </div>
+        </div>
+        <button onclick="testRule()">测试</button>
+        <div class="status-box status-hidden" id="test-result"></div>
+      </div>
+    </div>
+
+    <!-- 快捷指令 -->
+    <div id="tab-shortcuts" class="tab-content">
+      <div class="card">
+        <h2>⚡ 快捷指令（直接写入历史）</h2>
+        <p class="subtitle">将常用指令添加到PowerShell历史，这样敲开头时可以用Tab补全整条指令</p>
+        <div class="form-grid">
+          <div class="form-row">
+            <label>PowerShell指令</label>
+            <input type="text" id="shortcut-command" placeholder="例: git status、npm start 等" />
+          </div>
+          <div class="form-row">
+            <label>分类</label>
+            <input type="text" id="shortcut-category" placeholder="例: git, npm, custom" />
+          </div>
+          <div class="form-row">
+            <label>描述</label>
+            <input type="text" id="shortcut-description" placeholder="简短描述此指令的作用" />
+          </div>
+        </div>
+        <button onclick="addShortcut()" class="btn-primary">添加到历史</button>
+        <div class="status-box status-hidden" id="add-shortcut-status"></div>
+      </div>
+
+      <div class="card">
+        <div class="toolbar">
+          <input type="text" id="shortcut-search" placeholder="搜索快捷指令..." class="search-input" oninput="searchShortcuts()" />
+          <label for="shortcut-filter">分类过滤：</label>
+          <select id="shortcut-filter" onchange="filterShortcuts()">
+            <option value="">全部分类</option>
+          </select>
+        </div>
+        <div id="shortcuts-list" class="shortcuts-list">
+          <div class="empty">加载中...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 从当前页面URL获取API基础路径
+    // 如果访问 /psh，则 API_BASE = /psh
+    // 如果访问 /psh/，则 API_BASE = /psh
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+    const API_BASE = pathParts.length > 0 ? '/' + pathParts[0] : '/powershell';
+    
+    let stats = null;
+    let rules = [];
+    let shortcuts = [];
+    let categories = [];
+    
+    // 规则预设库
+    const rulePresets = {
+      password: {
+        name: '隐藏密码/Token',
+        pattern: '(password|passwd|pwd|secret|token|apikey|api_key|key)\\s*[=:\\s]+([^\\s\\r\\n]+)',
+        maskMode: 'strong',
+        maskGroup: 2,
+        description: '隐藏密码、Token、API密钥等认证信息（只掩盖值部分）'
+      },
+      email: {
+        name: '隐藏邮箱地址',
+        pattern: '[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}',
+        maskMode: 'weak',
+        maskGroup: 0,
+        description: '隐藏邮箱地址，保留长度'
+      },
+      ip: {
+        name: '隐藏IP地址',
+        pattern: '\\b(?:\\d{1,3}\\.){3}\\d{1,3}\\b',
+        maskMode: 'weak',
+        maskGroup: 0,
+        description: '隐藏IPv4地址，保留长度'
+      },
+      ssh: {
+        name: '隐藏SSH/RDP连接信息',
+        pattern: '(ssh|rdp|telnet|scp)\\s+(?:-[a-zA-Z0-9\\s]*)?([^\\s@]+@[^\\s:]+)',
+        maskMode: 'strong',
+        maskGroup: 2,
+        description: '隐藏SSH/RDP用户名和主机信息'
+      },
+      apikey: {
+        name: '隐藏API密钥',
+        pattern: '(api[_-]?key|auth[_-]?token|bearer|authorization)\\s*[=:\\s]+([a-zA-Z0-9_\\-]{16,})',
+        maskMode: 'strong',
+        maskGroup: 2,
+        description: '隐藏API密钥和认证令牌'
+      },
+      creditcard: {
+        name: '隐藏信用卡号',
+        pattern: '\\b(?:\\d{4}[-\\s]?){3}\\d{4}\\b',
+        maskMode: 'strong',
+        maskGroup: 0,
+        description: '隐藏信用卡号'
+      }
+    };
+
+    // 切换标签页
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      
+      const tabButtons = document.querySelectorAll('.tab');
+      const tabOrder = ['dashboard', 'history', 'rules', 'shortcuts'];
+      const tabIndex = tabOrder.indexOf(tab);
+      if (tabIndex >= 0 && tabIndex < tabButtons.length) {
+        tabButtons[tabIndex].classList.add('active');
+      }
+      
+      document.getElementById(`tab-${tab}`).classList.add('active');
+      
+      if (tab === 'dashboard') loadStats();
+      if (tab === 'history') loadHistory();
+      if (tab === 'rules') loadRules();
+      if (tab === 'shortcuts') loadShortcuts();
+    }
+
+    // 加载统计信息
+    async function loadStats() {
+      try {
+        const res = await fetch(`${API_BASE}/api/stats`);
+        const data = await res.json();
+        
+        if (data.success) {
+          stats = data.stats;
+          
+          // 显示历史统计
+          if (stats.records) {
+            document.getElementById('stat-total').textContent = stats.records.total || 0;
+            document.getElementById('stat-records').textContent = stats.records.total || 0;
+            document.getElementById('stat-masked').textContent = stats.records.masked_count || 0;
+          }
+          
+          // 快捷指令统计
+          document.getElementById('stat-shortcuts').textContent = stats.quickCommands || 0;
+          
+          const topDiv = document.getElementById('top-shortcuts');
+          if (stats.quickCommands && stats.quickCommands > 0) {
+            topDiv.innerHTML = `<div class="shortcut-simple-item">已添加 <strong>${stats.quickCommands}</strong> 个快捷指令到PowerShell历史</div>`;
+          } else {
+            topDiv.innerHTML = '<div class="empty">暂无快捷指令</div>';
+          }
+          
+          // 规则统计
+          const rulesDiv = document.getElementById('rules-status');
+          if (stats.rules && stats.rules > 0) {
+            rulesDiv.innerHTML = `<div class="rule-simple-item">已配置 <strong>${stats.rules}</strong> 条隐私规则</div>`;
+          } else {
+            rulesDiv.innerHTML = '<div class="empty">暂无规则</div>';
+          }
+        }
+      } catch (err) {
+        console.error('加载统计失败:', err);
+      }
+    }
+
+    // 加载历史
+    async function loadHistory() {
+      try {
+        const limit = document.getElementById('history-limit').value;
+        const url = limit ? `${API_BASE}/api/history?limit=${limit}` : `${API_BASE}/api/history`;
+        const res = await fetch(url);
+        const data = await res.json();
+        
+        if (data.success) {
+          const searchTerm = document.getElementById('history-search').value.toLowerCase();
+          let records = data.history || [];
+          
+          if (searchTerm) {
+            records = records.filter(r => r.command.toLowerCase().includes(searchTerm));
+          }
+          
+          const listDiv = document.getElementById('history-list');
+          if (records.length === 0) {
+            listDiv.innerHTML = '<div class="empty">无匹配命令</div>';
+          } else {
+            listDiv.innerHTML = records.reverse().map((record, idx) => {
+              const statusBadge = {
+                'normal': '<span class="badge">正常</span>',
+                'weak_masked': '<span class="badge info">弱掩盖</span>',
+                'strong_masked': '<span class="badge primary">强掩盖</span>',
+                'shortcut': '<span class="badge success">⚡ 快捷指令</span>'
+              }[record.status] || '';
+              
+              return `
+              <div class="history-item ${['weak_masked', 'strong_masked'].includes(record.status) ? 'history-' + record.status : ''} ${record.status === 'shortcut' ? 'history-shortcut' : ''}">
+                <div class="history-header">
+                  <span class="history-index">#${records.length - idx}</span>
+                  <code class="history-command ${record.status === 'shortcut' ? 'shortcut-cmd' : ''}">${escapeHtml(record.command)}</code>
+                </div>
+                <div class="history-meta">
+                  <span class="history-time">${new Date(record.timestamp).toLocaleString('zh-CN')}</span>
+                  ${statusBadge}
+                  ${record.reason ? `<span class="history-reason">${escapeHtml(record.reason)}</span>` : ''}
+                </div>
+                <div class="history-actions">
+                  ${record.status !== 'shortcut' ? `<button onclick="editHistoryRecord('${escapeAttr(record.id)}', '${escapeAttr(record.command)}')" class="btn-sm">✏️ 编辑</button>` : ''}
+                  ${record.status !== 'shortcut' ? `<button onclick="addHistoryAsShortcut('${escapeAttr(record.command)}')" class="btn-sm" title="将此指令登记为快捷指令">⚡ 登记为快捷指令</button>` : ''}
+                  ${record.status !== 'shortcut' ? `<button onclick="deleteHistoryRecord('${escapeAttr(record.id)}')" class="btn-sm btn-danger">🗑️ 删除</button>` : '<span class="shortcut-hint">快捷指令（不可编辑）</span>'}
+                </div>
+              </div>
+            `;
+            }).join('');
+          }
+        }
+      } catch (err) {
+        console.error('加载历史失败:', err);
+        document.getElementById('history-list').innerHTML = '<div class="error">加载失败: ' + err.message + '</div>';
+      }
+    }
+
+    // 编辑历史记录
+    async function editHistoryRecord(id, currentCommand) {
+      const newCommand = prompt('编辑命令:', currentCommand);
+      if (newCommand === null || newCommand.trim() === '') return;
+      
+      try {
+        const res = await fetch(`${API_BASE}/api/history/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ command: newCommand.trim() })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          await loadHistory();
+        } else {
+          alert('编辑失败: ' + data.message);
+        }
+      } catch (err) {
+        alert('错误: ' + err.message);
+      }
+    }
+
+    // 删除历史记录
+    async function deleteHistoryRecord(id) {
+      if (!confirm('确定要删除这条记录吗？')) return;
+      
+      try {
+        const res = await fetch(`${API_BASE}/api/history/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        
+        if (data.success) {
+          await loadHistory();
+        } else {
+          alert('删除失败: ' + data.message);
+        }
+      } catch (err) {
+        alert('错误: ' + err.message);
+      }
+    }
+
+    // 将历史记录登记为快捷指令
+    async function addHistoryAsShortcut(command) {
+      // 弹出对话框，让用户输入分类和描述
+      const category = prompt('输入快捷指令分类（例如: git, npm, docker）:', 'custom') || 'custom';
+      if (category === null) return; // 用户取消
+      
+      const description = prompt('输入快捷指令描述（可选）:', '') || '';
+      
+      try {
+        const res = await fetch(`${API_BASE}/api/shortcuts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            command: command,
+            category: category.trim(),
+            description: description.trim()
+          })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          alert('✓ 快捷指令已添加到PowerShell历史！\n下次就可以用Tab补全。\n\n指令: ' + command + '\n分类: ' + category);
+          // 刷新历史列表和快捷指令列表
+          await loadHistory();
+          if (document.getElementById('tab-shortcuts').classList.contains('active')) {
+            await loadShortcuts();
+          }
+        } else {
+          alert('添加失败: ' + data.message);
+        }
+      } catch (err) {
+        alert('错误: ' + err.message);
+      }
+    }
+
+    // 清理历史
+    async function cleanHistory() {
+      if (!confirm('确认清理历史？\n\n将执行以下操作：\n1. 应用所有过滤规则（掩盖敏感信息）\n2. 去除重复指令\n3. 操作前会自动备份\n\n是否继续？')) return;
+      
+      try {
+        const res = await fetch(`${API_BASE}/api/history/clean`, { method: 'POST' });
+        const data = await res.json();
+        
+        if (data.success) {
+          const stats = data.cleanResult || {};
+          const msg = `清理完成！\n\n原始: ${stats.original || 0} 条\n清理后: ${stats.cleaned || 0} 条\n移除: ${stats.removed || 0} 条\n掩盖: ${stats.masked || 0} 条`;
+          alert(msg);
+          loadStats();
+          loadHistory();
+        } else {
+          alert('清理失败: ' + data.message);
+        }
+      } catch (err) {
+        alert('清理失败: ' + err.message);
+      }
+    }
+
+    // 加载规则
+    async function loadRules() {
+      try {
+        const res = await fetch(`${API_BASE}/api/rules`);
+        const data = await res.json();
+        
+        if (data.success) {
+          rules = data.rules;
+          
+          const listDiv = document.getElementById('rules-list');
+          if (rules.length === 0) {
+            listDiv.innerHTML = '<div class="empty">暂无规则</div>';
+          } else {
+            listDiv.innerHTML = rules.map(r => `
+              <div class="rule-item ${!r.enabled ? 'disabled' : ''}">
+                <div class="rule-header">
+                  <span class="rule-name">${escapeHtml(r.name)}</span>
+                  <div class="rule-badges">
+                    ${r.enabled ? `<span class="badge ${r.maskMode === 'weak' ? 'info' : 'primary'}">${r.maskMode === 'weak' ? '弱' : '强'}</span>` : '<span class="badge muted">已禁用</span>'}
+                    ${r.maskGroup > 0 ? `<span class="badge muted">分组${r.maskGroup}</span>` : ''}
+                  </div>
+                </div>
+                <div class="rule-pattern"><code>${escapeHtml(r.pattern)}</code></div>
+                <div class="rule-actions">
+                  <button onclick="toggleRule('${r.id}', ${!r.enabled})" class="btn-sm">${r.enabled ? '禁用' : '启用'}</button>
+                  <button onclick="deleteRule('${r.id}')" class="btn-sm btn-danger">删除</button>
+                </div>
+              </div>
+            `).join('');
+          }
+          
+          // 更新测试下拉框
+          const testSelect = document.getElementById('test-rule-id');
+          testSelect.innerHTML = '<option value="">请选择规则</option>' +
+            rules.map(r => `<option value="${r.id}">${escapeHtml(r.name)}</option>`).join('');
+        }
+      } catch (err) {
+        console.error('加载规则失败:', err);
+      }
+    }
+
+    // 切换模板（关键字vs正则）
+    document.addEventListener('DOMContentLoaded', function() {
+      const templateSelect = document.getElementById('rule-template');
+      if (templateSelect) {
+        templateSelect.addEventListener('change', function(e) {
+          const mode = e.target.value;
+          const keywordDiv = document.getElementById('keyword-mode');
+          const regexDiv = document.getElementById('regex-mode');
+          
+          if (mode === 'keyword') {
+            keywordDiv.style.display = 'block';
+            regexDiv.style.display = 'none';
+          } else if (mode === 'pattern') {
+            keywordDiv.style.display = 'none';
+            regexDiv.style.display = 'block';
+          } else {
+            keywordDiv.style.display = 'none';
+            regexDiv.style.display = 'block';
+          }
+        });
+      }
+    });
+    
+    // 添加预设规则
+    async function addPresetRule(presetKey) {
+      const preset = rulePresets[presetKey];
+      if (!preset) {
+        alert('预设规则不存在');
+        return;
+      }
+      
+      showStatus('add-rule-status', '添加中...', 'loading');
+      try {
+        const res = await fetch(`${API_BASE}/api/rules`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: preset.name,
+            pattern: preset.pattern,
+            action: 'mask',
+            maskMode: preset.maskMode,
+            maskGroup: preset.maskGroup,
+            enabled: true
+          })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          showStatus('add-rule-status', `✓ "${preset.name}" 已添加！`, 'success');
+          setTimeout(() => {
+            document.getElementById('add-rule-status').classList.add('status-hidden');
+            loadRules();
+          }, 1500);
+        } else {
+          showStatus('add-rule-status', '失败: ' + data.message, 'error');
+        }
+      } catch (err) {
+        showStatus('add-rule-status', '错误: ' + err.message, 'error');
+      }
+    }
+    
+    // 添加自定义规则
+    async function addCustomRule() {
+      const name = document.getElementById('rule-name').value.trim();
+      if (!name) {
+        showStatus('add-rule-status', '请填写规则名称', 'error');
+        return;
+      }
+      
+      const template = document.getElementById('rule-template').value;
+      let pattern, maskGroup;
+      
+      if (template === 'keyword') {
+        // 关键字模式：转换为正则
+        const keywords = document.getElementById('rule-keywords').value.trim();
+        if (!keywords) {
+          showStatus('add-rule-status', '请输入关键字', 'error');
+          return;
+        }
+        
+        // 构建正则：(关键字1|关键字2)\s*[=:]+([^\s]+)
+        const keywordList = keywords.split('|').map(k => k.trim()).filter(k => k);
+        pattern = `(${keywordList.join('|')})\\s*[=:\\s]+([^\\s\\r\\n]+)`;
+        maskGroup = 2; // 自动设为掩盖值部分
+      } else {
+        // 正则模式：直接使用
+        pattern = document.getElementById('rule-pattern').value.trim();
+        if (!pattern) {
+          showStatus('add-rule-status', '请输入正则表达式', 'error');
+          return;
+        }
+        maskGroup = parseInt(document.getElementById('rule-target').value) || 0;
+      }
+      
+      const maskMode = document.getElementById('rule-maskMode').value;
+      const enabled = document.getElementById('rule-enabled').checked;
+      
+      showStatus('add-rule-status', '添加中...', 'loading');
+      try {
+        const res = await fetch(`${API_BASE}/api/rules`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: name,
+            pattern: pattern,
+            action: 'mask',
+            maskMode: maskMode,
+            maskGroup: maskGroup,
+            enabled: enabled
+          })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          showStatus('add-rule-status', '✓ 规则已添加！', 'success');
+          document.getElementById('rule-name').value = '';
+          document.getElementById('rule-template').value = '';
+          document.getElementById('rule-keywords').value = '';
+          document.getElementById('rule-pattern').value = '';
+          document.getElementById('rule-target').value = '0';
+          document.getElementById('rule-maskMode').value = 'strong';
+          document.getElementById('rule-enabled').checked = true;
+          document.getElementById('keyword-mode').style.display = 'none';
+          document.getElementById('regex-mode').style.display = 'block';
+          
+          setTimeout(() => {
+            document.getElementById('add-rule-status').classList.add('status-hidden');
+            loadRules();
+          }, 1500);
+        } else {
+          showStatus('add-rule-status', '失败: ' + data.message, 'error');
+        }
+      } catch (err) {
+        showStatus('add-rule-status', '错误: ' + err.message, 'error');
+      }
+    }
+    
+    // 旧的 addRule 函数（保持向后兼容）
+    async function addRule() {
+      // 如果有模板选择，使用新逻辑；否则使用旧逻辑
+      const template = document.getElementById('rule-template')?.value;
+      if (template || template === '') {
+        addCustomRule();
+      } else {
+        // 旧方式：直接从输入框读取
+        const name = document.getElementById('rule-name').value.trim();
+        const pattern = document.getElementById('rule-pattern').value.trim();
+        const maskMode = document.getElementById('rule-maskMode').value;
+        const maskGroup = parseInt(document.getElementById('rule-maskGroup')?.value) || 0;
+        const enabled = document.getElementById('rule-enabled').checked;
+        
+        if (!name || !pattern) {
+          showStatus('add-rule-status', '请填写规则名称和匹配模式', 'error');
+          return;
+        }
+        
+        showStatus('add-rule-status', '添加中...', 'loading');
+        try {
+          const res = await fetch(`${API_BASE}/api/rules`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, pattern, action: 'mask', maskMode, maskGroup, enabled })
+          });
+          const data = await res.json();
+          
+          if (data.success) {
+            showStatus('add-rule-status', '规则添加成功！', 'success');
+            document.getElementById('rule-name').value = '';
+            document.getElementById('rule-pattern').value = '';
+            document.getElementById('rule-maskGroup').value = '0';
+            loadRules();
+          } else {
+            showStatus('add-rule-status', '失败: ' + data.message, 'error');
+          }
+        } catch (err) {
+          showStatus('add-rule-status', '错误: ' + err.message, 'error');
+        }
+      }
+    }
+
+    // 切换规则状态
+    async function toggleRule(ruleId, enabled) {
+      try {
+        const res = await fetch(`${API_BASE}/api/rules/${ruleId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enabled })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          loadRules();
+        }
+      } catch (err) {
+        alert('操作失败: ' + err.message);
+      }
+    }
+
+    // 删除规则
+    async function deleteRule(ruleId) {
+      if (!confirm('确认删除此规则？')) return;
+      
+      try {
+        const res = await fetch(`${API_BASE}/api/rules/${ruleId}`, { method: 'DELETE' });
+        const data = await res.json();
+        
+        if (data.success) {
+          loadRules();
+        }
+      } catch (err) {
+        alert('删除失败: ' + err.message);
+      }
+    }
+
+    // 测试规则
+    async function testRule() {
+      const command = document.getElementById('test-command').value.trim();
+      const ruleId = document.getElementById('test-rule-id').value;
+      
+      if (!command || !ruleId) {
+        showStatus('test-result', '请输入命令并选择规则', 'error');
+        return;
+      }
+      
+      try {
+        const res = await fetch(`${API_BASE}/api/rules/test`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ command, ruleId })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          const result = data.result;
+          if (result.error) {
+            showStatus('test-result', '测试失败: ' + result.error, 'error');
+          } else {
+            const msg = result.matched 
+              ? `✓ 匹配成功\n动作: ${result.action}\n结果: ${result.result}`
+              : '✗ 不匹配此规则';
+            showStatus('test-result', msg, result.matched ? 'success' : 'warning');
+          }
+        }
+      } catch (err) {
+        showStatus('test-result', '错误: ' + err.message, 'error');
+      }
+    }
+
+    // 加载快捷指令
+    async function loadShortcuts() {
+      try {
+        const [shortcutsRes, categoriesRes] = await Promise.all([
+          fetch(`${API_BASE}/api/shortcuts`),
+          fetch(`${API_BASE}/api/shortcuts/categories`)
+        ]);
+        
+        const shortcutsData = await shortcutsRes.json();
+        const categoriesData = await categoriesRes.json();
+        
+        if (shortcutsData.success) {
+          shortcuts = shortcutsData.shortcuts;
+          renderShortcuts(shortcuts);
+        }
+        
+        if (categoriesData.success) {
+          categories = categoriesData.categories;
+          const filterSelect = document.getElementById('shortcut-filter');
+          filterSelect.innerHTML = '<option value="">全部分类</option>' +
+            categories.map(c => `<option value="${c}">${c}</option>`).join('');
+        }
+      } catch (err) {
+        console.error('加载快捷指令失败:', err);
+      }
+    }
+
+    function renderShortcuts(list) {
+      const listDiv = document.getElementById('shortcuts-list');
+      if (list.length === 0) {
+        listDiv.innerHTML = '<div class="empty">无匹配结果</div>';
+      } else {
+        listDiv.innerHTML = list.map(s => `
+          <div class="shortcut-item">
+            <div class="shortcut-header">
+              <span class="shortcut-category">${escapeHtml(s.category)}</span>
+            </div>
+            <div class="shortcut-command-large"><code>${escapeHtml(s.command)}</code></div>
+            <div class="shortcut-description">${escapeHtml(s.description || '')}</div>
+            <div class="shortcut-meta">
+              添加于: ${new Date(s.addedAt).toLocaleString('zh-CN')}
+            </div>
+            <div class="shortcut-actions">
+              <button onclick="copyToClipboard('${escapeAttr(s.command)}')" class="btn-sm">📋 复制</button>
+              <button onclick="deleteShortcut('${escapeAttr(s.id)}')" class="btn-sm btn-danger">删除</button>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+
+    // 添加快捷指令
+    async function addShortcut() {
+      const command = document.getElementById('shortcut-command').value.trim();
+      const category = document.getElementById('shortcut-category').value.trim() || 'custom';
+      const description = document.getElementById('shortcut-description').value.trim();
+      
+      if (!command) {
+        showStatus('add-shortcut-status', '请输入PowerShell指令', 'error');
+        return;
+      }
+      
+      showStatus('add-shortcut-status', '添加中...', 'loading');
+      try {
+        const res = await fetch(`${API_BASE}/api/shortcuts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ command, category, description })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          showStatus('add-shortcut-status', '✓ 快捷指令已添加到PowerShell历史！下次就可以用Tab补全。', 'success');
+          document.getElementById('shortcut-command').value = '';
+          document.getElementById('shortcut-category').value = '';
+          document.getElementById('shortcut-description').value = '';
+          await loadShortcuts();
+        } else {
+          showStatus('add-shortcut-status', '失败: ' + data.message, 'error');
+        }
+      } catch (err) {
+        showStatus('add-shortcut-status', '错误: ' + err.message, 'error');
+      }
+    }
+
+    // 删除快捷指令
+    async function deleteShortcut(id) {
+      if (!confirm('确认删除此快捷指令？')) return;
+      
+      try {
+        const res = await fetch(`${API_BASE}/api/shortcuts/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        
+        if (data.success) {
+          loadShortcuts();
+        }
+      } catch (err) {
+        alert('删除失败: ' + err.message);
+      }
+    }
+
+    // 搜索快捷指令
+    function searchShortcuts() {
+      const query = document.getElementById('shortcut-search').value.toLowerCase();
+      const filtered = shortcuts.filter(s =>
+        s.command.toLowerCase().includes(query) ||
+        (s.description && s.description.toLowerCase().includes(query))
+      );
+      renderShortcuts(filtered);
+    }
+
+    // 按分类过滤
+    function filterShortcuts() {
+      const category = document.getElementById('shortcut-filter').value;
+      const filtered = category ? shortcuts.filter(s => s.category === category) : shortcuts;
+      renderShortcuts(filtered);
+    }
+
+    // 复制到剪贴板
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        alert('已复制到剪贴板！');
+      }).catch(err => {
+        alert('复制失败: ' + err.message);
+      });
+    }
+
+    // 显示状态消息
+    function showStatus(elemId, msg, status) {
+      const elem = document.getElementById(elemId);
+      elem.textContent = msg;
+      elem.classList.remove('status-hidden', 'success', 'error', 'warning', 'loading');
+      elem.classList.add(status);
+    }
+
+    // HTML转义
+    function escapeHtml(s) {
+      const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+      return String(s).replace(/[&<>"']/g, c => map[c]);
+    }
+
+    function escapeAttr(s) {
+      return String(s).replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+    }
+
+    // 初始化
+    (async () => {
+      await loadStats();
+    })();
+  </script>
+</body>
+</html>
