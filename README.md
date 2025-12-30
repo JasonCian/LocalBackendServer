@@ -7,7 +7,7 @@
 - **静态文件服务** - 支持多目录映射、自动索引、MIME 类型识别
 - **Markdown 渲染** - 集成 Marked.js + highlight.js + KaTeX，支持主题切换
 - **文件上传/删除** - RESTful API，兼容 PicList 格式，支持 UTF-8 文件名
-- **Telegram 服务** - 登录认证、即时消息、定时任务（Cron）
+- **Telegram 服务** - 多账号管理、自动登录、即时消息、定时任务（Cron）
 - **通知推送** - 支持钉钉、飞书、自定义 Webhook
 - **CORS 支持** - 跨域资源共享
 - **Windows 服务** - 通过 NSSM 实现后台运行
@@ -39,6 +39,7 @@ LocalBackendServer/
 │   │   └── telegram/       # Telegram 服务
 │   │       ├── telegram-service.js # 主服务
 │   │       ├── telegram-session.js # 会话管理
+│   │       ├── telegram-account-manager.js # 多账号管理
 │   │       └── telegram-tasks.js   # 任务调度
 │   └── routes/             # 路由处理器
 │       ├── file-routes.js  # 文件服务
@@ -130,6 +131,7 @@ node server.js
 ### 文件上传
 
 **请求**
+
 ```http
 POST /upload
 Content-Type: multipart/form-data
@@ -141,6 +143,7 @@ format: piclist (optional, default: piclist)
 ```
 
 **响应（PicList 格式）**
+
 ```json
 {
   "success": true,
@@ -153,6 +156,7 @@ format: piclist (optional, default: piclist)
 ### 文件删除
 
 **请求**
+
 ```http
 POST /delete
 Content-Type: application/json
@@ -166,6 +170,7 @@ Content-Type: application/json
 ```
 
 **响应**
+
 ```json
 {
   "success": true,
@@ -177,39 +182,57 @@ Content-Type: application/json
 
 ### Telegram API
 
+#### 账号管理
+
+```http
+GET  /telegram/api/accounts              # 获取所有账号
+POST /telegram/api/accounts              # 添加新账号
+PUT  /telegram/api/accounts/:id          # 更新账号信息
+DELETE /telegram/api/accounts/:id        # 删除账号
+POST /telegram/api/accounts/:id/switch   # 切换活跃账号
+```
+
 #### 发送验证码
+
 ```http
 POST /telegram/api/start
-{"phone": "+1234567890"}
+{"phone": "+1234567890", "accountId": "optional"}
 ```
 
 #### 验证登录
+
 ```http
 POST /telegram/api/verify
-{"stateId": "xxx", "code": "12345"}
+{"stateId": "xxx", "code": "12345", "accountId": "optional"}
 ```
 
 #### 即时发送
+
 ```http
 POST /telegram/api/sendNow
-{"to": "username", "message": "Hello"}
+{"to": "username", "message": "Hello", "accountId": "optional"}
 ```
 
 #### 任务管理
+
 ```http
-GET  /telegram/api/tasks           # 列出任务
+GET  /telegram/api/tasks           # 列出任务（支持 ?accountId=xxx 筛选）
 POST /telegram/api/tasks           # 创建任务
 PUT  /telegram/api/tasks/:id       # 更新任务
 DELETE /telegram/api/tasks/:id     # 删除任务
 ```
 
+更多 API 文档参见 [TELEGRAM-MULTI-ACCOUNT.md](./docs/TELEGRAM-MULTI-ACCOUNT.md)
+
 ## 🎨 Markdown 渲染
 
 支持的查询参数：
+
 - `?theme=anonymous-dark` - 切换主题
 - `?raw=1` - 查看原始 Markdown
 
 支持的功能：
+
 - GFM（GitHub Flavored Markdown）
 - 代码高亮（highlight.js）
 - 数学公式（KaTeX）
@@ -241,6 +264,7 @@ DELETE /telegram/api/tasks/:id     # 删除任务
 - **notification-service.js** - 通知推送（钉钉/飞书/自定义）
 - **telegram/telegram-service.js** - Telegram 集成服务
 - **telegram/telegram-session.js** - 登录会话管理
+- **telegram/telegram-account-manager.js** - 多账号管理器
 - **telegram/telegram-tasks.js** - Cron 任务调度
 
 ### 路由（routes/）
@@ -260,24 +284,24 @@ DELETE /telegram/api/tasks/:id     # 删除任务
 
 ## ⚙️ 配置选项
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `port` | number | 监听端口 |
-| `host` | string | 绑定地址 |
-| `directories` | array | 目录映射 `[{route, path}]` |
-| `uploadDir` | string | 默认上传目录 |
-| `cors` | boolean | 启用 CORS |
-| `showIndex` | boolean | 显示目录列表 |
-| `markdown.enabled` | boolean | 启用 Markdown 渲染 |
-| `markdown.theme` | string | 默认主题 |
-| `telegram.enabled` | boolean | 启用 Telegram |
-| `telegram.apiId` | number | Telegram API ID |
-| `telegram.apiHash` | string | Telegram API Hash |
-| `notifications` | array | 通知目标 |
+| 字段                 | 类型    | 说明                         |
+| -------------------- | ------- | ---------------------------- |
+| `port`             | number  | 监听端口                     |
+| `host`             | string  | 绑定地址                     |
+| `directories`      | array   | 目录映射 `[{route, path}]` |
+| `uploadDir`        | string  | 默认上传目录                 |
+| `cors`             | boolean | 启用 CORS                    |
+| `showIndex`        | boolean | 显示目录列表                 |
+| `markdown.enabled` | boolean | 启用 Markdown 渲染           |
+| `markdown.theme`   | string  | 默认主题                     |
+| `telegram.enabled` | boolean | 启用 Telegram                |
+| `telegram.apiId`   | number  | Telegram API ID              |
+| `telegram.apiHash` | string  | Telegram API Hash            |
+| `notifications`    | array   | 通知目标                     |
 
 ## 📝 日志
 
-运行日志：`logs/service.log`  
+运行日志：`logs/service.log`
 服务日志：`logs/service-nssm.log`（NSSM 模式）
 
 ## 🤝 扩展开发
@@ -338,7 +362,22 @@ public/
 
 详见 [CSS 文件组织文档](./docs/CSS-ORGANIZATION.md) 和 [快速参考](./docs/CSS-QUICK-REFERENCE.md)
 
-## 🙏 致谢
+## 版本更新
+
+### v0.3.0 
+
+- ✨ **Telegram 多账号支持** - 完整的多账号管理系统
+  - 独立会话隔离（每个账号一个会话文件）
+  - 账号列表管理、激活/切换
+  - 任务可绑定特定账号执行
+- ✨ **新增 telegram-account-manager.js** - 专业的多账号管理器
+- 🔄 **增强的配置验证** - 更安全的嵌套属性访问
+
+### v0.2.0
+
+- 初始发布，包含基础文件服务、Markdown 渲染、文件上传/删除、Telegram 集成
+
+## 致谢
 
 - [Marked.js](https://marked.js.org/) - Markdown 解析
 - [highlight.js](https://highlightjs.org/) - 代码高亮
