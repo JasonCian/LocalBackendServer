@@ -1,0 +1,159 @@
+/**
+ * ============================================================================
+ * Anonymous Theme - 目录样式 / Table of Contents Styles
+ * ============================================================================
+ * 
+ * 文件: Anonymous/Syntax/toc.css
+ * 描述: 目录（TOC）的样式定义
+ *       Styles for Table of Contents
+ * 
+ * Markdown 语法 / Markdown Syntax:
+ * [toc]
+ * 
+ * 参考: https://support.typora.io/TOC-levels/
+ * ============================================================================
+ */
+
+/* ============================================================================
+ * 目录容器样式 - TOC Container Styles
+ * ============================================================================ */
+
+/**
+ * 目录基础样式
+ */
+.md-toc {
+  margin: var(--anonymous-space-4) 0 0 0;
+  font-size: var(--anonymous-text-sm);
+}
+
+/**
+ * 目录内容区域
+ */
+.md-toc-content {
+  position: relative;
+  margin: 0 0 0 3px;
+  padding: 0;
+}
+
+/**
+ * 目录左侧边框线
+ */
+.md-toc-content:before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 12px;
+  width: 1px;
+  height: calc(100% - 30px);
+  border-left: 1px solid var(--anonymous-border-default);
+}
+
+/**
+ * 目录聚焦状态
+ */
+.md-toc:focus .md-toc-content {
+  margin: 0 !important;
+  border: none !important;
+}
+
+/* ============================================================================
+ * 目录项样式 - TOC Item Styles
+ * ============================================================================ */
+
+/**
+ * 目录项基础样式
+ */
+.md-toc-content .md-toc-item {
+  position: relative;
+  padding-bottom: var(--anonymous-space-2);
+}
+
+/**
+ * 目录项圆点标记
+ */
+.md-toc-content .md-toc-item:before {
+  content: "";
+  position: absolute;
+  top: 8px;
+  left: -2px;
+  width: 5px;
+  height: 5px;
+  background: var(--anonymous-border-default);
+  border-radius: var(--anonymous-radius-full);
+}
+
+/**
+ * 一级标题的圆点使用主色
+ */
+.md-toc-content .md-toc-h1::before {
+  background: var(--anonymous-primary);
+}
+
+/* ============================================================================
+ * 目录链接样式 - TOC Link Styles
+ * ============================================================================ */
+
+/**
+ * 目录链接悬停
+ */
+.md-toc-item a.md-toc-inner:hover {
+  text-decoration: none;
+}
+
+/**
+ * 悬停时圆点变为强调色
+ */
+.md-toc-item:has(a.md-toc-inner:hover)::before {
+  background: var(--anonymous-accent);
+}
+
+/**
+ * 悬停时链接内的代码样式
+ */
+.md-toc-item a.md-toc-inner:hover code {
+  background: var(--anonymous-accent-alpha-30);
+  color: var(--anonymous-accent);
+}
+
+/**
+ * 目录链接内边距
+ */
+.md-toc-item a {
+  padding-left: 18px !important;
+}
+
+/**
+ * 一级标题链接内边距
+ */
+.md-toc-content .md-toc-h1 a {
+  padding-left: 20px;
+}
+
+/* ============================================================================
+ * 目录工具提示 - TOC Tooltip
+ * ============================================================================ */
+
+/**
+ * 目录工具提示面板
+ */
+#write div.md-toc-tooltip {
+  z-index: 100;
+  top: -52px;
+  border-top: 1px solid var(--anonymous-border-default);
+  border-bottom: 1px solid var(--anonymous-border-default);
+  padding: 3px 0;
+}
+
+/**
+ * 删除目录按钮
+ */
+#write div.md-toc-tooltip .md-delete-toc {
+  margin: 0 !important;
+  padding: 0 10px;
+  background: var(--anonymous-bg-primary);
+}
+
+#write div.md-toc-tooltip .md-delete-toc:hover {
+  background: var(--anonymous-bg-secondary);
+  color: var(--anonymous-primary);
+}

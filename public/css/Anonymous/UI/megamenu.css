@@ -1,0 +1,311 @@
+/**
+ * ============================================================================
+ * Anonymous Theme - 主菜单样式 / Megamenu Styles
+ * ============================================================================
+ * 
+ * 文件: Anonymous/UI/megamenu.css
+ * 描述: 主菜单面板的样式定义
+ *       Styles for the megamenu panel
+ * 
+ * 参考: https://support.typora.io/Add-Custom-CSS/
+ * ============================================================================
+ */
+
+/* ============================================================================
+ * 主菜单侧边栏样式 - Megamenu Sidebar Styles
+ * ============================================================================ */
+
+/**
+ * Windows 下的主菜单侧边栏
+ */
+.unibody-window #megamenu-menu-sidebar {
+  --bg-color: #1b1b1f;
+  --bg-color2: rgb(40, 42, 50);
+  --border-color: rgb(60, 62, 70);
+  background: var(--bg-color);
+  border-right: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+/**
+ * 主菜单列表边框
+ */
+#megamenu-menu-sidebar .megamenu-menu-list {
+  border: none;
+}
+
+/**
+ * 主菜单区域
+ */
+.megamenu-section {
+  margin-top: 12px;
+}
+
+/* ============================================================================
+ * 主菜单面板样式 - Megamenu Panel Styles
+ * ============================================================================ */
+
+/**
+ * 主菜单标题
+ */
+.megamenu-menu-panel h1 {
+  margin-top: var(--anonymous-space-8);
+  margin-bottom: var(--anonymous-space-8);
+  font-size: 30px;
+  line-height: 30px;
+}
+
+#megamenu-section-about h1 {
+  text-align: center;
+}
+
+.megamenu-menu-panel h2 {
+  font-size: 26px;
+  line-height: 26px;
+}
+
+/**
+ * 主菜单按钮
+ */
+.megamenu-menu-panel .btn {
+  padding: 6px 12px;
+}
+
+.megamenu-menu-panel .long-btn {
+  padding: 10px 12px;
+  text-align: center;
+}
+
+/**
+ * 主菜单内容区域
+ */
+.megamenu-content {
+  padding-right: 30px;
+  padding-top: 26px;
+  background: var(--anonymous-bg-primary);
+}
+
+.megamenu-menu-panel #recent-file-panel .dropdown-menu {
+  margin-top: 4px;
+}
+
+/**
+ * 打开主题文件夹按钮
+ */
+#open-theme-folder-btn {
+  margin-top: var(--anonymous-space-8);
+}
+
+/* ============================================================================
+ * 主菜单头部样式 - Megamenu Header Styles
+ * ============================================================================ */
+
+/**
+ * 主菜单头部边框
+ */
+.megamenu-menu-header {
+  border-color: var(--anonymous-border-default);
+}
+
+/**
+ * 返回按钮
+ */
+.megamenu-menu-header #megamenu-back-btn {
+  margin-left: 10px;
+  border-radius: var(--anonymous-radius-md);
+  border-width: 2px;
+}
+
+.megamenu-menu-header #megamenu-back-btn > i {
+  display: block;
+  font-size: 16px;
+  line-height: 28px;
+}
+
+.megamenu-menu-header #megamenu-menu-header-title:hover {
+  color: var(--anonymous-primary);
+}
+
+/* ============================================================================
+ * 主菜单列表样式 - Megamenu List Styles
+ * ============================================================================ */
+
+/**
+ * 主菜单列表容器
+ */
+#megamenu-menu-list {
+  padding: 0 8px;
+}
+
+/**
+ * 主菜单列表项
+ */
+.megamenu-menu-list li {
+  margin-top: 6px;
+}
+
+.megamenu-menu-list li a {
+  display: block;
+  border-radius: var(--anonymous-radius-md);
+  border: 1px solid transparent;
+  font-size: 16px;
+  line-height: 34px;
+}
+
+/**
+ * 主菜单图标
+ */
+.megamenu-menu-list li a .fa {
+  display: inline-block;
+  margin-left: 0;
+  margin-right: 0;
+  opacity: 1;
+  font-size: 18px;
+  line-height: 38px;
+}
+
+.megamenu-menu-list li a .fa + span {
+  margin-left: 14px;
+}
+
+.megamenu-menu-list li #m-saved .fa {
+  font-size: 20px;
+  line-height: 36px !important;
+  color: var(--anonymous-primary);
+}
+
+/**
+ * 主菜单悬停和激活状态
+ */
+.megamenu-menu-list li a:hover,
+.megamenu-menu-list li a.active:hover {
+  background: var(--anonymous-bg-secondary) !important;
+  border: 1px solid var(--anonymous-primary);
+  color: var(--anonymous-primary) !important;
+}
+
+.megamenu-menu-list li a.active {
+  background: var(--anonymous-bg-secondary);
+  color: var(--anonymous-primary) !important;
+}
+
+/* ============================================================================
+ * 最近文件面板 - Recent File Panel
+ * ============================================================================ */
+
+/**
+ * 最近文件操作按钮容器
+ */
+#recent-file-panel-action-btn-container {
+  margin-right: 0;
+}
+
+/**
+ * 最近文件搜索输入框
+ */
+#recent-file-panel-search-input {
+  width: calc(100% - 55px);
+}
+
+/**
+ * 清除最近文档按钮
+ */
+#megamenu-clear-recet-documents {
+  background: var(--anonymous-bg-secondary);
+  padding: 5px 10px;
+  border-radius: var(--anonymous-radius-md);
+  font-size: var(--anonymous-text-sm);
+}
+
+#megamenu-clear-recet-documents:hover {
+  color: var(--anonymous-primary);
+}
+
+/* ============================================================================
+ * 主题预览网格 - Theme Preview Grid
+ * ============================================================================ */
+
+/**
+ * 主题预览网格布局
+ */
+#theme-preview-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+  justify-content: space-between;
+  grid-gap: var(--anonymous-space-8);
+  max-width: 100%;
+}
+
+@media (max-width: 1440px) {
+  #theme-preview-grid {
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+  }
+}
+
+@media (max-width: 1200px) {
+  #theme-preview-grid {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+@media (max-width: 992px) {
+  #theme-preview-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  #theme-preview-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/**
+ * 主题预览卡片
+ */
+.theme-preview-div {
+  margin: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  padding: 5px;
+  border: 3px solid var(--anonymous-border-default);
+  border-radius: var(--anonymous-radius-xl);
+  color: var(--anonymous-primary);
+}
+
+.theme-preview-content {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--anonymous-radius-md);
+}
+
+.theme-preview-div:hover {
+  border-color: var(--anonymous-accent);
+}
+
+.theme-preview-div.active {
+  border-color: var(--anonymous-primary);
+}
+
+.theme-preview-div .fa,
+#outline-btn:hover {
+  color: var(--anonymous-primary) !important;
+}
+
+/* ============================================================================
+ * 主菜单面板滚动条 - Megamenu Panel Scrollbar
+ * ============================================================================ */
+
+.megamenu-menu-panel {
+  scrollbar-width: none !important;
+}
+
+/* ============================================================================
+ * 响应式布局 - Responsive Layout
+ * ============================================================================ */
+
+@media (max-width: 768px) {
+  #megamenu-back-btn {
+    margin-left: 0 !important;
+  }
+}

@@ -1,0 +1,130 @@
+/**
+ * ============================================================================
+ * Anonymous Theme - 任务列表样式 / Task List Styles
+ * ============================================================================
+ * 
+ * 文件: Anonymous/Syntax/task-list.css
+ * 描述: 任务列表（复选框列表）的样式定义
+ *       Styles for task lists (checkbox lists)
+ * 
+ * Markdown 语法 / Markdown Syntax:
+ * - [ ] 未完成的任务
+ * - [x] 已完成的任务
+ * 
+ * 参考: https://support.typora.io/Task-List/
+ * ============================================================================
+ */
+
+/* ============================================================================
+ * 任务列表复选框位置 - Task List Checkbox Position
+ * ============================================================================ */
+
+/**
+ * 任务列表复选框左边距
+ */
+ul > .task-list-item > input {
+  margin-left: -22px;
+}
+
+/* ============================================================================
+ * 复选框样式 - Checkbox Styles
+ * ============================================================================ */
+
+/**
+ * 复选框和单选框基础样式
+ * 
+ * 注意：使用 appearance: none 移除原生样式以便自定义
+ */
+input[type="checkbox"],
+input[type="radio"] {
+  margin-right: 10px !important;
+  margin-bottom: -2px !important;
+  width: 14px !important;
+  height: 14px !important;
+  box-sizing: border-box;
+  background: transparent !important;
+  border: 1px solid var(--anonymous-border-default) !important;
+  border-radius: var(--anonymous-radius-sm) !important;
+  padding: 0 !important;
+  outline: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  -ms-appearance: none;
+  appearance: none;
+  list-style: none;
+}
+
+/**
+ * 选中状态的复选框
+ */
+input[type="checkbox"]:checked,
+input[type="radio"]:checked {
+  background: var(--anonymous-primary) !important;
+  border-color: transparent !important;
+}
+
+/**
+ * 选中的复选框对勾
+ */
+input[type="checkbox"]:checked::after {
+  content: "";
+  display: block;
+  position: absolute;
+  bottom: 2.5px;
+  left: 3.5px;
+  width: 5px;
+  height: 9px;
+  box-sizing: border-box;
+  background: transparent;
+  border: 2px solid #fff;
+  border-top: none;
+  border-left: none;
+  -webkit-transform: rotate(40deg);
+  -ms-transform: rotate(40deg);
+  transform: rotate(40deg);
+}
+
+/**
+ * 单选框圆形样式
+ */
+input[type="radio"] {
+  -webkit-border-radius: var(--anonymous-radius-full) !important;
+  -moz-border-radius: var(--anonymous-radius-full) !important;
+  border-radius: var(--anonymous-radius-full) !important;
+  border: 1px solid var(--anonymous-border-default) !important;
+}
+
+/**
+ * 选中的单选框圆点
+ */
+input[type="radio"]:checked::after {
+  content: "";
+  display: block;
+  margin: 3.5px auto;
+  width: 5px;
+  height: 5px;
+  box-sizing: border-box;
+  background: #fff;
+  -webkit-border-radius: var(--anonymous-radius-full);
+  -moz-border-radius: var(--anonymous-radius-full);
+  border-radius: var(--anonymous-radius-full);
+}
+
+/* ============================================================================
+ * 已完成任务样式（可选）
+ * Completed Task Styles (Optional)
+ * 
+ * 取消注释以下代码以启用已完成任务的删除线效果
+ * Uncomment to enable strikethrough for completed tasks
+ * 参考: https://support.typora.io/Task-List/#erase-completed-tasks
+ * ============================================================================ */
+
+/*
+.task-list-done {
+  text-decoration: line-through;
+  color: var(--anonymous-text-muted);
+}
+
+.task-list-not-done {
+}
+*/

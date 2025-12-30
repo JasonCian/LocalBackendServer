@@ -1,0 +1,399 @@
+/**
+ * ============================================================================
+ * Anonymous Theme - 窗口样式 / Window Styles
+ * ============================================================================
+ * 
+ * 文件: Anonymous/UI/window.css
+ * 描述: 窗口、对话框、表单控件的样式定义
+ *       Styles for windows, dialogs, and form controls
+ * 
+ * 参考: https://support.typora.io/Add-Custom-CSS/
+ * ============================================================================
+ */
+
+/* ============================================================================
+ * 按钮样式 - Button Styles
+ * ============================================================================ */
+
+/**
+ * 按钮基础样式
+ */
+.btn,
+.btn-default,
+.long-btn {
+  border-radius: var(--anonymous-radius-md) !important;
+  border: 1px solid var(--anonymous-border-default) !important;
+  background: var(--anonymous-bg-secondary) !important;
+  outline: none !important;
+}
+
+/**
+ * 主按钮样式
+ */
+.btn-primary {
+  background: var(--anonymous-primary) !important;
+  border-color: var(--anonymous-primary) !important;
+  color: #fff;
+}
+
+/**
+ * 按钮悬停状态
+ */
+.btn:hover,
+.long-btn:hover {
+  background: var(--anonymous-primary-alpha-12) !important;
+  border-color: var(--anonymous-primary) !important;
+  color: var(--anonymous-primary);
+}
+
+/**
+ * 按钮聚焦状态
+ */
+.btn:focus,
+.long-btn:focus {
+  outline: none !important;
+}
+
+/**
+ * 按钮间距
+ */
+.btn {
+  margin-right: 5px !important;
+}
+
+.btn:last-of-type {
+  margin-right: 0;
+}
+
+/**
+ * 下拉切换按钮
+ */
+.dropdown-toggle::after {
+  font-size: var(--anonymous-text-sm);
+}
+
+.dropdown-toggle:hover::after {
+  color: var(--anonymous-primary);
+}
+
+/* ============================================================================
+ * 选择框样式 - Select Styles
+ * ============================================================================ */
+
+/**
+ * 选择框基础样式
+ */
+select {
+  border-radius: var(--anonymous-radius-md) !important;
+  border: 1px solid var(--anonymous-border-default) !important;
+  padding: 6px !important;
+}
+
+option {
+  background: var(--anonymous-bg-primary);
+}
+
+/* ============================================================================
+ * 文本域样式 - Textarea Styles
+ * ============================================================================ */
+
+/**
+ * 文本域基础样式
+ */
+textarea {
+  outline: none;
+  padding: var(--anonymous-space-4);
+  border-radius: var(--anonymous-radius-lg);
+  border-color: var(--anonymous-border-default);
+  background: var(--anonymous-bg-primary) !important;
+  color: var(--anonymous-text-primary) !important;
+}
+
+#write textarea {
+  margin-top: 14px !important;
+  margin-bottom: 0;
+}
+
+/* ============================================================================
+ * 输入框样式 - Input Styles
+ * ============================================================================ */
+
+/**
+ * 输入框基础样式
+ */
+html input,
+input {
+  position: relative;
+  border-radius: var(--anonymous-radius-md) !important;
+  border: 1px solid var(--anonymous-border-default);
+  outline: none !important;
+  padding: 0 6px;
+  line-height: 1.2;
+}
+
+/**
+ * 输入框聚焦状态
+ */
+html input:focus,
+html textarea:focus,
+html input[type="number"]:focus,
+html input[type="search"]:focus,
+html input[type="text"]:focus {
+  border-color: var(--anonymous-primary) !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/**
+ * 输入框占位符
+ */
+input::placeholder {
+  font-size: var(--anonymous-text-sm);
+  color: var(--anonymous-text-muted) !important;
+}
+
+/* ============================================================================
+ * 表单控件样式 - Form Control Styles
+ * ============================================================================ */
+
+/**
+ * 表单控件内边距
+ */
+.form-control {
+  padding: 6px;
+}
+
+/* ============================================================================
+ * 对话框样式 - Dialog Styles
+ * ============================================================================ */
+
+/**
+ * 搜索面板和对话框
+ */
+#md-searchpanel input,
+#md-replace-type-label,
+#search-panel-replace-btn,
+.modal-dialog,
+.modal-title,
+.modal-content {
+  border-radius: var(--anonymous-radius-md);
+}
+
+.modal-content {
+  padding: 8px;
+  border-radius: var(--anonymous-radius-lg);
+}
+
+/* ============================================================================
+ * 窗口样式 - Window Styles
+ * ============================================================================ */
+
+/**
+ * 窗口基础样式
+ */
+.window,
+.window label {
+  font-size: 13px !important;
+}
+
+.window .window-header h2 {
+  font-size: 15px !important;
+}
+
+.window .nav-group-item {
+  margin: 14px 0;
+  font-size: 15px !important;
+}
+
+.window pre {
+  padding: var(--anonymous-space-4);
+}
+
+/* ============================================================================
+ * 工具提示样式 - Tooltip Styles
+ * ============================================================================ */
+
+/**
+ * 工具提示基础样式
+ */
+#ty-tooltip,
+.ty-tooltip.shown {
+  padding: 6px 12px;
+  background: var(--anonymous-bg-secondary);
+  border-radius: var(--anonymous-radius-md);
+  color: var(--anonymous-text-primary);
+}
+
+/* ============================================================================
+ * 导航项样式 - Navigation Item Styles
+ * ============================================================================ */
+
+/**
+ * 导航组项圆角
+ */
+.nav-group-item {
+  border-radius: var(--anonymous-radius-md) !important;
+}
+
+/* ============================================================================
+ * 导出详情样式 - Export Detail Styles
+ * ============================================================================ */
+
+/**
+ * 导出项激活状态
+ */
+.export-item.active,
+.export-items-list-control {
+  border-radius: var(--anonymous-radius-sm) !important;
+}
+
+/**
+ * 输入组和导出详情
+ */
+.input-group table,
+.export-detail {
+  border-radius: var(--anonymous-radius-md) !important;
+}
+
+.export-detail .file-input input {
+  height: 30px !important;
+  padding-left: 8px !important;
+  border-color: var(--anonymous-border-default) !important;
+}
+
+/**
+ * 搜索输入框
+ */
+.search-input {
+  padding: 6px 12px !important;
+  border-color: var(--anonymous-border-default) !important;
+}
+
+/**
+ * 标签输入组
+ */
+.label-input-group div {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+}
+
+.label-input-group div pre {
+  border-radius: var(--anonymous-radius-md) !important;
+  font-size: var(--anonymous-text-sm) !important;
+}
+
+/**
+ * 输入组内容
+ */
+.input-group-content {
+  border-radius: var(--anonymous-radius-md) !important;
+}
+
+.input-group-content table {
+  margin-top: 4px;
+}
+
+.label-hint svg {
+  margin-right: 3px;
+}
+
+.export-detail .input-group-content > .row {
+  margin-right: var(--anonymous-space-4);
+}
+
+/**
+ * 导出详情和激活项背景
+ */
+.export-detail,
+.export-item.active,
+.export-items-list-control {
+  background: var(--anonymous-bg-secondary) !important;
+}
+
+.export-item.active {
+  color: var(--anonymous-primary) !important;
+}
+
+/**
+ * 提示框样式
+ */
+.md-show-hint::after {
+  background: var(--anonymous-bg-secondary) !important;
+  border-radius: var(--anonymous-radius-sm);
+  box-shadow: 0 0 3px var(--anonymous-primary) !important;
+}
+
+/* ============================================================================
+ * 快速打开对话框 - Quick Open Dialog
+ * ============================================================================ */
+
+/**
+ * 快速打开面板
+ */
+#typora-quick-open {
+  padding: 12px;
+  background-color: var(--anonymous-bg-primary);
+  border: 1px solid var(--anonymous-border-default);
+  border-radius: var(--anonymous-radius-lg);
+}
+
+/**
+ * 快速打开项
+ */
+.typora-quick-open-item,
+.md-hover-tip .code-tooltip-content {
+  border-radius: var(--anonymous-radius-md);
+  overflow-x: auto;
+}
+
+/**
+ * 悬停提示样式
+ */
+.code-tooltip.md-hover-tip,
+.md-hover-tip .code-tooltip-content,
+.md-arrow::after {
+  border-bottom-color: var(--anonymous-primary) !important;
+  background: var(--anonymous-primary) !important;
+  box-shadow: 0 1px 4px var(--anonymous-primary) !important;
+}
+
+.md-hover-tip .code-tooltip-content:hover a {
+  color: var(--anonymous-accent) !important;
+}
+
+/* ============================================================================
+ * 偏好设置面板 - Preferences Panel
+ * ============================================================================ */
+
+/**
+ * 侧边栏分隔线
+ */
+.sidebar {
+  position: relative;
+}
+
+.sidebar:after {
+  content: "";
+  display: block;
+  position: absolute;
+  width: 1px;
+  height: 100%;
+  right: -24px;
+  top: 0;
+  border-left: 1px solid var(--anonymous-border-default);
+}
+
+/**
+ * 偏好设置链接
+ */
+.ty-preferences a {
+  font-size: var(--anonymous-text-xs) !important;
+  text-decoration: none;
+  color: var(--anonymous-primary);
+}
+
+.ty-preferences a:hover {
+  text-decoration: underline;
+  color: var(--anonymous-accent);
+}

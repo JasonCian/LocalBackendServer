@@ -1,0 +1,124 @@
+/**
+ * ============================================================================
+ * Anonymous Theme - 搜索功能样式 / Search Styles
+ * ============================================================================
+ * 
+ * 文件: Anonymous/Components/search.css
+ * 描述: 搜索面板和搜索结果的样式定义
+ *       Styles for search panel and search results
+ * 
+ * 参考: https://support.typora.io/Add-Custom-CSS/
+ * ============================================================================
+ */
+
+/* ============================================================================
+ * 搜索面板样式 - Search Panel Styles
+ * ============================================================================ */
+
+/**
+ * 搜索面板消息
+ */
+#searchpanel-msg {
+  margin-top: 2px;
+  margin-bottom: 8px;
+  background: var(--anonymous-primary-alpha-30);
+}
+
+/**
+ * 警告提示
+ */
+.alert.alert-warning,
+.alert.alert-warning * {
+  color: var(--anonymous-primary) !important;
+}
+
+/**
+ * 搜索面板顶部间距
+ */
+#md-searchpanel {
+  padding-top: 7px;
+}
+
+/* ============================================================================
+ * 搜索控件样式 - Search Control Styles
+ * ============================================================================ */
+
+/**
+ * 搜索面板行
+ */
+#searchpanel-search-group .ty-search-panel-row {
+  padding-top: 0;
+}
+
+/**
+ * 搜索选项按钮
+ */
+#searchpanel-search-group .searchpanel-search-option-btn {
+  top: 3px;
+  background: var(--anonymous-bg-primary);
+}
+
+#searchpanel-search-group .searchpanel-search-option-btn:hover {
+  color: var(--anonymous-primary);
+}
+
+/**
+ * 搜索按钮行高
+ */
+.ty-search-panel-row .btn {
+  line-height: 14px;
+}
+
+/**
+ * 关闭和上传按钮
+ */
+.ty-search-panel-row .ion-close-round,
+.ty-search-panel-row .ty-upload {
+  padding-right: 8px !important;
+  padding-left: 4px !important;
+}
+
+/**
+ * 下一个和替换按钮位置
+ */
+#search-panel-next,
+#search-panel-replace-btn {
+  left: 3px;
+}
+
+/**
+ * 全部替换和替换按钮
+ */
+#search-panel-replaceall-btn,
+#search-panel-replace-btn {
+  padding-right: 4px !important;
+  padding-left: 4px !important;
+  text-align: center !important;
+}
+
+/* ============================================================================
+ * 搜索结果高亮 - Search Result Highlighting
+ * ============================================================================ */
+
+/**
+ * 大纲筛选匹配项
+ */
+.ty-on-outline-filter .ty-outline-hit {
+  color: var(--anonymous-accent);
+}
+
+/**
+ * 搜索匹配高亮
+ */
+.md-search-hit {
+  background: var(--anonymous-accent-alpha-40) !important;
+  color: #070909 !important;
+}
+
+/**
+ * 搜索选中项高亮
+ */
+.md-search-select {
+  background: var(--anonymous-accent) !important;
+  color: #070909 !important;
+}

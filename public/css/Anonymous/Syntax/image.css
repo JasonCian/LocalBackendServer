@@ -1,0 +1,151 @@
+/**
+ * ============================================================================
+ * Anonymous Theme - 图片样式 / Image Styles
+ * ============================================================================
+ * 
+ * 文件: Anonymous/Syntax/image.css
+ * 描述: 图片的样式定义
+ *       Styles for images
+ * 
+ * Markdown 语法 / Markdown Syntax:
+ * ![图片描述](图片URL)
+ * ![图片描述](图片URL "标题")
+ * 
+ * 参考: https://support.typora.io/Images/
+ * ============================================================================
+ */
+
+/* ============================================================================
+ * 图片基础样式 - Base Image Styles
+ * ============================================================================ */
+
+/**
+ * 图片通用样式
+ */
+img,
+span.md-image {
+  margin: var(--anonymous-space-4) auto 0 auto !important;
+  border-radius: var(--anonymous-radius-lg) !important;
+  border: none !important;
+  color: var(--anonymous-text-muted);
+}
+
+/**
+ * 聚焦状态的图片
+ */
+p.md-focus span.md-image {
+  background: var(--anonymous-primary-alpha-12);
+  box-shadow: 0 0 3px var(--anonymous-border-default);
+}
+
+p.md-focus span.md-image {
+  margin-top: 0;
+}
+
+/* ============================================================================
+ * 图片编辑元素样式 - Image Edit Elements
+ * ============================================================================ */
+
+/**
+ * 图片相关的编辑元素颜色
+ */
+span.md-image,
+span.md-image span.md-content,
+span.md-image span.md-image-src-span,
+span.md-image span.md-image-before-src,
+span.md-image span.md-image-after-src,
+span.md-image span.md-image-input-src-btn,
+span.md-image span.md-image-pick-file-btn,
+span.md-image span.md-before::before,
+span.md-image span.md-image-input-src-btn::before,
+span.md-image span.md-image-pick-file-btn::before {
+  color: var(--anonymous-primary);
+}
+
+/**
+ * 图片按钮背景
+ */
+span.md-image-btn {
+  background: var(--anonymous-bg-secondary);
+}
+
+span.md-image-btn:hover::before {
+  color: var(--anonymous-bg-primary) !important;
+}
+
+/**
+ * 文件选择按钮边框
+ */
+span.md-image span.md-image-pick-file-btn {
+  border-left-color: var(--anonymous-border-default);
+}
+
+/**
+ * 图片按钮选中和悬停状态
+ */
+.md-image-btn.selected,
+.md-image-btn:hover {
+  background: var(--anonymous-primary);
+}
+
+/* ============================================================================
+ * 导出时的图片网格布局 - Image Grid Layout for Export
+ * ============================================================================ */
+
+/**
+ * 包含图片的 section 使用网格布局
+ */
+.typora-export #write section:has(img),
+.md-htmlblock-container section:has(img) {
+  display: grid;
+  grid-gap: var(--anonymous-space-4);
+  justify-content: flex-start;
+  align-items: center;
+  grid-template-columns: repeat(auto-fit, minmax(16px, auto));
+  grid-auto-rows: minmax(16px, auto);
+}
+
+.typora-export #write > section:has(img) {
+  margin-top: var(--anonymous-space-4);
+}
+
+.typora-export #write section img,
+.md-htmlblock-container section img {
+  margin: 0 !important;
+}
+
+/**
+ * section 内的 span 元素
+ */
+.typora-export #write section:has(img) span,
+.md-htmlblock-container section:has(img) span {
+  display: block;
+  margin: var(--anonymous-space-2) 0;
+}
+
+.typora-export #write section span > img,
+.md-htmlblock-container section span > img {
+  margin: var(--anonymous-space-2) 0 !important;
+}
+
+.typora-export #write section span > img:first-of-type,
+.md-htmlblock-container section span > img:first-of-type {
+  margin-top: 0 !important;
+}
+
+.typora-export #write section span > img:last-of-type,
+.md-htmlblock-container section span > img:last-of-type {
+  margin-bottom: 0 !important;
+}
+
+/**
+ * 悬停时的图片 section 样式
+ */
+.typora-export #write > section:has(img):hover,
+.md-htmlblock-container > section:has(img):hover {
+  border-radius: var(--anonymous-radius-lg);
+  background: var(--anonymous-bg-secondary);
+  padding: var(--anonymous-space-4);
+  -webkit-transition: padding var(--anonymous-transition-linear);
+  transition: padding var(--anonymous-transition-linear);
+}

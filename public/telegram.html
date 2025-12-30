@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Telegram 客户端 · 本地轻量级后端</title>
+  <style>
+    :root {
+      --bg: #0f1220;
+      --bg2: #101526;
+      --fg: #e6e9ef;
+      --muted: #9aa0aa;
+      --primary: #6aa0ff;
+      --accent: #7a5cff;
+      --card: #141a2f;
+      --border: #1f2740;
+      --success: #7fd77f;
+      --error: #ff6b6b;
+      --warn: #ffd93d;
+    }
+    
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 20px;
+      background: radial-gradient(1200px 600px at 20% 0%, #0a0d1a, #0f1220);
+      color: var(--fg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      min-height: 100vh;
+    }
+    
+    .container { max-width: 1200px; margin: 0 auto; }
+    
+    header { margin-bottom: 28px; }
+    h1 { font-size: 2em; margin: 0 0 8px; }
+    .subtitle { color: var(--muted); margin: 0; }
+    
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 28px; }
+    @media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+    
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 18px; overflow: hidden; }
+    .card h2 { margin: 0 0 14px; font-size: 1.1em; }
+    
+    .form-row { display: grid; gap: 6px; margin-bottom: 12px; }
+    label { display: block; color: var(--muted); font-size: 0.9em; }
+    input, select, textarea { width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border); background: #0d1224; color: var(--fg); font-size: 0.95em; }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); background: #101526; }
+    
+    .buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+    button { padding: 10px 14px; border: none; border-radius: 8px; background: linear-gradient(135deg, var(--primary), var(--accent)); color: var(--fg); cursor: pointer; font-size: 0.95em; }
+    button.secondary { background: #2a3150; }
+    button:hover { opacity: 0.9; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    
+    .status-box { padding: 12px; border-radius: 8px; margin-bottom: 14px; white-space: pre-wrap; font-family: ui-monospace, Consolas, monospace; font-size: 0.85em; background: #0d1224; border: 1px solid var(--border); max-height: 200px; overflow-y: auto; }
+    .status-box.loading { color: var(--warn); }
+    .status-box.success { color: var(--success); border-color: var(--success); }
+    .status-box.error { color: var(--error); border-color: var(--error); }
+    
+    .health-info { background: #0d1224; border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-size: 0.9em; margin-bottom: 14px; }
+    .health-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; }
+    .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.8em; }
+    .badge.connected { background: var(--success); color: #0f1220; }
+    .badge.disconnected { background: var(--error); color: #fff; }
+    .badge.authorized { background: var(--success); color: #0f1220; }
+    .badge.unauthorized { background: var(--muted); color: #0f1220; }
+    .badge.mode-real { background: var(--primary); color: #0f1220; }
+    .badge.mode-mock { background: var(--warn); color: #0f1220; }
+    
+    .task-list { list-style: none; margin: 0; padding: 0; }
+    .task-item { background: #0d1224; border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+    .task-item.disabled { opacity: 0.6; }
+    .task-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+    .task-title { font-weight: 600; word-break: break-word; }
+    .task-meta { font-size: 0.85em; color: var(--muted); }
+    .task-info { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; font-size: 0.9em; }
+    .task-info-item { color: var(--muted); }
+    .task-info-item code { background: #141a2f; padding: 2px 4px; border-radius: 4px; color: var(--fg); }
+    .task-actions { display: flex; gap: 6px; }
+    .task-actions button { padding: 6px 10px; font-size: 0.85em; }
+    
+    .empty { text-align: center; color: var(--muted); padding: 20px; }
+    
+    .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Telegram 客户端</h1>
+      <p class="subtitle">会话管理 · 定时任务 · 即时发送</p>
+    </header>
+
+    <div class="grid">
+      <!-- 左侧：登录 & 健康检查 -->
+      <div class="card">
+        <h2>🔐 登录与状态</h2>
+        
+        <div class="health-info" id="health-info">
+          <div class="health-item">
+            <span>模式</span>
+            <span class="badge mode-mock" id="badge-mode">模拟</span>
+          </div>
+          <div class="health-item">
+            <span>连接</span>
+            <span class="badge disconnected" id="badge-connected">未连接</span>
+          </div>
+          <div class="health-item">
+            <span>授权</span>
+            <span class="badge unauthorized" id="badge-authorized">未授权</span>
+          </div>
+          <div id="user-info" style="display:none; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border);">
+            <div class="health-item">
+              <span>用户</span>
+              <span id="user-name">-</span>
+            </div>
+          </div>
+        </div>
+
+        <div id="login-form" style="display: none;">
+          <div class="form-row">
+            <label for="phone">手机号</label>
+            <input id="phone" type="text" placeholder="+86..." />
+          </div>
+          <div class="buttons">
+            <button onclick="startLogin()">发送验证码</button>
+          </div>
+        </div>
+
+        <div id="verify-form" style="display: none;">
+          <div class="form-row">
+            <label for="code">验证码</label>
+            <input id="code" type="text" placeholder="例如 12345" />
+          </div>
+          <div id="password-form-group" style="display: none;">
+            <div class="form-row">
+              <label for="password">二步密码</label>
+              <input id="password" type="password" placeholder="••••••" />
+            </div>
+          </div>
+          <div class="buttons">
+            <button onclick="verify()">提交</button>
+            <button class="secondary" onclick="cancelLogin()">取消</button>
+          </div>
+        </div>
+
+        <div class="buttons" id="logout-btn" style="display: none;">
+          <button class="secondary" onclick="logout()">注销</button>
+        </div>
+
+        <div class="status-box" id="login-status" style="display: none; margin-top: 12px;"></div>
+      </div>
+
+      <!-- 右侧：即时发送 -->
+      <div class="card">
+        <h2>📤 即时发送</h2>
+        
+        <div class="form-row">
+          <label for="send-to">接收人（用户名/ID/频道）</label>
+          <input id="send-to" type="text" placeholder="@username 或 123456789" />
+        </div>
+        <div class="form-row">
+          <label for="send-message">消息</label>
+          <textarea id="send-message" placeholder="输入要发送的消息" rows="6"></textarea>
+        </div>
+        <div class="buttons">
+          <button id="btn-send" onclick="sendNow()" disabled>发送</button>
+        </div>
+        
+        <div class="status-box" id="send-status" style="display: none; margin-top: 12px;"></div>
+      </div>
+    </div>
+
+    <!-- 任务管理 -->
+    <div class="card">
+      <h2>⏰ 定时签到任务</h2>
+      
+      <div style="background: #0d1224; border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-bottom: 14px;">
+        <h3 style="margin: 0 0 12px; font-size: 0.95em;">新增任务</h3>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+          <div class="form-row">
+            <label for="new-cron">Cron 表达式</label>
+            <input id="new-cron" type="text" placeholder="0 8 * * *" />
+          </div>
+          <div class="form-row">
+            <label for="new-to">接收人</label>
+            <input id="new-to" type="text" placeholder="@user" />
+          </div>
+          <div class="form-row">
+            <label for="new-message">消息</label>
+            <input id="new-message" type="text" placeholder="/sign" />
+          </div>
+        </div>
+        
+        <div style="display: flex; gap: 12px; align-items: center; margin-top: 10px;">
+          <label style="display: flex; align-items: center; gap: 6px; margin: 0;">
+            <input id="new-enabled" type="checkbox" checked />
+            <span style="color: var(--muted); font-size: 0.9em;">启用</span>
+          </label>
+          <label style="display: flex; align-items: center; gap: 6px; margin: 0;">
+            <input id="new-runonce" type="checkbox" />
+            <span style="color: var(--muted); font-size: 0.9em;">仅运行一次</span>
+          </label>
+          <button onclick="addTask()" style="margin-left: auto;">添加任务</button>
+        </div>
+        
+        <div class="status-box" id="add-task-status" style="display: none; margin-top: 10px;"></div>
+      </div>
+
+      <h3 style="margin: 0 0 12px; font-size: 0.95em;">任务列表</h3>
+      <ul class="task-list" id="tasks-list">
+        <li class="empty">暂无任务</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    let stateId = null;
+    let currentPhoneCodeHash = null;
+    let isPasswordRequired = false;
+
+    async function fetchAPI(path, method = 'GET', body = null) {
+      const opts = { method, headers: { 'Content-Type': 'application/json' } };
+      if (body) opts.body = JSON.stringify(body);
+      const res = await fetch(path, opts);
+      return res.json();
+    }
+
+    async function checkHealth() {
+      try {
+        const data = await fetchAPI('/telegram/api/health');
+        if (data.success) {
+          const { mode, connected, authorized, user } = data;
+          document.getElementById('badge-mode').textContent = mode === 'real' ? '真实' : '模拟';
+          document.getElementById('badge-mode').className = 'badge mode-' + mode;
+          
+          document.getElementById('badge-connected').textContent = connected ? '已连接' : '未连接';
+          document.getElementById('badge-connected').className = 'badge ' + (connected ? 'connected' : 'disconnected');
+          
+          document.getElementById('badge-authorized').textContent = authorized ? '已授权' : '未授权';
+          document.getElementById('badge-authorized').className = 'badge ' + (authorized ? 'authorized' : 'unauthorized');
+          
+          const userInfo = document.getElementById('user-info');
+          const userName = document.getElementById('user-name');
+          if (user) {
+            userInfo.style.display = 'block';
+            userName.textContent = `${user.firstName || ''}${user.lastName || ''} (@${user.username || user.id})`.trim();
+          } else {
+            userInfo.style.display = 'none';
+          }
+          
+          // 更新 UI
+          updateLoginUI(authorized, mode);
+        }
+      } catch (e) {
+        console.error('Health check failed:', e);
+      }
+    }
+
+    function updateLoginUI(authorized, mode) {
+      const loginForm = document.getElementById('login-form');
+      const verifyForm = document.getElementById('verify-form');
+      const logoutBtn = document.getElementById('logout-btn');
+      const sendBtn = document.getElementById('btn-send');
+      
+      if (authorized) {
+        loginForm.style.display = 'none';
+        verifyForm.style.display = 'none';
+        logoutBtn.style.display = 'flex';
+        if (mode === 'real') sendBtn.disabled = false;
+      } else {
+        if (!stateId) {
+          loginForm.style.display = 'block';
+          verifyForm.style.display = 'none';
+        } else {
+          loginForm.style.display = 'none';
+          verifyForm.style.display = 'block';
+        }
+        logoutBtn.style.display = 'none';
+        sendBtn.disabled = true;
+      }
+    }
+
+    async function startLogin() {
+      const phone = document.getElementById('phone').value.trim();
+      if (!phone) { alert('请输入手机号'); return; }
+      
+      showStatus('login-status', '发送验证码中...', 'loading');
+      try {
+        const data = await fetchAPI('/telegram/api/start', 'POST', { phone });
+        if (data.success) {
+          stateId = data.stateId;
+          
+          let msg = `验证码已发送。\nstateId: ${stateId}`;
+          if (data.debugCode) msg += `\n调试验证码: ${data.debugCode}`;
+          if (data.mode === 'real') msg += '\n（真实模式：从官方客户端获取验证码）';
+          
+          showStatus('login-status', msg, 'success');
+          document.getElementById('login-form').style.display = 'none';
+          document.getElementById('verify-form').style.display = 'block';
+          document.getElementById('password-form-group').style.display = 'none';
+        } else {
+          showStatus('login-status', '失败: ' + (data.message || 'unknown'), 'error');
+        }
+      } catch (e) {
+        showStatus('login-status', '错误: ' + e.message, 'error');
+      }
+    }
+
+    async function verify() {
+      if (!stateId) { alert('会话已过期'); return; }
+      const code = document.getElementById('code').value.trim();
+      const password = document.getElementById('password').value;
+      
+      showStatus('login-status', '验证中...', 'loading');
+      try {
+        const data = await fetchAPI('/telegram/api/verify', 'POST', { stateId, code, password });
+        if (data.success) {
+          if (data.authorized) {
+            showStatus('login-status', '登录成功！', 'success');
+            stateId = null;
+            await checkHealth();
+            await loadTasks();
+          } else if (data.needPassword) {
+            showStatus('login-status', '验证码正确。\n请输入二步密码。', 'success');
+            document.getElementById('password-form-group').style.display = 'block';
+          }
+        } else {
+          showStatus('login-status', '失败: ' + (data.message || 'unknown'), 'error');
+        }
+      } catch (e) {
+        showStatus('login-status', '错误: ' + e.message, 'error');
+      }
+    }
+
+    async function logout() {
+      if (!confirm('确认注销会话？')) return;
+      showStatus('login-status', '注销中...', 'loading');
+      try {
+        const data = await fetchAPI('/telegram/api/logout', 'POST');
+        if (data.success) {
+          showStatus('login-status', '已注销。', 'success');
+          stateId = null;
+          document.getElementById('code').value = '';
+          document.getElementById('password').value = '';
+          await checkHealth();
+        }
+      } catch (e) {
+        showStatus('login-status', '错误: ' + e.message, 'error');
+      }
+    }
+
+    function cancelLogin() {
+      stateId = null;
+      document.getElementById('phone').value = '';
+      document.getElementById('code').value = '';
+      document.getElementById('password').value = '';
+      document.getElementById('login-status').style.display = 'none';
+      document.getElementById('login-form').style.display = 'block';
+      document.getElementById('verify-form').style.display = 'none';
+    }
+
+    async function sendNow() {
+      const to = document.getElementById('send-to').value.trim();
+      const message = document.getElementById('send-message').value.trim();
+      if (!to || !message) { alert('请填写接收人和消息'); return; }
+      
+      showStatus('send-status', '发送中...', 'loading');
+      try {
+        const data = await fetchAPI('/telegram/api/sendNow', 'POST', { to, message });
+        if (data.success) {
+          showStatus('send-status', `已发送至 ${to}`, 'success');
+          document.getElementById('send-message').value = '';
+        } else {
+          showStatus('send-status', '失败: ' + (data.message || 'unknown'), 'error');
+        }
+      } catch (e) {
+        showStatus('send-status', '错误: ' + e.message, 'error');
+      }
+    }
+
+    async function loadTasks() {
+      try {
+        const data = await fetchAPI('/telegram/api/tasks');
+        if (data.success) {
+          const list = document.getElementById('tasks-list');
+          if (data.tasks.length === 0) {
+            list.innerHTML = '<li class="empty">暂无任务</li>';
+          } else {
+            list.innerHTML = data.tasks.map(t => `
+              <li class="task-item ${t.enabled ? '' : 'disabled'}">
+                <div class="task-header">
+                  <div class="task-title">${escapeHtml(t.message)} → ${escapeHtml(t.to)}</div>
+                  <span class="task-meta">${t.enabled ? '启用' : '禁用'}</span>
+                </div>
+                <div class="task-info">
+                  <div class="task-info-item"><strong>Cron:</strong> <code>${escapeHtml(t.cron)}</code></div>
+                  <div class="task-info-item"><strong>ID:</strong> <code>${escapeHtml(t.id.slice(0,8))}...</code></div>
+                </div>
+                <div class="task-actions" style="align-items:center; flex-wrap: wrap;">
+                  <label style="display:flex; align-items:center; gap:6px; margin-right:8px;">
+                    <input type="checkbox" ${t.enabled ? 'checked' : ''} onchange="toggleEnabled('${escapeAttr(t.id)}', this.checked)" />
+                    <span style="color: var(--muted); font-size: 0.85em;">启用</span>
+                  </label>
+                  <label style="display:flex; align-items:center; gap:6px; margin-right:8px;">
+                    <input type="checkbox" ${t.runOnce ? 'checked' : ''} onchange="toggleRunOnce('${escapeAttr(t.id)}', this.checked)" />
+                    <span style="color: var(--muted); font-size: 0.85em;">仅运行一次</span>
+                  </label>
+                  <button class="secondary" style="font-size:0.8em;" onclick="editTask('${escapeAttr(t.id)}', '${escapeAttr(t.cron)}', '${escapeAttr(t.to)}', '${escapeAttr(t.message)}', ${t.enabled})">编辑</button>
+                  <button class="secondary" style="font-size:0.8em;" onclick="deleteTask('${escapeAttr(t.id)}')">删除</button>
+                </div>
+              </li>
+            `).join('');
+          }
+        }
+      } catch (e) {
+        console.error('Load tasks failed:', e);
+      }
+    }
+
+    async function addTask() {
+      const cron = document.getElementById('new-cron').value.trim();
+      const to = document.getElementById('new-to').value.trim();
+      const message = document.getElementById('new-message').value.trim();
+      const enabled = document.getElementById('new-enabled').checked;
+      const runOnce = document.getElementById('new-runonce').checked;
+      
+      if (!cron || !to || !message) { alert('请填写所有字段'); return; }
+      
+      showStatus('add-task-status', '添加中...', 'loading');
+      try {
+        const data = await fetchAPI('/telegram/api/tasks', 'POST', { cron, to, message, enabled, runOnce });
+        if (data.success) {
+          showStatus('add-task-status', `任务已添加: ${data.task.id.slice(0,8)}...`, 'success');
+          document.getElementById('new-cron').value = '';
+          document.getElementById('new-to').value = '';
+          document.getElementById('new-message').value = '';
+          document.getElementById('new-enabled').checked = true;
+          document.getElementById('new-runonce').checked = false;
+          await loadTasks();
+        } else {
+          showStatus('add-task-status', '失败: ' + (data.message || 'unknown'), 'error');
+        }
+      } catch (e) {
+        showStatus('add-task-status', '错误: ' + e.message, 'error');
+      }
+    }
+
+    async function editTask(id, cron, to, message, enabled) {
+      const newCron = prompt('Cron 表达式:', cron);
+      if (newCron === null) return;
+      
+      try {
+        const data = await fetchAPI(`/telegram/api/tasks/${id}`, 'PUT', { cron: newCron });
+        if (data.success) {
+          await loadTasks();
+        } else {
+          alert('更新失败: ' + (data.message || 'unknown'));
+        }
+      } catch (e) {
+        alert('错误: ' + e.message);
+      }
+    }
+
+    async function toggleEnabled(id, enabled) {
+      try {
+        const data = await fetchAPI(`/telegram/api/tasks/${id}`, 'PUT', { enabled });
+        if (data.success) {
+          await loadTasks();
+        } else {
+          alert('更新失败: ' + (data.message || 'unknown'));
+        }
+      } catch (e) {
+        alert('错误: ' + e.message);
+      }
+    }
+
+    async function toggleRunOnce(id, runOnce) {
+      try {
+        const data = await fetchAPI(`/telegram/api/tasks/${id}`, 'PUT', { runOnce });
+        if (data.success) {
+          await loadTasks();
+        } else {
+          alert('更新失败: ' + (data.message || 'unknown'));
+        }
+      } catch (e) {
+        alert('错误: ' + e.message);
+      }
+    }
+
+    async function deleteTask(id) {
+      if (!confirm('确认删除此任务？')) return;
+      
+      try {
+        const data = await fetchAPI(`/telegram/api/tasks/${id}`, 'DELETE');
+        if (data.success) {
+          await loadTasks();
+        } else {
+          alert('删除失败: ' + (data.message || 'unknown'));
+        }
+      } catch (e) {
+        alert('错误: ' + e.message);
+      }
+    }
+
+    function showStatus(elemId, msg, status) {
+      const elem = document.getElementById(elemId);
+      elem.textContent = msg;
+      elem.style.display = 'block';
+      elem.className = `status-box ${status}`;
+    }
+
+    function escapeHtml(s) {
+      const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+      return String(s).replace(/[&<>"']/g, c => map[c]);
+    }
+
+    function escapeAttr(s) {
+      return String(s).replace(/'/g, '&#39;').replace(/"/g, '&quot;');
+    }
+
+    // 初始化
+    (async () => {
+      await checkHealth();
+      await loadTasks();
+      // 每 10 秒刷新健康状态
+      setInterval(checkHealth, 10000);
+    })();
+  </script>
+</body>
+</html>

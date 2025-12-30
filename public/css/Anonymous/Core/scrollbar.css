@@ -1,0 +1,60 @@
+/**
+ * ============================================================================
+ * Anonymous Theme - 滚动条样式 / Scrollbar Styles
+ * ============================================================================
+ * 
+ * 文件: Anonymous/Core/scrollbar.css
+ * 描述: 自定义滚动条样式，支持 Webkit 浏览器和 Firefox
+ *       Custom scrollbar styles for Webkit browsers and Firefox
+ * 
+ * 参考: https://support.typora.io/Add-Custom-CSS/
+ * ============================================================================
+ */
+
+/* ============================================================================
+ * Webkit 滚动条样式 - Webkit Scrollbar Styles
+ * 适用于 Chrome、Safari、Edge 等浏览器
+ * ============================================================================ */
+
+/**
+ * 滚动条轨道和滑块基础尺寸
+ */
+::-webkit-scrollbar,
+::-webkit-scrollbar {
+  width: 8px !important;
+  height: 8px !important;
+}
+
+/**
+ * 滚动条滑块样式
+ * 使用圆角和灰色背景
+ */
+::-webkit-scrollbar-thumb,
+::-webkit-scrollbar-thumb {
+  border-radius: 4px !important;
+  background: var(--anonymous-text-muted) !important;
+}
+
+/**
+ * 滚动条轨道样式
+ */
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-track {
+  background: var(--anonymous-bg-secondary) !important;
+}
+
+/* ============================================================================
+ * Firefox 滚动条样式 - Firefox Scrollbar Styles
+ * 使用标准属性 scrollbar-color 和 scrollbar-width
+ * ============================================================================ */
+
+/**
+ * Firefox 滚动条颜色和宽度
+ * scrollbar-color: 滑块颜色 轨道颜色
+ * scrollbar-width: 滚动条宽度 (auto | thin | none)
+ */
+html,
+html * {
+  scrollbar-color: var(--anonymous-text-muted) var(--anonymous-bg-secondary) !important;
+  scrollbar-width: thin !important;
+}

@@ -1,0 +1,502 @@
+/**
+ * ============================================================================
+ * Anonymous Theme - 浏览器适配层 / Browser Adapter
+ * ============================================================================
+ * 
+ * 文件: Anonymous/browser-adapter.css
+ * 描述: 将 Anonymous 主题的 CSS 变量应用到浏览器渲染的标准 HTML 元素
+ *       Applies Anonymous theme CSS variables to standard HTML elements
+ * 
+ * 说明 / Notes:
+ * - Typora 使用特殊的 DOM 结构（.md-fences, .CodeMirror 等）
+ * - 浏览器使用 marked.js 渲染，生成标准 HTML（pre, code, blockquote 等）
+ * - 此文件作为适配层，让主题在浏览器中正常工作
+ * ============================================================================
+ */
+
+/* ============================================================================
+ * 基础重置 - Base Reset
+ * ============================================================================ */
+
+html {
+  font-size: 16px !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--anonymous-font-sans);
+  color: var(--anonymous-text-primary) !important;
+  background-color: var(--anonymous-bg-primary) !important;
+  line-height: var(--anonymous-leading-normal, 1.6);
+  letter-spacing: var(--anonymous-tracking-normal, 0.6px);
+}
+
+/* ============================================================================
+ * 内容区域 - Content Area (#write)
+ * ============================================================================ */
+
+#write {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: var(--anonymous-space-8, 40px) var(--anonymous-space-6, 30px);
+  color: var(--anonymous-text-primary) !important;
+  background-color: var(--anonymous-bg-primary);
+}
+
+/* 内容容器（服务器生成的包装元素） */
+.content-wrapper {
+  background-color: var(--anonymous-bg-primary) !important;
+  color: var(--anonymous-text-primary) !important;
+}
+
+/* ============================================================================
+ * 标题样式 - Headings
+ * ============================================================================ */
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--anonymous-font-heading, var(--anonymous-font-sans));
+  color: var(--anonymous-text-primary);
+  font-weight: 600;
+  line-height: var(--anonymous-leading-tight, 1.25);
+  margin-top: 1.5em;
+  margin-bottom: 0.8em;
+}
+
+h1 {
+  font-size: var(--anonymous-text-4xl, 2rem);
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--anonymous-border-default);
+}
+
+h2 {
+  font-size: var(--anonymous-text-3xl, 1.75rem);
+  padding-bottom: 0.25em;
+  border-bottom: 1px solid var(--anonymous-border-default);
+}
+
+h3 { font-size: var(--anonymous-text-2xl, 1.5rem); }
+h4 { font-size: var(--anonymous-text-xl, 1.25rem); }
+h5 { font-size: var(--anonymous-text-lg, 1.125rem); }
+h6 { font-size: var(--anonymous-text-base, 1rem); color: var(--anonymous-text-muted); }
+
+/* ============================================================================
+ * 段落和文本 - Paragraph and Text
+ * ============================================================================ */
+
+p {
+  margin: var(--anonymous-space-4, 1rem) 0;
+  line-height: var(--anonymous-leading-relaxed, 1.8);
+  color: var(--anonymous-text-primary);
+}
+
+/* 列表项文本颜色 */
+li {
+  color: var(--anonymous-text-primary);
+}
+
+/* 强调样式 */
+strong, b {
+  font-weight: 600;
+  color: var(--anonymous-text-bold, var(--anonymous-text-primary));
+}
+
+em, i {
+  font-style: italic;
+  color: var(--anonymous-text-italic, inherit);
+}
+
+/* 删除线 */
+del, s {
+  text-decoration: line-through;
+  color: var(--anonymous-text-muted);
+}
+
+/* 高亮标记 */
+mark {
+  background-color: var(--anonymous-accent-alpha-40, rgba(229, 165, 69, 0.4));
+  color: var(--anonymous-text-primary);
+  padding: 0.1em 0.3em;
+  border-radius: var(--anonymous-radius-sm, 2px);
+}
+
+/* ============================================================================
+ * 链接样式 - Links
+ * ============================================================================ */
+
+a {
+  color: var(--anonymous-primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--anonymous-primary-hover);
+  text-decoration: underline;
+}
+
+/* ============================================================================
+ * 行内代码 - Inline Code
+ * ============================================================================ */
+
+code {
+  font-family: var(--anonymous-font-mono);
+  font-size: var(--anonymous-text-sm, 0.875rem);
+  background-color: var(--anonymous-primary-alpha-30);
+  color: var(--anonymous-text-code);
+  padding: 0.2em 0.4em;
+  border-radius: var(--anonymous-radius-sm, 3px);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* ============================================================================
+ * 代码块 - Code Blocks
+ * ============================================================================ */
+
+pre {
+  font-family: var(--anonymous-font-mono);
+  font-size: var(--anonymous-text-sm, 0.875rem);
+  line-height: 1.5;
+  background-color: var(--anonymous-bg-secondary) !important;
+  color: var(--anonymous-text-code);
+  padding: var(--anonymous-space-4, 1rem);
+  margin: var(--anonymous-space-4, 1rem) 0;
+  border-radius: var(--anonymous-radius-lg, 8px);
+  overflow-x: auto;
+  border: 1px solid var(--anonymous-border-default);
+}
+
+pre code {
+  background: transparent;
+  padding: 0;
+  font-size: inherit;
+  color: inherit;
+  border-radius: 0;
+}
+
+/* ============================================================================
+ * 代码高亮覆盖 - Syntax Highlighting Override (highlight.js)
+ * 使用 Anonymous 主题的语法高亮变量
+ * ============================================================================ */
+
+/* 关键字 */
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-deletion {
+  color: var(--anonymous-syntax-keyword);
+}
+
+/* 内置函数/类型 */
+.hljs-built_in,
+.hljs-type,
+.hljs-params {
+  color: var(--anonymous-syntax-builtin);
+}
+
+/* 字符串 */
+.hljs-string,
+.hljs-regexp,
+.hljs-addition {
+  color: var(--anonymous-syntax-string);
+}
+
+/* 数字 */
+.hljs-number,
+.hljs-literal,
+.hljs-symbol,
+.hljs-bullet {
+  color: var(--anonymous-syntax-number);
+}
+
+/* 注释 */
+.hljs-comment,
+.hljs-quote,
+.hljs-meta {
+  color: var(--anonymous-syntax-comment);
+  font-style: italic;
+}
+
+/* 函数/标题 */
+.hljs-title,
+.hljs-title.function_,
+.hljs-section {
+  color: var(--anonymous-syntax-def);
+}
+
+/* 类名/类型名 */
+.hljs-title.class_,
+.hljs-class .hljs-title {
+  color: var(--anonymous-syntax-variable);
+}
+
+/* 变量 */
+.hljs-variable,
+.hljs-template-variable {
+  color: var(--anonymous-syntax-variable-2);
+}
+
+/* 属性 */
+.hljs-attr,
+.hljs-attribute {
+  color: var(--anonymous-syntax-attribute);
+}
+
+/* 属性值/选择器 */
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-selector-attr,
+.hljs-selector-pseudo {
+  color: var(--anonymous-syntax-property);
+}
+
+/* 标签 */
+.hljs-tag,
+.hljs-name {
+  color: var(--anonymous-syntax-tag);
+}
+
+/* 标签括号 */
+.hljs-tag .hljs-punctuation {
+  color: var(--anonymous-syntax-tag-bracket);
+}
+
+/* 运算符/标点 */
+.hljs-operator,
+.hljs-punctuation {
+  color: var(--anonymous-syntax-operator);
+}
+
+/* 强调/链接 */
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: bold;
+}
+
+.hljs-link {
+  color: var(--anonymous-primary);
+  text-decoration: underline;
+}
+
+/* ============================================================================
+ * 引用块 - Blockquote
+ * ============================================================================ */
+
+blockquote {
+  margin: var(--anonymous-space-4, 1rem) 0;
+  padding: var(--anonymous-space-3, 0.75rem) var(--anonymous-space-4, 1rem);
+  background-color: var(--anonymous-bg-tertiary, rgba(40, 42, 50, 0.8));
+  border-left: 4px solid var(--anonymous-primary);
+  border-radius: 0 var(--anonymous-radius-md, 6px) var(--anonymous-radius-md, 6px) 0;
+  color: var(--anonymous-text-secondary);
+}
+
+blockquote > :first-child { margin-top: 0; }
+blockquote > :last-child { margin-bottom: 0; }
+
+blockquote blockquote {
+  margin-left: var(--anonymous-space-4, 1rem);
+}
+
+/* ============================================================================
+ * 列表 - Lists
+ * ============================================================================ */
+
+ul, ol {
+  padding-left: var(--anonymous-space-6, 1.5rem);
+  margin: var(--anonymous-space-4, 1rem) 0;
+}
+
+li {
+  margin: var(--anonymous-space-2, 0.5rem) 0;
+  line-height: var(--anonymous-leading-relaxed, 1.8);
+}
+
+li > ul, li > ol {
+  margin: var(--anonymous-space-1, 0.25rem) 0;
+}
+
+/* 任务列表 */
+.task-list-item {
+  list-style-type: none;
+  margin-left: -1.5em;
+}
+
+.task-list-item input[type="checkbox"] {
+  margin-right: 0.5em;
+  accent-color: var(--anonymous-primary);
+  width: 1em;
+  height: 1em;
+  vertical-align: middle;
+}
+
+/* ============================================================================
+ * 表格 - Tables
+ * ============================================================================ */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: var(--anonymous-space-4, 1rem) 0;
+  font-size: var(--anonymous-text-sm, 0.875rem);
+  overflow-x: auto;
+  display: block;
+}
+
+table th,
+table td {
+  padding: var(--anonymous-space-3, 0.75rem) var(--anonymous-space-4, 1rem);
+  border: 1px solid var(--anonymous-border-default);
+  text-align: left;
+}
+
+table th {
+  background-color: var(--anonymous-bg-secondary);
+  font-weight: 600;
+  color: var(--anonymous-text-primary);
+}
+
+table tr:nth-child(2n) {
+  background-color: var(--anonymous-bg-tertiary);
+}
+
+table tr:hover {
+  background-color: var(--anonymous-primary-alpha-12);
+}
+
+/* ============================================================================
+ * 分隔线 - Horizontal Rule
+ * ============================================================================ */
+
+hr {
+  border: none;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--anonymous-border-default),
+    transparent
+  );
+  margin: var(--anonymous-space-8, 2rem) 0;
+}
+
+/* ============================================================================
+ * 图片 - Images
+ * ============================================================================ */
+
+img {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--anonymous-radius-md, 6px);
+  display: block;
+}
+
+p > img:only-child {
+  margin: var(--anonymous-space-4, 1rem) auto;
+}
+
+/* 图片标题 */
+img + em,
+figure figcaption {
+  display: block;
+  text-align: center;
+  font-size: var(--anonymous-text-sm, 0.875rem);
+  color: var(--anonymous-text-muted);
+  margin-top: var(--anonymous-space-2, 0.5rem);
+}
+
+/* ============================================================================
+ * 键盘按键 - Keyboard
+ * ============================================================================ */
+
+kbd {
+  font-family: var(--anonymous-font-mono);
+  font-size: var(--anonymous-text-sm, 0.875rem);
+  padding: 0.2em 0.5em;
+  background-color: var(--anonymous-bg-secondary);
+  border: 1px solid var(--anonymous-border-default);
+  border-radius: var(--anonymous-radius-sm, 3px);
+  box-shadow: inset 0 -1px 0 var(--anonymous-border-hover);
+  color: var(--anonymous-text-primary);
+}
+
+/* ============================================================================
+ * 脚注 - Footnotes
+ * ============================================================================ */
+
+.footnotes {
+  margin-top: var(--anonymous-space-8, 2rem);
+  padding-top: var(--anonymous-space-4, 1rem);
+  border-top: 1px solid var(--anonymous-border-default);
+  font-size: var(--anonymous-text-sm, 0.875rem);
+  color: var(--anonymous-text-secondary);
+}
+
+/* ============================================================================
+ * 数学公式 - Math (KaTeX)
+ * ============================================================================ */
+
+.katex {
+  color: var(--anonymous-text-math, #f9007c);
+}
+
+.katex-display {
+  margin: var(--anonymous-space-4, 1rem) 0;
+  overflow-x: auto;
+  padding: var(--anonymous-space-2, 0.5rem) 0;
+}
+
+/* ============================================================================
+ * 滚动条 - Scrollbar
+ * ============================================================================ */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--anonymous-bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--anonymous-border-default);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--anonymous-border-hover);
+}
+
+/* ============================================================================
+ * 选中效果 - Selection
+ * ============================================================================ */
+
+::selection {
+  background-color: var(--anonymous-primary-alpha-30);
+  color: var(--anonymous-text-primary);
+}
+
+/* ============================================================================
+ * 打印样式 - Print Styles
+ * ============================================================================ */
+
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+  
+  pre, code {
+    background-color: #f5f5f5 !important;
+    color: #333 !important;
+  }
+  
+  a {
+    color: #000;
+    text-decoration: underline;
+  }
+}

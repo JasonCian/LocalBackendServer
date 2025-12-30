@@ -1,0 +1,120 @@
+/**
+ * ============================================================================
+ * Anonymous Theme - 工具栏样式 / Toolbar Styles
+ * ============================================================================
+ * 
+ * 文件: Anonymous/UI/toolbar.css
+ * 描述: 工具栏的样式定义
+ *       Styles for the toolbar
+ * 
+ * 参考: https://support.typora.io/Add-Custom-CSS/
+ * ============================================================================
+ */
+
+/* ============================================================================
+ * 工具栏图标样式 - Toolbar Icon Styles
+ * ============================================================================ */
+
+/**
+ * 工具栏按钮悬停状态
+ */
+.unibody-window .long-btn:hover span,
+.unibody-window .long-btn:hover i,
+.megamenu-menu-panel .btn:hover,
+#megamenu-menu-header-title:hover,
+.toolbar-icon:hover,
+#megamenu-back-btn:hover i {
+  color: var(--anonymous-primary);
+  text-decoration: none;
+}
+
+.unibody-window .long-btn:hover,
+.megamenu-menu-panel .btn:hover,
+#megamenu-back-btn:hover {
+  border-color: var(--anonymous-primary);
+  background: var(--anonymous-bg-secondary);
+}
+
+/* ============================================================================
+ * 标题栏按钮样式 - Title Bar Button Styles
+ * ============================================================================ */
+
+/**
+ * 标题栏左侧区域
+ */
+#w-titlebar-left {
+  margin-top: 3px;
+}
+
+/**
+ * 窗口控制按钮
+ */
+#w-traffic-lights span {
+  background: transparent !important;
+  border-radius: 0 !important;
+  border: none !important;
+}
+
+#w-traffic-lights .btn {
+  margin: 0 !important;
+}
+
+#w-traffic-lights #w-min,
+#w-traffic-lights #w-close,
+#w-traffic-lights #w-max {
+  padding-top: 8px;
+  padding-left: 18px;
+}
+
+#w-traffic-lights #w-close {
+  border-top-right-radius: var(--anonymous-radius-lg) !important;
+}
+
+/**
+ * 最大化按钮组
+ */
+#w-max-group.w-show-more > #w-full,
+#w-max-group.w-show-more > #w-pin {
+  display: block !important;
+  background: var(--anonymous-bg-secondary) !important;
+}
+
+#w-max-group *,
+#w-max-group.w-show-more > #w-full *,
+#w-max-group.w-show-more > #w-pin * {
+  color: var(--anonymous-text-primary) !important;
+}
+
+#w-max-group.w-show-more > #w-pin {
+  border-bottom-left-radius: var(--anonymous-radius-md) !important;
+  border-bottom-right-radius: var(--anonymous-radius-md) !important;
+}
+
+/**
+ * 窗口按钮悬停状态
+ */
+#w-traffic-lights > span:not(#w-close):hover {
+  background: var(--anonymous-bg-secondary) !important;
+  color: var(--anonymous-text-primary);
+}
+
+#w-traffic-lights #w-close:hover {
+  background: var(--anonymous-error) !important;
+  color: white !important;
+}
+
+#w-max-group.w-show-more > #w-full:hover *,
+#w-max-group.w-show-more > #w-pin:hover * {
+  color: var(--anonymous-primary) !important;
+}
+
+/* ============================================================================
+ * 长按钮样式 - Long Button Styles
+ * ============================================================================ */
+
+/**
+ * Windows 下的长按钮圆角
+ */
+.unibody-window .long-btn {
+  border-radius: var(--anonymous-radius-lg) !important;
+}

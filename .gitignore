@@ -1,0 +1,10 @@
+/logs
+/nssm*
+/node_modules
+/tmp
+/config.json
+/.github
+/data
+/docs
+/.git
+/package-lock.json

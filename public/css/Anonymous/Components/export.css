@@ -1,0 +1,279 @@
+/**
+ * ============================================================================
+ * Anonymous Theme - 导出样式 / Export Styles
+ * ============================================================================
+ * 
+ * 文件: Anonymous/Components/export.css
+ * 描述: PDF/HTML 导出时的样式优化，继承主题配色，提升导出文档的可读性
+ *       Styles for PDF/HTML export, inheriting theme colors for consistency
+ * 
+ * 设计理念 / Design Philosophy:
+ * - 保持主题原有配色风格
+ * - Maintain original theme color scheme
+ * - 仅优化排版和分页控制
+ * - Only optimize typography and page break control
+ * 
+ * 参考: https://support.typora.io/Export/
+ * ============================================================================
+ */
+
+/* ============================================================================
+ * 页面布局 - Page Layout
+ * ============================================================================ */
+
+@media print {
+  /**
+   * 主编辑区域
+   */
+  #write {
+    max-width: 100% !important;
+    padding: 20px 30px !important;
+    margin: 0 auto !important;
+  }
+
+  /**
+   * 内容容器
+   */
+  .typora-export,
+  .typora-export-show-outline {
+    padding: 0 !important;
+  }
+
+  /**
+   * 隐藏打印时不需要的 UI 元素
+   */
+  .md-toc-tooltip,
+  .megamenu,
+  .toolbar,
+  .typora-footer,
+  .sidebar,
+  .outline-content,
+  #outline-btn,
+  .typora-quick-open-list,
+  .context-menu,
+  .file-tree-node,
+  .md-notification-container,
+  .md-search-panel,
+  #typora-source,
+  .md-floating-tip,
+  .md-comment-popup {
+    display: none !important;
+  }
+}
+
+/* ============================================================================
+ * 分页控制 - Page Break Control
+ * ============================================================================ */
+
+@media print {
+  /**
+   * 标题分页控制
+   * 避免标题与后续内容分离
+   */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /**
+   * 避免在这些元素内部分页
+   */
+  pre,
+  blockquote,
+  table,
+  figure,
+  img,
+  .md-fences,
+  .md-math-block,
+  .md-diagram-panel,
+  .md-alert {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /**
+   * 孤行和寡行控制
+   */
+  p,
+  li {
+    orphans: 3;
+    widows: 3;
+  }
+}
+
+/* ============================================================================
+ * 代码块优化 - Code Block Optimization
+ * ============================================================================ */
+
+@media print {
+  /**
+   * 代码块长行换行
+   */
+  pre,
+  .md-fences {
+    overflow-x: visible !important;
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+  }
+
+  pre code,
+  .md-fences code,
+  .md-fences .CodeMirror,
+  .md-fences .CodeMirror-code {
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+  }
+
+  .CodeMirror-wrap,
+  .CodeMirror-scroll {
+    overflow: visible !important;
+  }
+}
+
+/* ============================================================================
+ * 图片优化 - Image Optimization
+ * ============================================================================ */
+
+@media print {
+  /**
+   * 图片尺寸限制
+   */
+  img {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  /**
+   * 图片容器
+   */
+  p:has(img),
+  .md-image {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /**
+   * 移除图片阴影（打印时可能显示不佳）
+   */
+  img,
+  span.md-image {
+    box-shadow: none !important;
+  }
+}
+
+/* ============================================================================
+ * 链接优化 - Link Optimization
+ * ============================================================================ */
+
+@media print {
+  /**
+   * 保持链接可识别
+   */
+  a {
+    text-decoration: underline !important;
+  }
+}
+
+/* ============================================================================
+ * 表格优化 - Table Optimization
+ * ============================================================================ */
+
+@media print {
+  /**
+   * 表格分页控制
+   */
+  table,
+  figure {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}
+
+/* ============================================================================
+ * 脚注优化 - Footnote Optimization
+ * ============================================================================ */
+
+@media print {
+  /**
+   * 脚注定义区域
+   */
+  .footnotes-area {
+    margin-top: 32px !important;
+    padding-top: 16px !important;
+    border-top: 1px solid var(--anonymous-border-default) !important;
+  }
+
+  .footnotes-area hr {
+    display: none !important;
+  }
+}
+
+/* ============================================================================
+ * 目录优化 - TOC Optimization
+ * ============================================================================ */
+
+@media print {
+  /**
+   * 目录后分页
+   */
+  .md-toc {
+    page-break-after: always !important;
+    margin-bottom: 32px !important;
+  }
+}
+
+/* ============================================================================
+ * 打印优化 - Print Optimization
+ * ============================================================================ */
+
+@media print {
+  /**
+   * 移除动画效果
+   */
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+
+  /**
+   * 确保背景色可打印
+   */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
+
+/* ============================================================================
+ * 导出特定样式 - Export Specific Styles
+ * ============================================================================ */
+
+/**
+ * Typora 导出模式
+ */
+.typora-export #write {
+  padding: 20px 30px !important;
+}
+
+/**
+ * 导出时的代码块优化
+ */
+.typora-export .md-fences {
+  overflow: visible !important;
+}
+
+.typora-export .md-fences .CodeMirror-scroll {
+  overflow: visible !important;
+}
+
+.typora-export .md-fences .CodeMirror-code {
+  white-space: pre-wrap !important;
+  word-wrap: break-word !important;
+}

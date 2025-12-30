@@ -1,0 +1,162 @@
+/**
+ * ============================================================================
+ * Anonymous Theme - 右键菜单样式 / Context Menu Styles
+ * ============================================================================
+ * 
+ * 文件: Anonymous/UI/context-menu.css
+ * 描述: 右键菜单和下拉菜单的样式定义
+ *       Styles for context menus and dropdown menus
+ * 
+ * 参考: https://support.typora.io/Add-Custom-CSS/
+ * ============================================================================
+ */
+
+/* ============================================================================
+ * 下拉菜单样式 - Dropdown Menu Styles
+ * ============================================================================ */
+
+/**
+ * 下拉菜单基础样式
+ */
+.dropdown-menu {
+  margin-top: 4px;
+  padding: 8px !important;
+  border-radius: var(--anonymous-radius-lg) !important;
+  border: 1px solid var(--anonymous-border-default);
+}
+
+/**
+ * 下拉菜单项和相关组件圆角
+ */
+#recent-file-panel-search-input,
+.megamenu-menu-panel .btn,
+.dropdown-menu li a,
+.dropdown-menu li:hover {
+  border-radius: var(--anonymous-radius-md) !important;
+}
+
+/**
+ * 拼写检查面板项
+ */
+.ty-spell-check-panel-item {
+  margin-bottom: 4px;
+  border-radius: var(--anonymous-radius-md);
+}
+
+/**
+ * 分割按钮组的下拉菜单
+ */
+.btn-split-group .dropdown-menu {
+  margin-top: 0;
+}
+
+/**
+ * 下拉菜单链接
+ */
+.dropdown-menu li a {
+  font-size: var(--anonymous-text-sm);
+}
+
+/**
+ * 下拉菜单表格单元格
+ */
+.dropdown-menu table th,
+.dropdown-menu table td {
+  padding: 5px !important;
+}
+
+/**
+ * 下拉菜单悬停状态
+ */
+.dropdown-menu li:hover > a,
+.dropdown-menu li > span > a:hover,
+#sidebar-files-menu li:hover > a,
+#close-sidebar-menu-btn:hover {
+  background: var(--anonymous-bg-secondary) !important;
+  color: var(--anonymous-primary) !important;
+}
+
+.dropdown-menu li > span > a:hover {
+  background: var(--anonymous-primary-alpha-12) !important;
+  box-shadow: inset 0 0 0 1px var(--anonymous-primary),
+    inset 0 -1px 0 var(--anonymous-primary);
+}
+
+/**
+ * 文件操作项
+ */
+.dropdown-menu li.file-action-item,
+.dropdown-menu li.file-sort-item,
+.dropdown-menu li.file-sort-item + li {
+  margin-top: 0;
+  border-radius: 0 !important;
+}
+
+/* ============================================================================
+ * 右键菜单样式 - Context Menu Styles
+ * ============================================================================ */
+
+/**
+ * 右键菜单基础样式
+ */
+.context-menu {
+  padding: 6px !important;
+  border-radius: var(--anonymous-radius-md) !important;
+  border: 1px solid var(--anonymous-border-default);
+}
+
+/**
+ * 扩展右键菜单
+ */
+.ext-context-menu {
+  margin: -4px 1px 0 1px;
+}
+
+/**
+ * 右键菜单链接
+ */
+.context-menu li a {
+  display: inline-block;
+  width: 100%;
+  border-radius: var(--anonymous-radius-md) !important;
+}
+
+/**
+ * 右键菜单激活状态
+ */
+.context-menu > .active a {
+  color: var(--anonymous-primary) !important;
+}
+
+/**
+ * 特殊背景色
+ */
+.tb43e-d6bd-dbe4y {
+  background: var(--anonymous-bg-secondary);
+}
+
+/* ============================================================================
+ * 侧边栏文件菜单 - Sidebar Files Menu
+ * ============================================================================ */
+
+/**
+ * 侧边栏文件菜单项
+ */
+#sidebar-files-menu li a {
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+#sidebar-files-menu .file-action-item {
+  line-height: 30px;
+}
+
+/* ============================================================================
+ * 响应式布局 - Responsive Layout
+ * ============================================================================ */
+
+@media (max-width: 768px) {
+  .dropdown-menu {
+    padding: 8px !important;
+  }
+}

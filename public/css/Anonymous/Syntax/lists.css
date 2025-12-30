@@ -1,0 +1,193 @@
+/**
+ * ============================================================================
+ * Anonymous Theme - 列表样式 / List Styles
+ * ============================================================================
+ * 
+ * 文件: Anonymous/Syntax/lists.css
+ * 描述: 有序列表和无序列表的样式定义
+ *       Styles for ordered and unordered lists
+ * 
+ * Markdown 语法 / Markdown Syntax:
+ * 无序列表:
+ * - 项目1
+ * - 项目2
+ *   - 嵌套项目
+ * 
+ * 有序列表:
+ * 1. 项目1
+ * 2. 项目2
+ *    1. 嵌套项目
+ * 
+ * 参考: https://support.typora.io/List-Style/
+ * ============================================================================
+ */
+
+/* ============================================================================
+ * 列表基础样式 - Base List Styles
+ * ============================================================================ */
+
+/**
+ * 有序和无序列表通用样式
+ */
+ul,
+ol {
+  margin-top: 0;
+  margin-bottom: 0;
+  margin-left: 0;
+}
+
+/**
+ * 无序列表缩进
+ */
+ul {
+  padding-left: 36px;
+}
+
+/**
+ * 有序列表缩进
+ */
+ol {
+  padding-left: 40px;
+}
+
+/* ============================================================================
+ * 列表间距 - List Spacing
+ * ============================================================================ */
+
+/**
+ * 段落后的列表顶部间距
+ */
+#write > p + ul,
+#write > p + ol,
+blockquote > ul,
+blockquote > ol,
+.md-alert > ul,
+.md-alert > ol {
+  margin-top: 11px;
+}
+
+/**
+ * 列表项间距
+ */
+#write li {
+  margin-top: 6px;
+}
+
+/**
+ * 列表项内的段落
+ */
+li > p {
+  margin: -5px 0;
+}
+
+/* ============================================================================
+ * 嵌套列表 - Nested Lists
+ * ============================================================================ */
+
+/**
+ * 有序列表嵌套
+ */
+ol ol {
+  margin-left: -7px;
+}
+
+/**
+ * 有序列表内的无序列表
+ */
+ol > li > ul {
+  margin-left: -7px;
+}
+
+/**
+ * 无序列表内的有序列表
+ */
+ul > li > ol {
+  margin-left: -2px;
+}
+
+/* ============================================================================
+ * 列表项内容样式 - List Item Content Styles
+ * ============================================================================ */
+
+/**
+ * 无序列表项内的段落
+ */
+ul > li > p {
+  margin: 0 0 0 -2px;
+}
+
+/**
+ * 有序列表项内的段落
+ */
+ol > li > p {
+  margin: 0 0 0 -6px;
+}
+
+/* ============================================================================
+ * 列表项内的块级元素 - Block Elements in List Items
+ * ============================================================================ */
+
+/**
+ * 列表项内的图片、代码块、引用块等
+ */
+#write li img,
+#write li pre,
+#write li figure,
+#write li blockquote,
+#write li .md-alert {
+  margin-top: 11px !important;
+  margin-bottom: 11px !important;
+}
+
+/**
+ * 列表项内嵌套的代码块和图片
+ */
+#write li pre pre,
+#write li .md-image {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+/* ============================================================================
+ * 列表样式类型（可选）
+ * List Style Types (Optional)
+ * 
+ * 取消注释以下代码以自定义列表样式
+ * Uncomment the following code to customize list styles
+ * 参考: https://support.typora.io/List-Style/
+ * ============================================================================ */
+
+/*
+ * 有序列表样式示例 - Ordered List Style Examples:
+ * ol { list-style-type: decimal; }              数字（默认）
+ * ol { list-style-type: decimal-leading-zero; } 带前导零的数字
+ * ol { list-style-type: lower-alpha; }          小写字母
+ * ol { list-style-type: upper-alpha; }          大写字母
+ * ol { list-style-type: lower-roman; }          小写罗马数字
+ * ol { list-style-type: upper-roman; }          大写罗马数字
+ * ol { list-style-type: cjk-ideographic; }      中文数字
+ */
+
+/*
+ * 无序列表样式示例 - Unordered List Style Examples:
+ * ul { list-style-type: disc; }                 实心圆点（默认）
+ * ul { list-style-type: circle; }               空心圆点
+ * ul { list-style-type: square; }               方块
+ * ul { list-style-type: "- "; }                 自定义符号
+ */
+
+/*
+ * 嵌套列表样式示例 - Nested List Style Examples:
+ *
+ * ol {
+ *   list-style-type: decimal;
+ * }
+ * 
+ * ol ol {
+ *   list-style-type: lower-alpha;
+ * }
+ * 
+ * ol ol ol {
+ *   list-style-type: lower-roman;
+ * }
+ */

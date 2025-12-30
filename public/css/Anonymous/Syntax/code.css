@@ -1,0 +1,55 @@
+/**
+ * ============================================================================
+ * Anonymous Theme - 行内代码样式 / Inline Code Styles
+ * ============================================================================
+ * 
+ * 文件: Anonymous/Syntax/code.css
+ * 描述: 行内代码的样式定义
+ *       Styles for inline code
+ * 
+ * Markdown 语法 / Markdown Syntax:
+ * 这是 `行内代码` 的示例
+ * 
+ * 参考: https://support.typora.io/Code-Block-Styles/
+ * ============================================================================
+ */
+
+/* ============================================================================
+ * 行内代码样式 - Inline Code Styles
+ * ============================================================================ */
+
+/**
+ * 行内代码基础样式
+ * 
+ * 属性说明:
+ * - border-radius: 圆角
+ * - background: 半透明主色背景
+ * - padding: 内边距
+ * - font-size: 略小于正文
+ * - box-decoration-break: clone 确保换行时样式正确
+ */
+code {
+  border-radius: var(--anonymous-radius-sm);
+  background: var(--anonymous-primary-alpha-30);
+  padding: 3px 5px;
+  color: var(--anonymous-text-code);
+  font-size: var(--anonymous-text-sm);
+  font-family: var(--anonymous-font-mono);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* ============================================================================
+ * 大纲中的代码样式 - Code in Outline
+ * ============================================================================ */
+
+/**
+ * 大纲面板中的行内代码
+ * 使用更小的字号和内边距
+ */
+.outline-content .outline-item code {
+  font-size: 11px;
+  padding: 2px 4px;
+  border-radius: var(--anonymous-radius-sm);
+  vertical-align: middle;
+}

@@ -1,0 +1,151 @@
+/**
+ * ============================================================================
+ * Anonymous Theme - 引用块样式 / Blockquote Styles
+ * ============================================================================
+ * 
+ * 文件: Anonymous/Syntax/blockquote.css
+ * 描述: 引用块和 GitHub 风格提示框的样式定义
+ *       Styles for blockquotes and GitHub-style alerts
+ * 
+ * Markdown 语法 / Markdown Syntax:
+ * > 这是一个引用块
+ * > 可以有多行
+ * 
+ * GitHub 风格提示框:
+ * > [!NOTE]
+ * > 这是一个注意提示
+ * 
+ * > [!TIP]
+ * > 这是一个技巧提示
+ * 
+ * > [!IMPORTANT]
+ * > 这是一个重要提示
+ * 
+ * > [!WARNING]
+ * > 这是一个警告提示
+ * 
+ * > [!CAUTION]
+ * > 这是一个注意事项
+ * 
+ * 参考: https://support.typora.io/Add-Custom-CSS/
+ * ============================================================================
+ */
+
+/* ============================================================================
+ * 引用块基础样式 - Base Blockquote Styles
+ * ============================================================================ */
+
+/**
+ * 引用块通用样式
+ * 
+ * 属性说明:
+ * - padding: 内边距提供舒适的阅读空间
+ * - border-left: 左侧边框作为视觉标识
+ * - border-radius: 圆角设计
+ * - background: 使用主色半透明背景
+ */
+blockquote,
+.md-alert {
+  margin-top: var(--anonymous-space-4) !important;
+  margin-bottom: 0;
+  padding: var(--anonymous-space-4);
+  background: var(--anonymous-primary-alpha-12);
+  box-sizing: border-box;
+  border-radius: var(--anonymous-radius-lg);
+  border-left: 4px solid var(--anonymous-primary);
+  border-right: 0.1px solid transparent;
+  border-bottom: 0.1px solid transparent;
+  border-top: 0.1px solid transparent;
+}
+
+/**
+ * 引用块内首个元素
+ * 移除顶部间距
+ */
+blockquote > *:first-child,
+.md-alert > *:first-child {
+  margin-top: 0 !important;
+}
+
+/**
+ * 引用块内最后一个元素
+ * 移除底部间距
+ */
+blockquote > *:last-child,
+.md-alert > *:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* ============================================================================
+ * GitHub 风格提示框 - GitHub Style Alerts
+ * ============================================================================ */
+
+/**
+ * NOTE 提示框（蓝色）
+ * 用于一般性信息提示
+ */
+.md-alert.md-alert-note {
+  border-left-color: var(--anonymous-primary);
+  background: var(--anonymous-primary-alpha-12);
+  color: var(--anonymous-primary);
+}
+
+.md-alert.md-alert-note .md-alert-text-note {
+  color: var(--anonymous-primary);
+}
+
+/**
+ * CAUTION 提示框（橙色）
+ * 用于需要注意的事项
+ */
+.md-alert.md-alert-caution {
+  border-left-color: var(--anonymous-accent);
+  background: var(--anonymous-accent-alpha-12);
+  color: var(--anonymous-accent);
+}
+
+.md-alert.md-alert-caution .md-alert-text-caution {
+  color: var(--anonymous-accent);
+}
+
+/**
+ * TIP 提示框（绿色）
+ * 用于有用的技巧和建议
+ */
+.md-alert.md-alert-tip {
+  border-left-color: var(--anonymous-success);
+  background: var(--anonymous-success-alpha-12);
+  color: var(--anonymous-success);
+}
+
+.md-alert.md-alert-tip .md-alert-text-tip {
+  color: var(--anonymous-success);
+}
+
+/**
+ * IMPORTANT 提示框（紫色）
+ * 用于重要信息
+ */
+.md-alert.md-alert-important {
+  border-left-color: var(--anonymous-info);
+  background: var(--anonymous-info-alpha-12);
+  color: var(--anonymous-info);
+}
+
+.md-alert.md-alert-important .md-alert-text-important {
+  color: var(--anonymous-info);
+}
+
+/**
+ * WARNING 提示框（红色）
+ * 用于警告信息
+ */
+.md-alert.md-alert-warning {
+  border-left-color: var(--anonymous-error);
+  background: var(--anonymous-error-alpha-12);
+  color: var(--anonymous-error);
+}
+
+.md-alert.md-alert-warning .md-alert-text-warning {
+  color: var(--anonymous-error);
+}

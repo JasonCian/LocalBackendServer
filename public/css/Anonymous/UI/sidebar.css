@@ -1,0 +1,218 @@
+/**
+ * ============================================================================
+ * Anonymous Theme - 侧边栏样式 / Sidebar Styles
+ * ============================================================================
+ * 
+ * 文件: Anonymous/UI/sidebar.css
+ * 描述: 侧边栏容器的样式定义
+ *       Styles for the sidebar container
+ * 
+ * 参考: https://support.typora.io/Add-Custom-CSS/
+ * ============================================================================
+ */
+
+/* ============================================================================
+ * 侧边栏容器样式 - Sidebar Container Styles
+ * ============================================================================ */
+
+/**
+ * 侧边栏边框
+ */
+#typora-sidebar {
+  border-right-color: var(--anonymous-border-default);
+}
+
+/**
+ * Windows 系统下侧边栏内容区域
+ */
+.os-windows #sidebar-content {
+  margin-top: -1px;
+  border-top: 1px solid var(--anonymous-border-default);
+}
+
+/* ============================================================================
+ * 侧边栏标签样式 - Sidebar Tab Styles
+ * ============================================================================ */
+
+/**
+ * 侧边栏标签按钮
+ */
+.sidebar-tab-btn {
+  margin-top: 12px !important;
+  color: var(--anonymous-text-primary);
+  font-size: 1rem !important;
+  line-height: 20px !important;
+  vertical-align: middle;
+}
+
+.sidebar-tab-btn:hover {
+  color: var(--anonymous-primary);
+}
+
+/**
+ * 标签区域
+ */
+.sidebar-tabs {
+  padding: 0 2px;
+}
+
+/* ============================================================================
+ * 侧边栏页脚样式 - Sidebar Footer Styles
+ * ============================================================================ */
+
+/**
+ * 侧边栏页脚项
+ */
+#ty-sidebar-footer .sidebar-footer-item {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.os-windows #ty-sidebar-footer .sidebar-footer-item {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* ============================================================================
+ * 侧边栏搜索面板 - Sidebar Search Panel
+ * ============================================================================ */
+
+/**
+ * 搜索面板样式
+ */
+.ty-sidebar-search-panel {
+  padding-left: 14px !important;
+  padding-right: 14px !important;
+}
+
+/**
+ * 文件搜索面板
+ */
+#file-library-search-panel {
+  padding-top: 3px;
+  padding-bottom: 11px;
+  border-bottom: 1px solid var(--anonymous-border-default) !important;
+}
+
+/**
+ * 搜索输入框
+ */
+#file-library-search-input {
+  top: 4px;
+  width: 100% !important;
+  border-radius: 0 !important;
+}
+
+#file-library-search-input,
+.native-window #file-library-search-input {
+  height: 28px;
+  border-radius: var(--anonymous-radius-md) !important;
+  font-size: var(--anonymous-text-xs);
+}
+
+/**
+ * 搜索选项按钮
+ */
+#ty-sidebar-search-panel .searchpanel-search-option-btn {
+  top: 12px;
+}
+
+/**
+ * 关闭大纲筛选按钮
+ */
+#close-outline-filter-btn {
+  top: 12px;
+  right: 15px;
+  border: none !important;
+  background: transparent !important;
+}
+
+/**
+ * 文件搜索选项按钮
+ */
+#sidebar-content #file-library-search-panel .searchpanel-search-option-btn {
+  top: 12px;
+}
+
+/* ============================================================================
+ * 活动标签指示器 - Active Tab Indicators
+ * ============================================================================ */
+
+/**
+ * 活动标签边框
+ */
+.ty-show-search #info-panel-tab-search .info-panel-tab-border,
+.active-tab-files #info-panel-tab-file .info-panel-tab-border,
+.active-tab-outline #info-panel-tab-outline .info-panel-tab-border {
+  height: 3px;
+  border-radius: 2px;
+}
+
+/* ============================================================================
+ * macOS 特定样式 - macOS Specific Styles
+ * ============================================================================ */
+
+/**
+ * macOS 搜索模式标签区域
+ */
+.mac-os .ty-show-search .ty-tab-wrapper {
+  border-bottom: 1px solid var(--anonymous-border-default);
+}
+
+.mac-os #sidebar-search-btn span::before {
+  font-size: 18px;
+}
+
+/**
+ * macOS 搜索标签输入框
+ */
+.mac-os #ty-sidebar-search-tabs input {
+  top: 0;
+  margin-right: 0;
+  padding: 0;
+  border-top: none;
+  border-right: none;
+  border-left: none;
+  border-radius: 0 !important;
+  border-bottom-width: 1px;
+}
+
+.mac-os #ty-sidebar-search-tabs .searchpanel-search-option-btn {
+  top: 14px;
+}
+
+.mac-os #ty-sidebar-search-tabs #ty-sidebar-search-back-btn {
+  margin-top: 14px !important;
+}
+
+.mac-os #ty-sidebar-search-tabs .sidebar-tab-btn {
+  width: 25px !important;
+  padding-right: 8px;
+}
+
+/**
+ * macOS 搜索选项按钮位置
+ */
+.mac-os #ty-sidebar-search-tabs #filesearch-regexp-option-btn {
+  right: 12px;
+}
+
+.mac-os #ty-sidebar-search-tabs #filesearch-word-option-btn {
+  right: 35px;
+}
+
+.mac-os #ty-sidebar-search-tabs #filesearch-case-option-btn {
+  right: 58px;
+}
+
+/* ============================================================================
+ * 侧边栏显示大纲筛选 - Sidebar Outline Filter
+ * ============================================================================ */
+
+.os-windows .ty-show-outline-filter #sidebar-content .sidebar-content-content {
+  margin-top: -4px;
+}
+
+.os-windows .ty-show-search #sidebar-content .sidebar-content-content {
+  margin-top: -7px;
+}

@@ -1,0 +1,298 @@
+/**
+ * ============================================================================
+ * Anonymous Theme - 标题样式 / Heading Styles
+ * ============================================================================
+ * 
+ * 文件: Anonymous/Syntax/headings.css
+ * 描述: Markdown 标题 (h1-h6) 的样式定义
+ *       Styles for Markdown headings (h1-h6)
+ * 
+ * Markdown 语法 / Markdown Syntax:
+ * # 一级标题
+ * ## 二级标题
+ * ### 三级标题
+ * #### 四级标题
+ * ##### 五级标题
+ * ###### 六级标题
+ * 
+ * 参考: https://support.typora.io/Auto-Numbering/
+ * ============================================================================
+ */
+
+/* ============================================================================
+ * 标题通用样式 - Common Heading Styles
+ * ============================================================================ */
+
+/**
+ * 所有标题的共享样式
+ * 
+ * 属性说明:
+ * - position: relative 用于伪元素定位
+ * - line-height: 1.5 紧凑的行高
+ * - margin: 标题前后间距
+ * - letter-spacing: 2px 增加字间距提高辨识度
+ */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  position: relative;
+  line-height: var(--anonymous-leading-snug);
+  margin: var(--anonymous-heading-margin-top) 0
+    var(--anonymous-heading-margin-bottom);
+  color: var(--anonymous-text-primary);
+  letter-spacing: var(--anonymous-tracking-wider);
+  font-family: var(--anonymous-font-heading);
+  cursor: text;
+}
+
+/* ============================================================================
+ * 各级标题尺寸 - Heading Sizes
+ * 使用 rem 单位以支持 Typora 字体缩放
+ * ============================================================================ */
+
+/**
+ * 一级标题
+ * 最大的标题，通常用于文档标题
+ * 底部有边框分隔
+ */
+h1 {
+  font-size: var(--anonymous-text-4xl); /* 2rem = 32px */
+  border-bottom: 1px solid var(--anonymous-border-default);
+}
+
+/**
+ * 二级标题
+ * 用于主要章节
+ */
+h2 {
+  font-size: var(--anonymous-text-3xl); /* 1.75rem = 28px */
+}
+
+/**
+ * 三级标题
+ * 用于子章节
+ */
+h3 {
+  font-size: var(--anonymous-text-2xl); /* 1.5rem = 24px */
+}
+
+/**
+ * 四级标题
+ * 用于小节
+ */
+h4 {
+  font-size: var(--anonymous-text-xl); /* 1.25rem = 20px */
+}
+
+/**
+ * 五级标题
+ * 用于细分内容
+ */
+h5 {
+  font-size: var(--anonymous-text-lg); /* 1.125rem = 18px */
+}
+
+/**
+ * 六级标题
+ * 最小的标题级别
+ */
+h6 {
+  font-size: var(--anonymous-text-base); /* 1rem = 16px */
+}
+
+/* ============================================================================
+ * 标题后元素间距 - Spacing After Headings
+ * ============================================================================ */
+
+/**
+ * 标题后第一个元素的顶部间距
+ * 确保标题与内容之间有适当的间距
+ */
+#write > h1 + *,
+#write > h2 + *,
+#write > h3 + *,
+#write > h4 + *,
+#write > h5 + *,
+#write > h6 + * {
+  margin-top: var(--anonymous-heading-margin-bottom) !important;
+}
+
+/* ============================================================================
+ * 标题级别标识 - Heading Level Indicators
+ * ============================================================================ */
+
+/**
+ * 标题级别标签（悬停时显示）
+ * 在标题左侧显示 h1, h2 等标识
+ */
+#write > h1::before,
+#write > h2::before,
+#write > h3::before,
+#write > h4::before,
+#write > h5::before,
+#write > h6::before,
+#write > h1.md-focus::before,
+#write > h2.md-focus::before,
+#write > h3.md-focus::before,
+#write > h4.md-focus::before,
+#write > h5.md-focus::before,
+#write > h6.md-focus::before {
+  display: none;
+  position: absolute;
+  left: -36px;
+  height: 20px;
+  padding-left: 6px;
+  padding-right: 3px;
+  border: 1px solid var(--anonymous-primary);
+  border-radius: var(--anonymous-radius-sm);
+  font-size: var(--anonymous-text-xs);
+  font-weight: 700;
+  color: var(--anonymous-primary);
+}
+
+/**
+ * 各级标题标签内容和位置
+ */
+#write > h1::before,
+#write > h1.md-focus::before {
+  content: "h1";
+  top: 15px;
+}
+
+#write > h2::before,
+#write > h2.md-focus::before {
+  content: "h2";
+  top: 10.5px;
+}
+
+#write > h3::before,
+#write > h3.md-focus::before {
+  content: "h3";
+  top: 8px;
+}
+
+#write > h4::before,
+#write > h4.md-focus::before {
+  content: "h4";
+  top: 5.5px;
+}
+
+#write > h5::before,
+#write > h5.md-focus::before {
+  content: "h5";
+  top: 4px;
+}
+
+#write > h6::before,
+#write > h6.md-focus::before {
+  content: "h6";
+  top: 2.5px;
+}
+
+/**
+ * 悬停时显示标题级别标签
+ */
+#write > h1:hover::before,
+#write > h2:hover::before,
+#write > h3:hover::before,
+#write > h4:hover::before,
+#write > h5:hover::before,
+#write > h6:hover::before {
+  display: block;
+}
+
+/* ============================================================================
+ * 标题内代码样式 - Code in Headings
+ * ============================================================================ */
+
+/**
+ * 标题中的行内代码
+ * 字号略小于标题本身
+ */
+h1 code {
+  font-size: 1.625rem; /* 26px */
+}
+
+h2 code {
+  font-size: 1.375rem; /* 22px */
+}
+
+h3 code {
+  font-size: 1.125rem; /* 18px */
+}
+
+h4 code {
+  font-size: 1rem; /* 16px */
+}
+
+/* ============================================================================
+ * 标题自动编号（可选）
+ * Auto-Numbering for Headings (Optional)
+ * 
+ * 取消注释以下代码以启用标题自动编号
+ * Uncomment the following code to enable auto-numbering
+ * 参考: https://support.typora.io/Auto-Numbering/
+ * ============================================================================ */
+
+/*
+#write {
+  counter-reset: h1;
+}
+
+h1 {
+  counter-reset: h2;
+}
+
+h2 {
+  counter-reset: h3;
+}
+
+h3 {
+  counter-reset: h4;
+}
+
+h4 {
+  counter-reset: h5;
+}
+
+h5 {
+  counter-reset: h6;
+}
+
+#write h1:before {
+  counter-increment: h1;
+  content: counter(h1) ". ";
+}
+
+#write h2:before {
+  counter-increment: h2;
+  content: counter(h1) "." counter(h2) ". ";
+}
+
+#write h3:before,
+h3.md-focus.md-heading:before {
+  counter-increment: h3;
+  content: counter(h1) "." counter(h2) "." counter(h3) ". ";
+}
+
+#write h4:before,
+h4.md-focus.md-heading:before {
+  counter-increment: h4;
+  content: counter(h1) "." counter(h2) "." counter(h3) "." counter(h4) ". ";
+}
+
+#write h5:before,
+h5.md-focus.md-heading:before {
+  counter-increment: h5;
+  content: counter(h1) "." counter(h2) "." counter(h3) "." counter(h4) "." counter(h5) ". ";
+}
+
+#write h6:before,
+h6.md-focus.md-heading:before {
+  counter-increment: h6;
+  content: counter(h1) "." counter(h2) "." counter(h3) "." counter(h4) "." counter(h5) "." counter(h6) ". ";
+}
+*/

@@ -1,0 +1,381 @@
+/**
+ * ============================================================================
+ * Anonymous Theme - 大纲样式 / Outline Styles
+ * ============================================================================
+ * 
+ * 文件: Anonymous/UI/outline.css
+ * 描述: 大纲面板的样式定义
+ *       Styles for the outline panel
+ * 
+ * 参考: https://support.typora.io/Add-Custom-CSS/
+ * ============================================================================
+ */
+
+/* ============================================================================
+ * 大纲容器样式 - Outline Container Styles
+ * ============================================================================ */
+
+/**
+ * 大纲内容区域
+ */
+.outline-content {
+  overflow: auto !important;
+  padding: 14px 14px 14px 17px;
+  font-size: var(--anonymous-text-sm) !important;
+}
+
+.os-windows .outline-content {
+  padding-top: 15px;
+}
+
+/* ============================================================================
+ * 大纲项样式 - Outline Item Styles
+ * ============================================================================ */
+
+/**
+ * 大纲项列表
+ */
+.outline-content li {
+  position: relative;
+  z-index: 30;
+}
+
+.outline-content > li:first-of-type::before {
+  top: 0;
+}
+
+/**
+ * 嵌套大纲项
+ */
+.outline-content li ul {
+  position: relative;
+  z-index: 48;
+  margin-left: 18px;
+  margin-top: 0 !important;
+}
+
+.no-collapse-outline .outline-content li ul {
+  margin-left: 21px;
+}
+
+/**
+ * 大纲项容器
+ */
+.outline-content li .outline-item {
+  position: relative;
+  z-index: 50;
+  margin: 0 0 3px 7px;
+  width: calc(100% - 4px);
+  border-radius: var(--anonymous-radius-md);
+  border: none;
+  line-height: 1;
+  padding: 0 0 0 4px;
+}
+
+/* ============================================================================
+ * 展开/折叠按钮样式 - Expander Styles
+ * ============================================================================ */
+
+/**
+ * 展开按钮
+ */
+.outline-item > .outline-expander {
+  display: block;
+  float: left;
+  width: auto;
+  height: 0;
+  background: transparent;
+  padding-left: 0;
+}
+
+.outline-item > .outline-expander:before {
+  margin-top: 10px;
+  margin-left: -2px;
+  background: transparent;
+  padding: 0 4px 0 2px;
+  font-size: 10px;
+}
+
+/* ============================================================================
+ * 大纲标签样式 - Outline Label Styles
+ * ============================================================================ */
+
+/**
+ * 大纲标签
+ */
+.outline-content li .outline-label {
+  display: inline-block;
+  border-radius: var(--anonymous-radius-sm);
+  padding: 7px 7px 7px 8px;
+  font-size: var(--anonymous-text-sm) !important;
+  line-height: 1.2;
+  overflow-wrap: normal;
+  word-wrap: normal;
+  word-break: keep-all;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+/**
+ * 单项和非折叠模式的标签内边距
+ */
+.outline-item-single .outline-label,
+.outline-item-single.outline-item-open .outline-label,
+.no-collapse-outline .outline-content li .outline-label {
+  padding-left: 0 !important;
+}
+
+/**
+ * 悬停和展开状态的标签内边距
+ */
+.outline-item > .outline-expander:hover + .outline-label,
+.outline-item-open > .outline-item > .outline-label {
+  padding-left: 11px;
+}
+
+.no-collapse-outline .outline-item-open > .outline-item > .outline-label {
+  padding-left: 0 !important;
+}
+
+.outline-item-active > .outline-expander:hover + .outline-label,
+.outline-item-open > .outline-item-active > .outline-label {
+  padding-left: 12px;
+}
+
+/**
+ * 激活状态字重
+ */
+.outline-item-active > .outline-expander,
+.outline-item-active > .outline-label {
+  font-weight: 900;
+}
+
+/* ============================================================================
+ * 大纲连接线样式 - Outline Connection Lines
+ * ============================================================================ */
+
+/**
+ * 大纲项连接线
+ */
+.outline-content li .outline-item::before {
+  content: "";
+  position: absolute;
+  z-index: 38;
+  left: -10px;
+  top: -27.5px;
+  width: 10px;
+  height: calc(50% + 28px);
+  background: transparent;
+  border-left: 1px solid var(--anonymous-border-default);
+  border-bottom: 1px solid var(--anonymous-border-default);
+}
+
+.os-windows .outline-content li .outline-item::before {
+  top: -28.5px;
+}
+
+/**
+ * 首个大纲项连接线
+ */
+.outline-content > li:first-of-type > .outline-item::before {
+  top: calc(50% - 1px);
+  height: calc(50% + 15px);
+  border-left: 1px solid var(--anonymous-border-default);
+  border-top: 1px solid var(--anonymous-border-default);
+  border-bottom: none;
+  border-top-left-radius: var(--anonymous-radius-sm);
+  border-bottom-left-radius: 0;
+}
+
+/**
+ * 子项首个连接线
+ */
+.outline-children > li:first-child > .outline-item::before,
+.outline-content > li:nth-child(2) > .outline-item::before {
+  top: -11px;
+  height: calc(50% + 12px);
+}
+
+.os-windows .outline-children > li:first-child > .outline-item::before,
+.os-windows .outline-content > li:nth-child(2) > .outline-item::before {
+  top: -13px;
+  height: calc(50% + 13px);
+}
+
+.no-collapse-outline .outline-children > li:first-child > .outline-item::before,
+.no-collapse-outline
+  .outline-content
+  > li:nth-child(2)
+  > .outline-item::before {
+  top: -8px;
+  height: calc(50% + 8px);
+}
+
+/**
+ * 末尾连接线圆角
+ */
+.outline-content > li:last-child > .outline-item::before,
+.outline-children > li:last-child > .outline-item::before {
+  border-bottom-left-radius: var(--anonymous-radius-sm);
+}
+
+/**
+ * 子项垂直连接线
+ */
+.no-collapse-outline .outline-item-wrapper > .outline-children::before,
+.outline-item-open > .outline-children::before {
+  content: "";
+  position: absolute;
+  left: -21px;
+  top: -26px;
+  width: 1px;
+  height: calc(100% + 12px);
+  background: transparent;
+  border-left: 1px solid var(--anonymous-border-default);
+}
+
+.no-collapse-outline .outline-item-wrapper > .outline-children::before {
+  left: -24px;
+}
+
+.no-collapse-outline
+  .outline-content
+  > li.outline-item-wrapper:first-child
+  > .outline-children::before,
+.outline-content
+  > li.outline-item-open:first-child
+  > .outline-children::before {
+  top: -15px;
+}
+
+/**
+ * 隐藏末尾垂直线
+ */
+.outline-content > li:only-of-type > .outline-item::before,
+.no-collapse-outline
+  .outline-item-wrapper:last-of-type
+  > .outline-children::before,
+.no-collapse-outline
+  .outline-children
+  > li.outline-item-wrapper:last-child
+  > .outline-children::before,
+.outline-item-open:last-of-type > .outline-children::before,
+.outline-children
+  > li.outline-item-open:last-child
+  > .outline-children::before {
+  display: none;
+}
+
+.outline-content > li:only-of-type {
+  margin-left: -8px;
+}
+
+/* ============================================================================
+ * 大纲项激活和悬停状态 - Outline Item Active and Hover States
+ * ============================================================================ */
+
+/**
+ * 激活和悬停状态连接线宽度
+ */
+li > .outline-item-active:before,
+.outline-item:hover::before,
+.outline-item-active > .outline-item::before {
+  width: 7px !important;
+}
+
+/**
+ * 激活和悬停状态位置调整
+ */
+li > .outline-item-active,
+li > .outline-item:hover,
+.outline-item-active > .outline-item {
+  margin-left: 4px !important;
+  padding-left: 7px !important;
+}
+
+li > .outline-item-active::before,
+li > .outline-item:hover::before,
+.outline-item-active > .outline-item::before {
+  left: -7px !important;
+}
+
+/**
+ * 激活和悬停状态背景
+ */
+.outline-item:hover,
+.outline-item:hover > .outline-label,
+.outline-item-active,
+.outline-item-active > .outline-label {
+  background: var(--anonymous-bg-secondary) !important;
+}
+
+/**
+ * 激活状态颜色
+ */
+.outline-item-active > .outline-label,
+.outline-item-active > .outline-expander::before {
+  color: var(--anonymous-primary);
+}
+
+/* ============================================================================
+ * 大纲筛选状态 - Outline Filter State
+ * ============================================================================ */
+
+/**
+ * 筛选模式下隐藏连接线
+ */
+.ty-on-outline-filter .outline-content .outline-item::before,
+.ty-on-outline-filter .outline-content .outline-item::after {
+  display: none;
+}
+
+.ty-on-outline-filter .outline-content > li > ul,
+.ty-on-outline-filter .outline-content .outline-item {
+  margin-left: 0;
+}
+
+/**
+ * 搜索匹配项样式
+ */
+.outline-content:has(.ty-outline-hit) {
+  padding-left: 14px;
+}
+
+.outline-content li:has(.ty-outline-hit) *::before,
+.outline-content li:has(.ty-outline-hit) *::after {
+  content: "";
+  display: none;
+}
+
+.outline-content li:has(.ty-outline-hit) .outline-item {
+  margin-left: 1px !important;
+  width: calc(100% - 1px);
+  padding-left: 0 !important;
+}
+
+.outline-content li:has(.ty-outline-hit) .outline-item > .outline-label {
+  padding: 8px 10px !important;
+}
+
+/* ============================================================================
+ * TOC 下拉菜单样式 - TOC Dropdown Menu Styles
+ * ============================================================================ */
+
+/**
+ * TOC 下拉菜单
+ */
+#toc-dropmenu {
+  top: calc(var(--title-bar-height) + 8px) !important;
+  right: 18px;
+  border-top-left-radius: var(--anonymous-radius-lg);
+  border-bottom-left-radius: var(--anonymous-radius-lg);
+}
+
+#toc-dropmenu #pin-outline-btn {
+  display: inline-block;
+  top: 10px;
+}
+
+#toc-dropmenu .divider {
+  margin-bottom: 0;
+}

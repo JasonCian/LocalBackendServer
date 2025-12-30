@@ -1,0 +1,394 @@
+/**
+ * ============================================================================
+ * Anonymous Theme - 变量定义 / Variables Definition
+ * ============================================================================
+ * 
+ * 文件: Anonymous/Core/variables.css
+ * 描述: 主题的所有 CSS 变量定义，包括颜色、字体、间距等
+ *       All CSS variable definitions including colors, fonts, spacing, etc.
+ * 
+ * 使用说明 / Usage:
+ * - 修改此文件可以全局更改主题外观
+ * - Modify this file to globally change theme appearance
+ * - 所有变量使用 --anonymous- 前缀
+ * - All variables use --anonymous- prefix
+ * 
+ * 参考: https://support.typora.io/Add-Custom-CSS/
+ * ============================================================================
+ */
+
+:root {
+  /* ==========================================================================
+   * 基础颜色 - Base Colors
+   * ========================================================================== */
+
+  /**
+   * 背景色 - Background Colors
+   * 
+   * --anonymous-bg-primary: 主背景色，用于编辑区域
+   * --anonymous-bg-secondary: 次级背景色，用于代码块、侧边栏等
+   */
+  --anonymous-bg-primary: #1b1b1f;
+  --anonymous-bg-secondary: rgb(40, 42, 50);
+  --anonymous-bg-tertiary: rgba(40, 42, 50, 0.8);
+
+  /**
+   * 文字颜色 - Text Colors
+   * 
+   * --anonymous-text-primary: 主文字颜色
+   * --anonymous-text-secondary: 次级文字颜色（Markdown 语法字符等）
+   * --anonymous-text-muted: 弱化文字颜色（注释、占位符等）
+   */
+  --anonymous-text-primary: #f5f5f5;
+  --anonymous-text-secondary: #8fa5b5;
+  --anonymous-text-muted: #464b50;
+  --anonymous-text-code: #d5e0ff;
+
+  /**
+   * 强调文本颜色 - Emphasis Text Colors
+   * 
+   * 用于粗体、斜体等强调元素
+   * For bold, italic and other emphasis elements
+   */
+  --anonymous-text-bold: #e0e8ff;
+  --anonymous-text-italic: #c4b5fd;
+  --anonymous-text-math: #f9007c;
+
+  /**
+   * 边框颜色 - Border Colors
+   */
+  --anonymous-border-default: #464b50;
+  --anonymous-border-hover: #667c89;
+  --anonymous-border-active: #3e69d7;
+
+  /* ==========================================================================
+   * 主题色 - Theme Colors
+   * ========================================================================== */
+
+  /**
+   * 主色 - Primary Color (蓝色)
+   * 用于链接、强调、选中状态等 - NOTE 提示框
+   */
+  --anonymous-primary: #6fa3ef;
+  --anonymous-primary-hover: #8cb8f5;
+  --anonymous-primary-alpha-30: rgba(111, 163, 239, 0.3);
+  --anonymous-primary-alpha-12: rgba(111, 163, 239, 0.12);
+
+  /**
+   * 强调色 - Accent Color (橙色)
+   * 用于悬停状态、重要提示等 - CAUTION 提示框
+   */
+  --anonymous-accent: #e5a545;
+  --anonymous-accent-hover: #f0b860;
+  --anonymous-accent-alpha-30: rgba(229, 165, 69, 0.3);
+  --anonymous-accent-alpha-12: rgba(229, 165, 69, 0.12);
+  --anonymous-accent-alpha-40: rgba(229, 165, 69, 0.4);
+
+  /**
+   * 成功色 - Success Color (绿色)
+   * 用于成功状态、提示信息等 - TIP 提示框
+   */
+  --anonymous-success: #5dba7d;
+  --anonymous-success-alpha-30: rgba(93, 186, 125, 0.3);
+  --anonymous-success-alpha-12: rgba(93, 186, 125, 0.12);
+
+  /**
+   * 信息色 - Info Color (紫色)
+   * 用于信息提示、重要内容等 - IMPORTANT 提示框
+   */
+  --anonymous-info: #b490e0;
+  --anonymous-info-alpha-30: rgba(180, 144, 224, 0.3);
+  --anonymous-info-alpha-12: rgba(180, 144, 224, 0.12);
+
+  /**
+   * 警告色 - Warning/Error Color (红色)
+   * 用于警告、错误状态等 - WARNING 提示框
+   */
+  --anonymous-error: #e57a7a;
+  --anonymous-error-alpha-30: rgba(229, 122, 122, 0.3);
+  --anonymous-error-alpha-12: rgba(229, 122, 122, 0.12);
+
+  /* ==========================================================================
+   * 字体 - Typography
+   * ========================================================================== */
+
+  /**
+   * 字体族 - Font Families
+   * 
+   * 提示：可以根据需要替换为自定义字体
+   * Tip: Replace with custom fonts as needed
+   * 
+   * 字体回退顺序说明 / Font Fallback Order:
+   * 1. 优先使用的自定义字体（如安装了的话）
+   * 2. 系统原生中文字体（macOS / Windows / Linux）
+   * 3. 通用后备字体
+   * 
+   * 推荐的中文字体 / Recommended CJK Fonts:
+   * - LXGW WenKai (霞鹜文楷): https://github.com/lxgw/LxgwWenKai
+   * - Source Han Sans (思源黑体): https://github.com/adobe-fonts/source-han-sans
+   * - Noto Sans SC: https://fonts.google.com/noto/specimen/Noto+Sans+SC
+   * 
+   * 推荐的等宽字体 / Recommended Monospace Fonts:
+   * - JetBrains Mono: https://www.jetbrains.com/lp/mono/
+   * - Fira Code: https://github.com/tonsky/FiraCode
+   * - Cascadia Code: https://github.com/microsoft/cascadia-code
+   */
+
+  /* ------------------------------------------------------------------
+   * 正文字体 - Sans-serif Font
+   * 
+   * 用于正文、段落等主要文本内容
+   * Used for body text, paragraphs, and main content
+   * ------------------------------------------------------------------ */
+  --anonymous-font-sans: 
+    /* 自定义字体 - Custom fonts (uncomment to use) */ "LXGW WenKai Mono", 
+    /* "Source Han Sans SC", */
+    /* "Noto Sans SC", */
+    /* macOS 系统字体 */ "PingFang SC", -apple-system, BlinkMacSystemFont,
+    /* Windows 系统字体 */ "Microsoft YaHei UI", "Microsoft YaHei",
+    /* Linux 系统字体 */ "Noto Sans CJK SC", "WenQuanYi Micro Hei",
+    /* 通用后备 */ "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif,
+    /* Emoji 支持 */ "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji";
+
+  /* ------------------------------------------------------------------
+   * 等宽字体 - Monospace Font
+   * 
+   * 用于代码块、行内代码等
+   * Used for code blocks, inline code, etc.
+   * ------------------------------------------------------------------ */
+  --anonymous-font-mono: 
+    /* 自定义字体 - Custom fonts (uncomment to use) */ "LXGW WenKai Mono",
+    /* "JetBrains Mono", */
+    /* "Fira Code", */
+    /* 编程字体 */ "Cascadia Code", "Source Code Pro", Consolas,
+    /* macOS */ "SF Mono", Menlo, Monaco,
+    /* Linux */ "Ubuntu Mono", "DejaVu Sans Mono",
+    /* 通用后备 */ monospace;
+
+  /* ------------------------------------------------------------------
+   * 标题字体 - Heading Font
+   * 
+   * 默认使用正文字体，可自定义
+   * Defaults to sans font, can be customized
+   * ------------------------------------------------------------------ */
+  --anonymous-font-heading: var(--anonymous-font-sans);
+
+  /**
+   * 字号 - Font Sizes
+   * 使用 rem 单位以支持 Typora 字体缩放功能
+   */
+  --anonymous-text-xs: 0.75rem;
+  /* 12px */
+  --anonymous-text-sm: 0.875rem;
+  /* 14px */
+  --anonymous-text-base: 1rem;
+  /* 16px */
+  --anonymous-text-lg: 1.125rem;
+  /* 18px */
+  --anonymous-text-xl: 1.25rem;
+  /* 20px */
+  --anonymous-text-2xl: 1.5rem;
+  /* 24px */
+  --anonymous-text-3xl: 1.75rem;
+  /* 28px */
+  --anonymous-text-4xl: 2rem;
+  /* 32px */
+
+  /**
+   * 行高 - Line Heights
+   */
+  --anonymous-leading-tight: 1.25;
+  --anonymous-leading-snug: 1.375;
+  --anonymous-leading-normal: 1.6;
+  --anonymous-leading-relaxed: 1.75;
+  --anonymous-leading-loose: 2;
+
+  /**
+   * 字间距 - Letter Spacing
+   */
+  --anonymous-tracking-tight: -0.025em;
+  --anonymous-tracking-normal: 0.6px;
+  --anonymous-tracking-wide: 1px;
+  --anonymous-tracking-wider: 2px;
+
+  /* ==========================================================================
+   * 间距 - Spacing
+   * ========================================================================== */
+
+  /**
+   * 间距尺度 - Spacing Scale
+   * 基于 4px 基础单位
+   */
+  --anonymous-space-0: 0;
+  --anonymous-space-1: 0.25rem;
+  /* 4px */
+  --anonymous-space-2: 0.5rem;
+  /* 8px */
+  --anonymous-space-3: 0.75rem;
+  /* 12px */
+  --anonymous-space-4: 1rem;
+  /* 16px */
+  --anonymous-space-5: 1.25rem;
+  /* 20px */
+  --anonymous-space-6: 1.5rem;
+  /* 24px */
+  --anonymous-space-8: 2rem;
+  /* 32px */
+  --anonymous-space-10: 2.5rem;
+  /* 40px */
+  --anonymous-space-12: 3rem;
+  /* 48px */
+
+  /**
+   * 编辑区间距 - Editor Spacing
+   */
+  --anonymous-paragraph-spacing: 1.5rem;
+  --anonymous-heading-margin-top: 2rem;
+  --anonymous-heading-margin-bottom: 1.125rem;
+  --anonymous-list-indent: 2.25rem;
+
+  /* ==========================================================================
+   * 布局 - Layout
+   * ========================================================================== */
+
+  /**
+   * 编辑区宽度 - Editor Width
+   */
+  --anonymous-editor-max-width: 1424px;
+  --anonymous-editor-min-width: 300px;
+  --anonymous-editor-padding-x: 112px;
+  --anonymous-editor-padding-y: 32px;
+
+  /**
+   * 侧边栏宽度 - Sidebar Width
+   */
+  --anonymous-sidebar-width: 280px;
+
+  /* ==========================================================================
+   * 圆角 - Border Radius
+   * ========================================================================== */
+
+  --anonymous-radius-sm: 3px;
+  --anonymous-radius-md: 5px;
+  --anonymous-radius-lg: 8px;
+  --anonymous-radius-xl: 10px;
+  --anonymous-radius-full: 50%;
+
+  /* ==========================================================================
+   * 阴影 - Shadows
+   * ========================================================================== */
+
+  --anonymous-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --anonymous-shadow-md: 0 1px 3px 0 rgba(0, 0, 0, 0.15),
+    0 2px 5px 0 rgba(0, 0, 0, 0.1);
+  --anonymous-shadow-lg: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --anonymous-shadow-xl: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+  /* ==========================================================================
+   * 动画 - Transitions
+   * ========================================================================== */
+
+  --anonymous-transition-fast: 0.15s ease;
+  --anonymous-transition-normal: 0.3s ease;
+  --anonymous-transition-slow: 0.5s ease;
+  --anonymous-transition-linear: 0.3s linear;
+
+  /* ==========================================================================
+   * 语法高亮 - Syntax Highlighting
+   * ========================================================================== */
+
+  /**
+   * CodeMirror 语法高亮颜色
+   * 参考: https://support.typora.io/Code-Block-Styles/
+   * 
+   * 设计理念：护眼 + 高对比度
+   * - 适度饱和度，避免刺眼但保持鲜明
+   * - 高亮度确保深色背景下的可读性
+   * - 色相区分明显，易于辨认不同 token
+   */
+  --anonymous-syntax-keyword: #d19aff;
+  /* 关键字 - 亮紫色 */
+  --anonymous-syntax-operator: #6fd9ed;
+  /* 操作符 - 亮青色 */
+  --anonymous-syntax-variable: #ff8a8a;
+  /* 变量 - 亮珊瑚色 */
+  --anonymous-syntax-variable-2: #f5b97a;
+  /* 变量2 - 亮杏色 */
+  --anonymous-syntax-variable-3: #8cb4ff;
+  /* 变量3 - 亮蓝色 */
+  --anonymous-syntax-builtin: #ffab70;
+  /* 内置对象 - 亮橙色 */
+  --anonymous-syntax-atom: #ffab70;
+  /* 原子值 - 亮橙色 */
+  --anonymous-syntax-number: #ffe066;
+  /* 数字 - 亮金色 */
+  --anonymous-syntax-def: #79b8ff;
+  /* 定义 - 亮蓝色 */
+  --anonymous-syntax-string: #a8e88d;
+  /* 字符串 - 亮黄绿色 */
+  --anonymous-syntax-string-2: #85e085;
+  /* 字符串2 - 亮绿色 */
+  --anonymous-syntax-comment: #8b9eb0;
+  /* 注释 - 亮灰蓝色 */
+  --anonymous-syntax-attribute: #ffd75e;
+  /* 属性 - 亮金色 */
+  --anonymous-syntax-property: #6fd9c0;
+  /* 属性值 - 亮青绿色 */
+  --anonymous-syntax-qualifier: #f0c75e;
+  /* 限定符 - 亮黄色 */
+  --anonymous-syntax-tag: #ff8a8a;
+  /* HTML 标签 - 亮珊瑚色 */
+  --anonymous-syntax-tag-bracket: #6fd9ed;
+  /* 标签括号 - 亮青色 */
+  --anonymous-syntax-header: #6fd9ed;
+  /* 标题 - 亮青色 */
+  --anonymous-syntax-meta: #8b9eb0;
+  /* 元信息 - 亮灰蓝色 */
+  --anonymous-syntax-error-bg: #ff8a8a;
+  /* 错误背景 - 亮珊瑚色 */
+
+  /* ==========================================================================
+   * Mermaid 图表 - Mermaid Diagrams
+   * ========================================================================== */
+
+  /**
+   * Mermaid 图表配置
+   * 参考: https://support.typora.io/Draw-Diagrams-With-Markdown/#mermaid-options
+   */
+  --mermaid-theme: dark;
+  --mermaid-font-family: "trebuchet ms", verdana, arial, sans-serif;
+  --mermaid-sequence-numbers: on;
+  --mermaid-flowchart-curve: linear;
+  --mermaid--gantt-left-padding: 75;
+
+  /* ==========================================================================
+   * Typora 内置变量覆盖 - Typora Built-in Variables Override
+   * ========================================================================== */
+
+  /**
+   * 覆盖 Typora 内置变量以确保主题一致性
+   * 参考: https://support.typora.io/Add-Custom-CSS/
+   */
+  --text-color: var(--anonymous-text-primary);
+  --bg-color: var(--anonymous-bg-primary);
+  --control-text-color: var(--anonymous-text-primary);
+  --meta-content-color: var(--anonymous-text-muted);
+  --md-char-color: var(--anonymous-text-muted);
+  --side-bar-bg-color: var(--anonymous-bg-primary);
+  --active-file-bg-color: var(--anonymous-bg-secondary);
+  --active-file-text-color: var(--anonymous-primary);
+  --active-file-border-color: var(--anonymous-primary);
+  --item-hover-bg-color: var(--anonymous-bg-secondary);
+  --item-hover-text-color: var(--anonymous-primary);
+  --select-text-bg-color: var(--anonymous-primary-alpha-30);
+  --search-select-bg-color: var(--anonymous-accent-alpha-40);
+  --search-select-text-color: var(--anonymous-text-primary);
+  --monospace: var(--anonymous-font-mono);
+  --window-border: 1px solid var(--anonymous-border-default);
+  --rawblock-edit-panel-bd: var(--anonymous-bg-secondary);
+  --primary-color: var(--anonymous-primary);
+  --primary-btn-border-color: var(--anonymous-bg-secondary);
+  --primary-btn-text-color: var(--anonymous-text-primary);
+}

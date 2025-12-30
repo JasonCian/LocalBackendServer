@@ -1,0 +1,121 @@
+/*
+ * ============================================================================
+ * Anonymous Theme for Typora
+ * ============================================================================
+ * Name: Anonymous
+ * Version: 1.0.0
+ * Author: JasonCian
+ * Description: A clean, modular dark theme based on mdmdt color scheme
+ * License: Apache-2.0
+ * Typora-Version: >=1.0.0
+ * Update: 2025-12-01 - Complete Migration from mdmdt-dark:
+ *         - ✅ 完整迁移 mdmdt-dark 样式 (Full mdmdt-dark migration)
+ *         - ✅ 模块化结构重构 (Modular structure refactoring)
+ *         - ✅ 符合 CONTRIBUTING.md 规范 (CONTRIBUTING.md compliant)
+ *         - ✅ 详细中英文注释 (Detailed bilingual comments)
+ *         - ✅ CSS 变量统一管理 (CSS variables unified management)
+ *         - ✅ 完整语法高亮支持 (Complete syntax highlighting)
+ *         - ✅ 响应式布局优化 (Responsive layout optimization)
+ *         - ✅ 打印/导出样式支持 (Print/Export styles support)
+ * ============================================================================
+ * 
+ * 原始主题 / Original Theme:
+ * - mdmdt-dark by cayxc
+ * - Homepage: https://gitee.com/cayxc/mdmdt https://github.com/cayxc/Mdmdt
+ * 
+ * 主题特点 / Theme Features:
+ * - 深色模式设计，护眼舒适 | Dark mode design for comfortable reading
+ * - 高度模块化结构 | Highly modular structure
+ * - 完整的配置注释 | Comprehensive configuration comments
+ * - 基于 mdmdt 配色方案 | Based on mdmdt color scheme
+ * - 清晰的代码组织 | Clear code organization
+ * 
+ * 文件结构 / File Structure:
+ * - Core: 核心变量、基础样式、滚动条
+ * - Syntax: Markdown 语法元素样式
+ * - UI: 用户界面组件（侧边栏、菜单等）
+ * - Components: 功能组件（搜索、通知等）
+ * 
+ * 使用说明 / Usage:
+ * 1. 将整个 Anonymous 文件夹放入 Typora 主题目录
+ * 2. 在 Typora 设置中选择 Anonymous 主题
+ * 3. 重启 Typora 使主题生效
+ * 
+ * 自定义配置 / Customization:
+ * - 颜色配置：修改 Core/variables.css
+ * - 语法样式：修改 Syntax/ 下的对应文件
+ * - UI 样式：修改 UI/ 下的对应文件
+ * 
+ * 官方参考文档 / Official Reference:
+ * - Add Custom CSS: https://support.typora.io/Add-Custom-CSS/
+ * - Custom Font: https://support.typora.io/Custom-Font/
+ * - Typeset: https://support.typora.io/Typeset/
+ * - Background: https://support.typora.io/Backgound/
+ * - Code Block Styles: https://support.typora.io/Code-Block-Styles/
+ * - Auto Numbering: https://support.typora.io/Auto-Numbering/
+ * - Width of Writing Area: https://support.typora.io/Width-of-Writing-Area/
+ * - List Style: https://support.typora.io/List-Style/
+ * - Task List: https://support.typora.io/Task-List/
+ * - RTL: https://support.typora.io/RTL/
+ * ============================================================================
+ */
+
+/* ============================================================================
+   核心基础 / Core Foundation
+   必须首先加载，定义所有基础变量和重置样式
+   ============================================================================ */
+@import "Anonymous/Core/variables.css"; /* CSS 变量定义 | CSS variables */
+@import "Anonymous/Core/base.css"; /* 基础样式重置 | Base styles */
+@import "Anonymous/Core/scrollbar.css"; /* 滚动条样式 | Scrollbar styles */
+
+/* ============================================================================
+   Markdown 语法 / Markdown Syntax
+   核心内容样式，按元素类型组织
+   ============================================================================ */
+@import "Anonymous/Syntax/headings.css"; /* 标题样式 h1-h6 | Heading styles */
+@import "Anonymous/Syntax/paragraph.css"; /* 段落样式 | Paragraph styles */
+@import "Anonymous/Syntax/emphasis.css"; /* 强调样式 bold/italic/mark/kbd | Emphasis */
+@import "Anonymous/Syntax/links.css"; /* 链接样式 | Link styles */
+@import "Anonymous/Syntax/lists.css"; /* 列表样式 ul/ol | List styles */
+@import "Anonymous/Syntax/blockquote.css"; /* 引用块和提示框 | Blockquote & alerts */
+@import "Anonymous/Syntax/code.css"; /* 行内代码样式 | Inline code styles */
+@import "Anonymous/Syntax/codeblock.css"; /* 代码块和语法高亮 | Code block & syntax */
+@import "Anonymous/Syntax/table.css"; /* 表格样式 | Table styles */
+@import "Anonymous/Syntax/image.css"; /* 图片样式 | Image styles */
+@import "Anonymous/Syntax/horizontal-rule.css"; /* 分隔线样式 | Horizontal rule */
+@import "Anonymous/Syntax/footnote.css"; /* 脚注样式 | Footnote styles */
+@import "Anonymous/Syntax/task-list.css"; /* 任务列表样式 | Task list styles */
+@import "Anonymous/Syntax/math.css"; /* 数学公式样式 | Math/LaTeX styles */
+@import "Anonymous/Syntax/mermaid.css"; /* Mermaid 图表样式 | Mermaid diagrams */
+@import "Anonymous/Syntax/toc.css"; /* 目录样式 | TOC styles */
+@import "Anonymous/Syntax/yaml.css"; /* YAML 前言样式 | YAML frontmatter */
+
+/* ============================================================================
+   用户界面 / User Interface
+   Typora 界面组件样式
+   ============================================================================ */
+@import "Anonymous/UI/sidebar.css"; /* 侧边栏容器 | Sidebar container */
+@import "Anonymous/UI/file-tree.css"; /* 文件树/列表 | File tree/list */
+@import "Anonymous/UI/outline.css"; /* 大纲面板 | Outline panel */
+@import "Anonymous/UI/megamenu.css"; /* 主菜单面板 | Megamenu panel */
+@import "Anonymous/UI/toolbar.css"; /* 工具栏按钮 | Toolbar buttons */
+@import "Anonymous/UI/context-menu.css"; /* 右键/下拉菜单 | Context/dropdown menu */
+@import "Anonymous/UI/window.css"; /* 窗口/对话框/表单 | Window/dialog/form */
+
+/* ============================================================================
+   功能组件 / Functional Components
+   特定功能的样式，最后加载
+   ============================================================================ */
+@import "Anonymous/Components/search.css"; /* 搜索功能 | Search functionality */
+@import "Anonymous/Components/notification.css"; /* 通知提示 | Notifications */
+@import "Anonymous/Components/footer.css"; /* 页脚状态栏 | Footer status bar */
+@import "Anonymous/Components/focus-mode.css"; /* 专注模式 | Focus mode */
+@import "Anonymous/Components/typewriter.css"; /* 打字机模式 | Typewriter mode */
+@import "Anonymous/Components/selection.css"; /* 文本选择 | Text selection */
+@import "Anonymous/Components/export.css"; /* 导出样式 | Export styles */
+
+/* ============================================================================
+   浏览器适配层 / Browser Adapter
+   使主题在浏览器中正常工作（非 Typora 环境）
+   ============================================================================ */
+@import "Anonymous/browser-adapter.css"; /* 浏览器渲染适配 | Browser rendering adapter */

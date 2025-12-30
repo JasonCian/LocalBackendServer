@@ -1,0 +1,173 @@
+/**
+ * ============================================================================
+ * Anonymous Theme - 表格样式 / Table Styles
+ * ============================================================================
+ * 
+ * 文件: Anonymous/Syntax/table.css
+ * 描述: 表格的样式定义
+ *       Styles for tables
+ * 
+ * Markdown 语法 / Markdown Syntax:
+ * | 表头1 | 表头2 |
+ * |-------|-------|
+ * | 内容1 | 内容2 |
+ * 
+ * 参考: https://support.typora.io/Add-Custom-CSS/
+ * ============================================================================
+ */
+
+/* ============================================================================
+ * 表格基础样式 - Base Table Styles
+ * ============================================================================ */
+
+/**
+ * 表格和 figure 容器
+ */
+table,
+figure {
+  width: 100%;
+  margin-bottom: 0;
+  border-radius: var(--anonymous-radius-lg);
+  padding: 0 !important;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/**
+ * figure 容器顶部间距
+ */
+figure {
+  margin-top: var(--anonymous-space-4) !important;
+}
+
+/**
+ * 表格边框和溢出处理
+ */
+table {
+  margin-top: 0;
+  border: 1px solid var(--anonymous-border-default) !important;
+  overflow: hidden;
+}
+
+/* ============================================================================
+ * 表格行样式 - Table Row Styles
+ * ============================================================================ */
+
+/**
+ * 表头行背景
+ */
+table thead tr th {
+  background: var(--anonymous-bg-secondary);
+}
+
+/**
+ * 表格偶数行背景
+ */
+table tbody tr:nth-child(even) td {
+  background: var(--anonymous-bg-primary);
+}
+
+/**
+ * 表格奇数行背景
+ */
+table tbody tr:nth-child(odd) td {
+  background: var(--anonymous-bg-primary);
+}
+
+/* ============================================================================
+ * 表格单元格样式 - Table Cell Styles
+ * ============================================================================ */
+
+/**
+ * 表格单元格通用样式
+ */
+table tr th,
+table tr td {
+  padding: 10px !important;
+  white-space: pre-wrap !important;
+}
+
+/**
+ * 表格单元格左边框
+ */
+table tr td,
+table thead tr th {
+  border-left: 1px solid var(--anonymous-border-default) !important;
+}
+
+/**
+ * 首列单元格无左边框
+ */
+table tbody tr td:first-of-type,
+table thead tr th:first-of-type {
+  border-left: none !important;
+}
+
+/* ============================================================================
+ * 表格编辑面板 - Table Edit Panel
+ * ============================================================================ */
+
+/**
+ * 表格大小调整面板
+ */
+.md-grid-board-wrap table {
+  border: none !important;
+  border-radius: 0;
+}
+
+.md-grid-board-wrap table tr th,
+.md-grid-board-wrap table tr td {
+  padding: 0 !important;
+}
+
+/**
+ * 表格宽度/高度输入框
+ */
+#md-grid-width,
+#md-grid-height {
+  text-align: center !important;
+  padding: 1px 0;
+}
+
+/**
+ * 调整表格按钮
+ */
+button#md-resize-grid {
+  display: block !important;
+  width: 100%;
+  margin: 5px auto 0;
+  color: var(--anonymous-bg-primary);
+}
+
+button#md-resize-grid:hover {
+  color: var(--anonymous-primary);
+  border-color: var(--anonymous-primary);
+}
+
+/**
+ * 表格编辑工具栏
+ */
+.ty-table-edit {
+  margin-left: 0;
+}
+
+/**
+ * 删除表格提示
+ */
+.md-tooltip-remove {
+  position: absolute;
+  z-index: 200;
+  margin-top: -28px !important;
+  background: var(--anonymous-bg-primary);
+}
+
+.md-tooltip-remove .md-delete-table {
+  margin-right: 10px !important;
+}
+
+/**
+ * 表格调整弹出框
+ */
+.md-table-resize-popover .md-reset > a::before {
+  display: none !important;
+}

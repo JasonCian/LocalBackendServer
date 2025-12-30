@@ -1,0 +1,87 @@
+/**
+ * ============================================================================
+ * Anonymous Theme - 页脚样式 / Footer Styles
+ * ============================================================================
+ * 
+ * 文件: Anonymous/Components/footer.css
+ * 描述: 页脚状态栏的样式定义
+ *       Styles for the footer status bar
+ * 
+ * 参考: https://support.typora.io/Add-Custom-CSS/
+ * ============================================================================
+ */
+
+/* ============================================================================
+ * 页脚容器样式 - Footer Container Styles
+ * ============================================================================ */
+
+/**
+ * 页脚基础样式
+ */
+footer.ty-footer,
+.ty-footer .footer-item {
+  height: 24px;
+  border-top: none;
+}
+
+/**
+ * 页脚项
+ */
+.ty-footer .footer-item {
+  margin-left: 3px;
+  margin-top: -5px;
+  border-radius: var(--anonymous-radius-md);
+  background: var(--anonymous-border-default) !important;
+  line-height: 24px;
+}
+
+/**
+ * 字数统计
+ */
+.ty-footer #footer-word-count {
+  margin-right: -2px;
+}
+
+/**
+ * 源代码模式切换按钮
+ */
+.typora-sourceview-on #toggle-sourceview-btn {
+  margin-left: 0;
+}
+
+/* ============================================================================
+ * 字数统计信息面板 - Word Count Info Panel
+ * ============================================================================ */
+
+/**
+ * 字典安装对话框
+ */
+#dict-install-dialog + div {
+  bottom: 3px !important;
+}
+
+/**
+ * 字数统计信息
+ */
+#footer-word-count-info {
+  padding: 6px;
+  border-radius: var(--anonymous-radius-md);
+  border: 1px solid var(--anonymous-border-default);
+}
+
+#footer-word-count-info table {
+  border-radius: 0;
+}
+
+/**
+ * 字数统计表格圆角
+ */
+#footer-word-count-info table tr > td:first-of-type {
+  border-top-left-radius: var(--anonymous-radius-md);
+  border-bottom-left-radius: var(--anonymous-radius-md);
+}
+
+#footer-word-count-info table tr > td:last-of-type {
+  border-top-right-radius: var(--anonymous-radius-md);
+  border-bottom-right-radius: var(--anonymous-radius-md);
+}

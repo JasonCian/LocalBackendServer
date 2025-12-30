@@ -1,0 +1,217 @@
+/**
+ * ============================================================================
+ * Anonymous Theme - 亮色模式变量定义 / Light Mode Variables Definition
+ * ============================================================================
+ * 
+ * 文件: Anonymous/Core/variables-light.css
+ * 描述: 亮色主题的所有 CSS 变量定义
+ *       All CSS variable definitions for light theme
+ * 
+ * 使用说明 / Usage:
+ * - 此文件由 anonymous-light.css 调用，覆盖暗色模式变量
+ * - This file is imported by anonymous-light.css to override dark mode variables
+ * - 所有变量使用 --anonymous- 前缀
+ * - All variables use --anonymous- prefix
+ * 
+ * 设计理念 / Design Philosophy:
+ * - 保持与暗色模式相同的视觉层次和风格
+ * - Maintain the same visual hierarchy and style as dark mode
+ * - 使用温和的浅色背景，减少眼睛疲劳
+ * - Use gentle light backgrounds to reduce eye strain
+ * - 保持足够的对比度以确保可读性
+ * - Maintain sufficient contrast for readability
+ * - 语法高亮颜色适当调整以适应浅色背景
+ * - Syntax highlighting colors adjusted for light backgrounds
+ * 
+ * 参考: https://support.typora.io/Add-Custom-CSS/
+ * ============================================================================
+ */
+
+:root {
+  /* ==========================================================================
+   * 基础颜色 - Base Colors (Light)
+   * ========================================================================== */
+
+  /**
+   * 背景色 - Background Colors
+   * 
+   * 使用温暖的纸质色调，柔和护眼
+   * Using warm paper-like tones for comfortable reading
+   */
+  --anonymous-bg-primary: #f5f2eb;
+  --anonymous-bg-secondary: #e8e4db;
+  --anonymous-bg-tertiary: rgba(232, 228, 219, 0.95);
+
+  /**
+   * 文字颜色 - Text Colors
+   * 
+   * 使用温暖的深棕黑色调，与纸质背景协调
+   * Using warm dark tones that harmonize with paper background
+   */
+  --anonymous-text-primary: #2c2a25;
+  --anonymous-text-secondary: #4a4740;
+  --anonymous-text-muted: #6d6a62;
+  --anonymous-text-code: #1e1c18;
+
+  /**
+   * 强调文本颜色 - Emphasis Text Colors
+   * 
+   * 亮色模式下使用深色调强调
+   * Using darker tones for emphasis in light mode
+   */
+  --anonymous-text-bold: #1a1815;
+  --anonymous-text-italic: #5b21b6;
+  --anonymous-text-math: #a21caf;
+
+  /**
+   * 边框颜色 - Border Colors
+   * 
+   * 使用与纸质背景协调的暖色调边框
+   * Using warm-toned borders that match paper background
+   */
+  --anonymous-border-default: #c9c4b8;
+  --anonymous-border-hover: #8a857a;
+  --anonymous-border-active: #1d4ed8;
+
+  /* ==========================================================================
+   * 主题色 - Theme Colors (Light)
+   * ========================================================================== */
+
+  /**
+   * 主色 - Primary Color (蓝色)
+   * 用于链接、强调、选中状态等 - NOTE 提示框
+   * 在纸质背景上使用饱和的蓝色
+   */
+  --anonymous-primary: #1d4ed8;
+  --anonymous-primary-hover: #1e40af;
+  --anonymous-primary-alpha-30: rgba(29, 78, 216, 0.25);
+  --anonymous-primary-alpha-12: rgba(29, 78, 216, 0.12);
+
+  /**
+   * 强调色 - Accent Color (橙色)
+   * 用于悬停状态、重要提示等 - CAUTION 提示框
+   */
+  --anonymous-accent: #c2410c;
+  --anonymous-accent-hover: #9a3412;
+  --anonymous-accent-alpha-30: rgba(194, 65, 12, 0.25);
+  --anonymous-accent-alpha-12: rgba(194, 65, 12, 0.12);
+  --anonymous-accent-alpha-40: rgba(194, 65, 12, 0.35);
+
+  /**
+   * 成功色 - Success Color (绿色)
+   * 用于成功状态、提示信息等 - TIP 提示框
+   */
+  --anonymous-success: #15803d;
+  --anonymous-success-alpha-30: rgba(21, 128, 61, 0.25);
+  --anonymous-success-alpha-12: rgba(21, 128, 61, 0.12);
+
+  /**
+   * 信息色 - Info Color (紫色)
+   * 用于信息提示、重要内容等 - IMPORTANT 提示框
+   */
+  --anonymous-info: #7c3aed;
+  --anonymous-info-alpha-30: rgba(124, 58, 237, 0.25);
+  --anonymous-info-alpha-12: rgba(124, 58, 237, 0.12);
+
+  /**
+   * 警告色 - Warning/Error Color (红色)
+   * 用于警告、错误状态等 - WARNING 提示框
+   */
+  --anonymous-error: #b91c1c;
+  --anonymous-error-alpha-30: rgba(185, 28, 28, 0.25);
+  --anonymous-error-alpha-12: rgba(185, 28, 28, 0.12);
+
+  /* ==========================================================================
+   * 阴影 - Shadows (Light)
+   * ==========================================================================
+   * 
+   * 纸质背景下使用温暖的棕色调阴影
+   * Using warm brown-tinted shadows for paper background
+   */
+  --anonymous-shadow-sm: 0 1px 2px 0 rgba(60, 50, 40, 0.08);
+  --anonymous-shadow-md: 0 1px 3px 0 rgba(60, 50, 40, 0.12),
+    0 2px 5px 0 rgba(60, 50, 40, 0.08);
+  --anonymous-shadow-lg: 0 4px 6px -1px rgba(60, 50, 40, 0.1),
+    0 2px 4px -1px rgba(60, 50, 40, 0.06);
+  --anonymous-shadow-xl: 0 10px 15px -3px rgba(60, 50, 40, 0.1),
+    0 4px 6px -2px rgba(60, 50, 40, 0.06);
+
+  /* ==========================================================================
+   * 语法高亮 - Syntax Highlighting (Light)
+   * ==========================================================================
+   * 
+   * 针对纸质背景优化的语法高亮配色
+   * 设计理念：高对比度，深色调，与温暖背景协调
+   * 
+   * Syntax highlighting optimized for paper background
+   * Design: High contrast, darker tones harmonizing with warm background
+   */
+  --anonymous-syntax-keyword: #7c3aed;
+  /* 关键字 - 深紫色 */
+  --anonymous-syntax-operator: #0369a1;
+  /* 操作符 - 深蓝色 */
+  --anonymous-syntax-variable: #be123c;
+  /* 变量 - 玫红色 */
+  --anonymous-syntax-variable-2: #c2410c;
+  /* 变量2 - 深橙色 */
+  --anonymous-syntax-variable-3: #1d4ed8;
+  /* 变量3 - 深蓝色 */
+  --anonymous-syntax-builtin: #b45309;
+  /* 内置对象 - 琥珀色 */
+  --anonymous-syntax-atom: #b45309;
+  /* 原子值 - 琥珀色 */
+  --anonymous-syntax-number: #0369a1;
+  /* 数字 - 深蓝色 */
+  --anonymous-syntax-def: #1d4ed8;
+  /* 定义 - 深蓝色 */
+  --anonymous-syntax-string: #0f766e;
+  /* 字符串 - 深青绿色 */
+  --anonymous-syntax-string-2: #047857;
+  /* 字符串2 - 翡翠绿 */
+  --anonymous-syntax-comment: #78716c;
+  /* 注释 - 暖灰色 */
+  --anonymous-syntax-attribute: #a21caf;
+  /* 属性 - 洋红色 */
+  --anonymous-syntax-property: #0f766e;
+  /* 属性值 - 深青绿色 */
+  --anonymous-syntax-qualifier: #b45309;
+  /* 限定符 - 琥珀色 */
+  --anonymous-syntax-tag: #be123c;
+  /* HTML 标签 - 玫红色 */
+  --anonymous-syntax-tag-bracket: #6d6a62;
+  /* 标签括号 - 暖灰色 */
+  --anonymous-syntax-header: #1d4ed8;
+  /* 标题 - 深蓝色 */
+  --anonymous-syntax-meta: #78716c;
+  /* 元信息 - 暖灰色 */
+  --anonymous-syntax-error-bg: #fee2e2;
+  /* 错误背景 - 浅红色 */
+
+  /* ==========================================================================
+   * Mermaid 图表 - Mermaid Diagrams (Light)
+   * ========================================================================== */
+  --mermaid-theme: default;
+
+  /* ==========================================================================
+   * Typora 内置变量覆盖 - Typora Built-in Variables Override (Light)
+   * ========================================================================== */
+  --text-color: var(--anonymous-text-primary);
+  --bg-color: var(--anonymous-bg-primary);
+  --control-text-color: var(--anonymous-text-primary);
+  --meta-content-color: var(--anonymous-text-muted);
+  --md-char-color: var(--anonymous-text-muted);
+  --side-bar-bg-color: var(--anonymous-bg-primary);
+  --active-file-bg-color: var(--anonymous-bg-secondary);
+  --active-file-text-color: var(--anonymous-primary);
+  --active-file-border-color: var(--anonymous-primary);
+  --item-hover-bg-color: var(--anonymous-bg-secondary);
+  --item-hover-text-color: var(--anonymous-primary);
+  --select-text-bg-color: var(--anonymous-primary-alpha-30);
+  --search-select-bg-color: var(--anonymous-accent-alpha-40);
+  --search-select-text-color: var(--anonymous-text-primary);
+  --window-border: 1px solid var(--anonymous-border-default);
+  --rawblock-edit-panel-bd: var(--anonymous-bg-secondary);
+  --primary-color: var(--anonymous-primary);
+  --primary-btn-border-color: var(--anonymous-bg-secondary);
+  --primary-btn-text-color: var(--anonymous-text-primary);
+}

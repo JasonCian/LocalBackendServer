@@ -1,0 +1,118 @@
+/**
+ * ============================================================================
+ * Anonymous Theme - 通知样式 / Notification Styles
+ * ============================================================================
+ * 
+ * 文件: Anonymous/Components/notification.css
+ * 描述: 通知提示的样式定义
+ *       Styles for notifications
+ * 
+ * 参考: https://support.typora.io/Add-Custom-CSS/
+ * ============================================================================
+ */
+
+/* ============================================================================
+ * 通知容器样式 - Notification Container Styles
+ * ============================================================================ */
+
+/**
+ * 通知容器
+ */
+.md-notification-container {
+  padding-top: calc(var(--title-bar-height) + 10px) !important;
+  background: var(--anonymous-bg-primary);
+  border-bottom: 1px solid var(--anonymous-border-default);
+  box-shadow: var(--anonymous-shadow-md);
+  font-size: var(--anonymous-text-sm);
+}
+
+/**
+ * Windows 和 macOS 下的通知容器
+ */
+.native-window.os-windows .md-notification-container,
+.mac-os .md-notification-container {
+  padding-top: 1px !important;
+}
+
+/**
+ * 通知图标
+ */
+.md-notification-container #md-notification::before {
+  top: 8px;
+  font-size: 16px;
+}
+
+/* ============================================================================
+ * 通知内容样式 - Notification Content Styles
+ * ============================================================================ */
+
+/**
+ * 通知内容区域
+ */
+#md-notification .md-notification-content {
+  padding-bottom: 4px;
+}
+
+/**
+ * 通知段落
+ */
+#md-notification p {
+  margin: 4px 0;
+  white-space: nowrap;
+}
+
+#md-notification > p:last-of-type {
+  margin-bottom: 8px;
+}
+
+#md-notification > p:only-of-type {
+  margin-bottom: 0;
+}
+
+/**
+ * 通知按钮
+ */
+.md-notification-container .btn {
+  margin: 0;
+}
+
+/* ============================================================================
+ * 加载动画样式 - Loading Spinner Styles
+ * ============================================================================ */
+
+/**
+ * 搜索和导出加载动画
+ */
+#md-notification .typora-search-spinner,
+#md-notification .typora-export-spinner {
+  top: 5px !important;
+}
+
+.unibody-window #md-searchpanel .btn {
+  line-height: 24px !important;
+}
+
+#md-notification .typora-search-spinner > div,
+#md-notification .typora-export-spinner > div {
+  background: var(--anonymous-primary);
+}
+
+/* ============================================================================
+ * 模式警告样式 - Mode Warning Styles
+ * ============================================================================ */
+
+/**
+ * 打字机模式等进入模式警告
+ */
+#md-notification .ty-enter-mode-warning-body + div {
+  display: -webkit-flex;
+  display: flex;
+}
+
+#md-notification label {
+  align-self: center;
+}
+
+#md-notification label > input {
+  margin-top: 0;
+}

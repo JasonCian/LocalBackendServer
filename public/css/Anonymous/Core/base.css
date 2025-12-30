@@ -1,0 +1,266 @@
+/**
+ * ============================================================================
+ * Anonymous Theme - 基础样式 / Base Styles
+ * ============================================================================
+ * 
+ * 文件: Anonymous/Core/base.css
+ * 描述: 基础样式重置、html/body 样式、通用元素样式
+ *       Base style reset, html/body styles, common element styles
+ * 
+ * 包含 / Includes:
+ * - HTML 和 Body 基础样式
+ * - 字体渲染优化
+ * - Tab 宽度设置
+ * - 编辑区域基础布局
+ * 
+ * 参考: https://support.typora.io/Add-Custom-CSS/
+ * ============================================================================
+ */
+
+/* ============================================================================
+ * HTML 基础样式 - HTML Base Styles
+ * ============================================================================ */
+
+/**
+ * HTML 元素样式
+ * 
+ * 属性说明:
+ * - height: 100vh 确保全屏高度
+ * - font-size: 16px 设置基础字号（rem 单位基准）
+ * - -webkit-font-smoothing: 优化 macOS 字体渲染
+ * - scroll-behavior: smooth 启用平滑滚动
+ */
+html {
+  height: 100vh;
+  background-color: var(--anonymous-bg-primary);
+  font-size: 16px !important;
+  color: var(--anonymous-text-primary);
+  -webkit-font-smoothing: antialiased;
+  scroll-behavior: smooth;
+  scroll-padding: 14px;
+}
+
+/* ============================================================================
+ * Body 基础样式 - Body Base Styles
+ * ============================================================================ */
+
+/**
+ * Body 元素样式
+ * 
+ * 属性说明:
+ * - line-height: 1.6 提供舒适的阅读行高
+ * - letter-spacing: 0.6px 适当的字间距
+ * - overflow-x: hidden 隐藏水平滚动条
+ */
+body {
+  margin: 0;
+  padding: 0;
+  font-size: 1rem;
+  line-height: var(--anonymous-leading-normal);
+  letter-spacing: var(--anonymous-tracking-normal);
+  font-family: var(--anonymous-font-sans);
+  background: var(--anonymous-bg-primary);
+  overflow-x: hidden;
+}
+
+/**
+ * Windows 系统特定样式
+ * Windows 下使用 Microsoft YaHei 字体并调整字间距
+ */
+body.os-windows {
+  font-family: "Microsoft YaHei UI", "Microsoft YaHei", Arial, "Helvetica Neue",
+    Helvetica, sans-serif;
+  letter-spacing: var(--anonymous-tracking-wide);
+}
+
+/* ============================================================================
+ * 通用元素样式 - Common Element Styles
+ * ============================================================================ */
+
+/**
+ * Tab 宽度设置
+ * 统一所有元素的 Tab 显示宽度为 4 个空格
+ */
+* {
+  -webkit-tab-size: 4;
+  -moz-tab-size: 4;
+  -o-tab-size: 4;
+  tab-size: 4;
+}
+
+/* ============================================================================
+ * 编辑区域 - Write Area
+ * ============================================================================ */
+
+/**
+ * #write 编辑区域容器
+ * 
+ * 属性说明:
+ * - max-width: 限制最大宽度提高可读性
+ * - padding: 提供舒适的编辑空间
+ * 
+ * 参考: https://support.typora.io/Width-of-Writing-Area/
+ */
+#write {
+  margin: 0 auto;
+  width: 100%;
+  max-width: var(--anonymous-editor-max-width);
+  min-width: var(--anonymous-editor-min-width);
+  padding: var(--anonymous-editor-padding-y) var(--anonymous-editor-padding-x);
+  overflow: auto;
+
+  /* 性能优化: 绘制隔离，限制重绘范围 */
+  contain: layout style;
+  backface-visibility: hidden;
+}
+
+/**
+ * 编辑区首个元素
+ * 移除顶部间距以贴合容器
+ */
+#write > *:first-child {
+  margin-top: 0;
+}
+
+/* ============================================================================
+ * 源代码模式 - Source Code Mode
+ * ============================================================================ */
+
+/**
+ * 源代码模式编辑区
+ * 保持与 WYSIWYG 模式一致的宽度和间距
+ * 
+ * 参考: https://support.typora.io/Custom-Font/#change-font-for-source-code-mode
+ */
+#typora-source .CodeMirror-sizer {
+  padding-right: 0 !important;
+}
+
+#typora-source .CodeMirror-lines {
+  margin: 0 auto;
+  max-width: var(--anonymous-editor-max-width);
+  min-width: var(--anonymous-editor-min-width);
+  padding: var(--anonymous-editor-padding-y) var(--anonymous-editor-padding-x);
+}
+
+#typora-source .CodeMirror-lines pre {
+  border: none !important;
+  background: var(--anonymous-bg-primary) !important;
+  padding: var(--anonymous-space-2) var(--anonymous-space-4) !important;
+  font-size: 1rem !important;
+}
+
+/**
+ * 源代码模式当前行高亮
+ */
+#typora-source .CodeMirror-activeline pre {
+  background: var(--anonymous-bg-secondary) !important;
+  border-radius: var(--anonymous-radius-md);
+}
+
+#typora-source .CodeMirror-activeline .CodeMirror-linebackground {
+  background: transparent !important;
+}
+
+/**
+ * 源代码模式语法高亮
+ */
+#typora-source .CodeMirror-lines .cm-header {
+  color: var(--anonymous-accent);
+}
+
+/* ============================================================================
+ * 光标样式 - Cursor Styles
+ * ============================================================================ */
+
+/**
+ * CodeMirror 光标样式
+ */
+.CodeMirror.cm-s-typora-default div.CodeMirror-cursor {
+  border-left: 3px solid var(--anonymous-accent);
+}
+
+.CodeMirror div.CodeMirror-cursor {
+  border-color: var(--anonymous-text-primary);
+}
+
+/* ============================================================================
+ * 源代码模式语法颜色 - Source Mode Syntax Colors
+ * ============================================================================ */
+
+.cm-s-typora-default .cm-header,
+.cm-s-typora-default .cm-property,
+.cm-s-typora-default .cm-link {
+  color: var(--anonymous-accent);
+}
+
+.cm-s-inner .cm-comment,
+.cm-s-inner.cm-comment,
+.cm-overlay {
+  color: var(--anonymous-text-muted);
+}
+
+.cm-s-typora-default .cm-string {
+  color: var(--anonymous-primary);
+}
+
+.cm-s-typora-default .cm-code,
+.cm-s-typora-default .cm-comment {
+  color: var(--anonymous-text-code);
+}
+
+.cm-s-typora-default .cm-tag {
+  color: #e31570;
+}
+
+.cm-attribute {
+  color: var(--anonymous-accent);
+}
+
+/* ============================================================================
+ * 注释样式 - Comment Styles
+ * ============================================================================ */
+
+/**
+ * Markdown 注释样式
+ */
+span.md-comment {
+  color: var(--anonymous-text-muted);
+  opacity: 1;
+}
+
+/* ============================================================================
+ * 选中状态 - Selection Styles
+ * ============================================================================ */
+
+/**
+ * 文本选中样式
+ */
+::selection {
+  background: var(--anonymous-accent-alpha-40);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* ============================================================================
+ * 头部样式 - Header Styles
+ * ============================================================================ */
+
+/**
+ * 应用头部（标题栏）
+ */
+body > header {
+  background: var(--anonymous-bg-primary) !important;
+  box-shadow: var(--anonymous-shadow-md);
+}
+
+/* ============================================================================
+ * Meta 块样式 - Meta Block Styles
+ * ============================================================================ */
+
+/**
+ * 空 meta 块占位符
+ */
+#write pre.md-meta-block:empty:before {
+  color: var(--anonymous-text-code);
+}

@@ -1,0 +1,32 @@
+/**
+ * ============================================================================
+ * Anonymous Theme - 分隔线样式 / Horizontal Rule Styles
+ * ============================================================================
+ * 
+ * 文件: Anonymous/Syntax/horizontal-rule.css
+ * 描述: 水平分隔线的样式定义
+ *       Styles for horizontal rules
+ * 
+ * Markdown 语法 / Markdown Syntax:
+ * ---
+ * ***
+ * ___
+ * 
+ * 参考: https://support.typora.io/Add-Custom-CSS/
+ * ============================================================================
+ */
+
+/* ============================================================================
+ * 分隔线样式 - Horizontal Rule Styles
+ * ============================================================================ */
+
+/**
+ * 水平分隔线
+ * 使用 1px 高度和边框颜色
+ */
+hr {
+  height: 1px;
+  box-sizing: border-box;
+  background: var(--anonymous-border-default);
+  border: none;
+}

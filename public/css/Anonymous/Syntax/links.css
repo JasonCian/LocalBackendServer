@@ -1,0 +1,122 @@
+/**
+ * ============================================================================
+ * Anonymous Theme - 链接样式 / Link Styles
+ * ============================================================================
+ * 
+ * 文件: Anonymous/Syntax/links.css
+ * 描述: 超链接的样式定义
+ *       Styles for hyperlinks
+ * 
+ * Markdown 语法 / Markdown Syntax:
+ * [链接文本](URL)
+ * [链接文本][引用]
+ * <URL>
+ * 
+ * 参考: https://support.typora.io/Add-Custom-CSS/
+ * ============================================================================
+ */
+
+/* ============================================================================
+ * 基础链接样式 - Base Link Styles
+ * ============================================================================ */
+
+/**
+ * 链接基础样式
+ * 
+ * 属性说明:
+ * - position: relative 用于伪元素定位（链接图标）
+ * - text-decoration: none 默认无下划线
+ * - color: 使用主色
+ */
+a {
+  position: relative;
+  font-weight: 500;
+  text-decoration: none;
+  color: var(--anonymous-primary);
+  font-size: 1rem;
+  text-underline-offset: 4px;
+}
+
+/* ============================================================================
+ * 链接悬停状态 - Link Hover States
+ * ============================================================================ */
+
+/**
+ * 链接悬停样式
+ * 变为强调色并显示下划线
+ */
+a:hover,
+.md-link a:hover,
+.footnotes a:hover {
+  color: var(--anonymous-accent);
+  text-decoration: underline;
+  cursor: pointer !important;
+}
+
+/* ============================================================================
+ * 链接图标 - Link Icons
+ * ============================================================================ */
+
+/**
+ * 链接前图标
+ * 在普通内容中的链接前显示链接图标
+ * 注意：以下选择器防止在标题或代码块中生成链接图标（用于 PDF 导出）
+ */
+#write p a,
+#write table a,
+#write blockquote a,
+#write .md-alert a,
+#write li a {
+  padding-left: 2px;
+}
+
+/**
+ * 链接图标（使用 base64 编码的 SVG）
+ */
+#write p a::before,
+#write table a::before,
+#write blockquote a::before,
+#write .md-alert a::before,
+#write li a::before {
+  content: "";
+  display: inline-block;
+  position: relative;
+  top: 2px;
+  right: 2px;
+  z-index: 30;
+  width: 14px;
+  height: 14px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100%;
+  background-image: url("data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBzdGFuZGFsb25lPSJubyI/PjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+PHN2ZyB0PSIxNzQxNDk2OTA4OTA2IiBjbGFzcz0iaWNvbiIgdmlld0JveD0iMCAwIDEwMjQgMTAyNCIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHAtaWQ9IjE1NjgiIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCI+PHBhdGggZD0iTTIyNy44NCAyMS41MDRjLTQxLjQ3MiA3LjY4LTk3LjI4IDM3Ljg4OC0xMzAuMDQ4IDcwLjY1NkM0Ny42MTYgMTQyLjg0OCAyMC40OCAyMDcuMzYgMjAuNDggMjc2Ljk5MmMwIDc1Ljc3NiAxOC45NDQgMTIzLjM5MiA3Ni4yODggMTkzLjAyNCAzMC4yMDggMzUuODQgMTA1Ljk4NCAxMDguNTQ0IDExNy4yNDggMTEyLjY0IDIuNTYgMC41MTIgNi42NTYtMTQuMzM2IDguNzA0LTMzLjI4IDIuMDQ4LTE4Ljk0NCA3LjY4LTQ4LjEyOCAxMy4zMTItNjQgMTUuODcyLTQ4LjEyOCAxNC4zMzYtNTMuNzYtMjYuNjI0LTkzLjY5NkMxNjQuODY0IDM0Ny42NDggMTQ4LjQ4IDMxNS4zOTIgMTQ4LjQ4IDI3My40MDhjMC05OC44MTYgMTAzLjQyNC0xNjEuMjggMTg1Ljg1Ni0xMTMuMTUyIDExLjc3NiA3LjE2OCA3MS4xNjggNjMuNDg4IDEzMi42MDggMTI0LjkyOCAxMjAuODMyIDEyMS44NTYgMTIwLjMyIDEyMS4zNDQgMTE1LjcxMiAxNzcuMTUyLTEuNTM2IDE5LjQ1Ni03LjY4IDM0LjgxNi0yMC45OTIgNTUuODA4LTIyLjAxNiAzNC4zMDQtMjUuMDg4IDYyLjk3Ni04LjcwNCA4OS42IDEyLjI4OCAyMC40OCAyNS42IDI3LjY0OCA1My4yNDggMjguNjcyIDMyLjc2OCAxLjUzNiA1NC4yNzItMTUuODcyIDc4Ljg0OC02Mi45NzYgMjQuNTc2LTQ2LjU5MiAzMi4yNTYtNzYuOCAzMi4yNTYtMTI2LjQ2NCAwLTUzLjc2LTE1Ljg3Mi0xMDAuODY0LTUyLjIyNC0xNTUuMTM2LTIwLjk5Mi0zMC43Mi0xNjIuODE2LTE3My41NjgtMjEwLjk0NC0yMTEuOTY4QzM4NS41MzYgMjUuMDg4IDMxMC4yNzIgNS42MzIgMjI3Ljg0IDIxLjUwNHoiIGZpbGw9IiMzZTY5ZDciIHAtaWQ9IjE1NjkiPjwvcGF0aD48cGF0aCBkPSJNMzkxLjY4IDM5MS42OGMtMjQuMDY0IDExLjI2NC0zMS4yMzIgMTguNDMyLTUxLjIgNTUuMjk2LTI0LjA2NCA0NC4wMzItMzMuMjggNzguMzM2LTMzLjc5MiAxMjggMCA1NS4yOTYgMTUuMzYgMTAxLjg4OCA1Mi4yMjQgMTU3LjE4NCAyMS41MDQgMzIuMjU2IDE3Ny4xNTIgMTg2Ljg4IDIxOS42NDggMjE5LjEzNiAzOS40MjQgMjkuMTg0IDc4LjMzNiA0Ni4wOCAxMjQuNDE2IDUzLjI0OCAxNTcuMTg0IDI0LjA2NCAzMDAuNTQ0LTk4LjgxNiAzMDAuNTQ0LTI1Ny41MzYgMC03NS43NzYtMTguOTQ0LTEyMy4zOTItNzYuMjg4LTE5My4wMjQtMzAuMjA4LTM1Ljg0LTEwNS45ODQtMTA4LjU0NC0xMTcuMjQ4LTExMi42NC0yLjU2LTAuNTEyLTYuNjU2IDE0LjMzNi04LjcwNCAzMy4yOC0yLjA0OCAxOC45NDQtNy42OCA0OC4xMjgtMTMuMzEyIDY0LTE1Ljg3MiA0OC4xMjgtMTQuMzM2IDUzLjc2IDI2LjYyNCA5My42OTYgNDQuNTQ0IDQ0LjAzMiA2MC45MjggNzYuMjg4IDYwLjkyOCAxMTguMjcyIDAgOTguODE2LTEwMy40MjQgMTYxLjI4LTE4NS44NTYgMTEzLjE1Mi0xMS43NzYtNy4xNjgtNzEuMTY4LTYzLjQ4OC0xMzIuNjA4LTEyNC45MjgtMTIwLjgzMi0xMjEuODU2LTEyMC4zMi0xMjEuMzQ0LTExNS43MTItMTc3LjE1MiAxLjUzNi0xOS40NTYgNy42OC0zNC44MTYgMjAuOTkyLTU1LjgwOCAxNC4zMzYtMjIuMDE2IDE4Ljk0NC0zNC4zMDQgMTguOTQ0LTUxLjIgMC0yMy41NTItMTMuODI0LTUxLjItMjkuMTg0LTU5LjM5Mi0xNy45Mi05LjIxNi00NS4wNTYtMTAuNzUyLTYwLjQxNi0zLjU4NHoiIGZpbGw9IiMzZTY5ZDciIHAtaWQ9IjE1NzAiPjwvcGF0aD48L3N2Zz4=");
+}
+
+/**
+ * 链接悬停时图标变为强调色
+ */
+#write a:hover::before {
+  background-image: url("data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBzdGFuZGFsb25lPSJubyI/PjwhRE9DVFlQRSBzdmcgUFVCTElDICItLy9XM0MvL0RURCBTVkcgMS4xLy9FTiIgImh0dHA6Ly93d3cudzMub3JnL0dyYXBoaWNzL1NWRy8xLjEvRFREL3N2ZzExLmR0ZCI+PHN2ZyB0PSIxNzQxNDk3MDE4MTgyIiBjbGFzcz0iaWNvbiIgdmlld0JveD0iMCAwIDEwMjQgMTAyNCIgdmVyc2lvbj0iMS4xIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHAtaWQ9IjExMDciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCI+PHBhdGggZD0iTTIyNy44NCAyMS41MDRjLTQxLjQ3MiA3LjY4LTk3LjI4IDM3Ljg4OC0xMzAuMDQ4IDcwLjY1NkM0Ny42MTYgMTQyLjg0OCAyMC40OCAyMDcuMzYgMjAuNDggMjc2Ljk5MmMwIDc1Ljc3NiAxOC45NDQgMTIzLjM5MiA3Ni4yODggMTkzLjAyNCAzMC4yMDggMzUuODQgMTA1Ljk4NCAxMDguNTQ0IDExNy4yNDggMTEyLjY0IDIuNTYgMC41MTIgNi42NTYtMTQuMzM2IDguNzA0LTMzLjI4IDIuMDQ4LTE4Ljk0NCA3LjY4LTQ4LjEyOCAxMy4zMTItNjQgMTUuODcyLTQ4LjEyOCAxNC4zMzYtNTMuNzYtMjYuNjI0LTkzLjY5NkMxNjQuODY0IDM0Ny42NDggMTQ4LjQ4IDMxNS4zOTIgMTQ4LjQ4IDI3My40MDhjMC05OC44MTYgMTAzLjQyNC0xNjEuMjggMTg1Ljg1Ni0xMTMuMTUyIDExLjc3NiA3LjE2OCA3MS4xNjggNjMuNDg4IDEzMi42MDggMTI0LjkyOCAxMjAuODMyIDEyMS44NTYgMTIwLjMyIDEyMS4zNDQgMTE1LjcxMiAxNzcuMTUyLTEuNTM2IDE5LjQ1Ni03LjY4IDM0LjgxNi0yMC45OTIgNTUuODA4LTIyLjAxNiAzNC4zMDQtMjUuMDg4IDYyLjk3Ni04LjcwNCA4OS42IDEyLjI4OCAyMC40OCAyNS42IDI3LjY0OCA1My4yNDggMjguNjcyIDMyLjc2OCAxLjUzNiA1NC4yNzItMTUuODcyIDc4Ljg0OC02Mi45NzYgMjQuNTc2LTQ2LjU5MiAzMi4yNTYtNzYuOCAzMi4yNTYtMTI2LjQ2NCAwLTUzLjc2LTE1Ljg3Mi0xMDAuODY0LTUyLjIyNC0xNTUuMTM2LTIwLjk5Mi0zMC43Mi0xNjIuODE2LTE3My41NjgtMjEwLjk0NC0yMTEuOTY4QzM4NS41MzYgMjUuMDg4IDMxMC4yNzIgNS42MzIgMjI3Ljg0IDIxLjUwNHoiIGZpbGw9IiNmNTkxMDIiIHAtaWQ9IjExMDgiPjwvcGF0aD48cGF0aCBkPSJNMzkxLjY4IDM5MS42OGMtMjQuMDY0IDExLjI2NC0zMS4yMzIgMTguNDMyLTUxLjIgNTUuMjk2LTI0LjA2NCA0NC4wMzItMzMuMjggNzguMzM2LTMzLjc5MiAxMjggMCA1NS4yOTYgMTUuMzYgMTAxLjg4OCA1Mi4yMjQgMTU3LjE4NCAyMS41MDQgMzIuMjU2IDE3Ny4xNTIgMTg2Ljg4IDIxOS42NDggMjE5LjEzNiAzOS40MjQgMjkuMTg0IDc4LjMzNiA0Ni4wOCAxMjQuNDE2IDUzLjI0OCAxNTcuMTg0IDI0LjA2NCAzMDAuNTQ0LTk4LjgxNiAzMDAuNTQ0LTI1Ny41MzYgMC03NS43NzYtMTguOTQ0LTEyMy4zOTItNzYuMjg4LTE5My4wMjQtMzAuMjA4LTM1Ljg0LTEwNS45ODQtMTA4LjU0NC0xMTcuMjQ4LTExMi42NC0yLjU2LTAuNTEyLTYuNjU2IDE0LjMzNi04LjcwNCAzMy4yOC0yLjA0OCAxOC45NDQtNy42OCA0OC4xMjgtMTMuMzEyIDY0LTE1Ljg3MiA0OC4xMjgtMTQuMzM2IDUzLjc2IDI2LjYyNCA5My42OTYgNDQuNTQ0IDQ0LjAzMiA2MC45MjggNzYuMjg4IDYwLjkyOCAxMTguMjcyIDAgOTguODE2LTEwMy40MjQgMTYxLjI4LTE4NS44NTYgMTEzLjE1Mi0xMS43NzYtNy4xNjgtNzEuMTY4LTYzLjQ4OC0xMzIuNjA4LTEyNC45MjgtMTIwLjgzMi0xMjEuODU2LTEyMC4zMi0xMjEuMzQ0LTExNS43MTItMTc3LjE1MiAxLjUzNi0xOS40NTYgNy42OC0zNC44MTYgMjAuOTkyLTU1LjgwOCAxNC4zMzYtMjIuMDE2IDE4Ljk0NC0zNC4zMDQgMTguOTQ0LTUxLjIgMC0yMy41NTItMTMuODI0LTUxLjItMjkuMTg0LTU5LjM5Mi0xNy45Mi05LjIxNi00NS4wNTYtMTAuNzUyLTYwLjQxNi0zLjU4NHoiIGZpbGw9IiNmNTkxMDIiIHAtaWQ9IjExMDkiPjwvcGF0aD48L3N2Zz4=");
+}
+
+/* ============================================================================
+ * 特殊链接（无图标）- Special Links (No Icon)
+ * ============================================================================ */
+
+/**
+ * 脚注引用和返回链接
+ * 这些链接不需要显示链接图标
+ */
+sup a,
+a.reversefootnote {
+  padding-left: 0 !important;
+}
+
+sup a::before,
+a.reversefootnote::before,
+.md-toc-content .md-toc-item > a::before {
+  display: none;
+  width: 0 !important;
+  height: 0 !important;
+  background-image: none !important;
+}

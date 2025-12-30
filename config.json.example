@@ -1,0 +1,33 @@
+{
+  "port": 80,
+  "host": "0.0.0.0",
+  "directories": [
+    {
+      "route": "/docs",
+      "path": "D:/Examples/docs"
+    },
+    {
+      "route": "/",
+      "path": "D:/Examples/uploads"
+    }
+  ],
+  "uploadDir": "D:/Examples/uploads",
+  "cors": true,
+  "showIndex": true,
+  "markdown": {
+    "enabled": true,
+    "theme": "anonymous-dark"
+  },
+  "telegram": {
+    "enabled": false,
+    "apiId": 0,
+    "apiHash": "",
+    "sessionFile": "./data/telegram-session.txt",
+    "tasksFile": "./data/telegram-tasks.json"
+    },
+  "notifications": [
+    { "type": "dingtalk", "url": "https://oapi.dingtalk.com/robot/send?access_token=********" },
+    { "type": "feishu", "url": "https://open.feishu.cn/open-apis/bot/v2/hook/********" }
+  ],
+  "projectName": "本地轻量级后端自用服务器"
+}

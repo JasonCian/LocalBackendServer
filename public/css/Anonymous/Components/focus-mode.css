@@ -1,0 +1,146 @@
+/**
+ * ============================================================================
+ * Anonymous Theme - 专注模式样式 / Focus Mode Styles
+ * ============================================================================
+ * 
+ * 文件: Anonymous/Components/focus-mode.css
+ * 描述: 专注模式的样式定义
+ *       Styles for focus mode
+ * 
+ * 专注模式说明:
+ * - 专注模式下，非当前行/段落的内容会变淡
+ * - 帮助用户集中注意力在当前编辑内容上
+ * 
+ * 参考: https://support.typora.io/Change-Styles-in-Focus-Mode/
+ * ============================================================================
+ */
+
+/* ============================================================================
+ * 专注模式未聚焦元素样式
+ * Focus Mode Unfocused Element Styles
+ * 
+ * 说明：以下是专注模式下未聚焦元素的样式示例
+ * 可根据需要取消注释并自定义
+ * ============================================================================ */
+
+/*
+.on-focus-mode .md-end-block:not(.md-focus):not(.md-focus-container) * {
+  color: var(--anonymous-text-muted) !important;
+}
+
+.on-focus-mode .md-end-block:not(.md-focus):not(.md-focus-container) img {
+  opacity: 0.5;
+}
+
+.on-focus-mode .md-fences:not(.md-focus) .CodeMirror-code {
+  opacity: 0.5;
+}
+*/
+
+/* ============================================================================
+ * 专注模式核心参数
+ * Focus Mode Core Parameters
+ * 
+ * 参数说明:
+ * - --anonymous-focus-opacity: 非焦点区域的不透明度
+ * - --anonymous-focus-blur: 非焦点区域的轻度模糊值
+ * - --anonymous-focus-transition: 过渡动画时间
+ * ============================================================================ */
+
+:root {
+  --anonymous-focus-opacity: 0.5;
+  --anonymous-focus-blur: 0.4px;
+  --anonymous-focus-transition: 0.2s ease;
+}
+
+/* ============================================================================
+ * 专注模式全局激活
+ * Focus Mode Global Activation
+ * 
+ * 当专注模式或打字机模式启用时，对编辑区应用轻度去饱和效果
+ * ============================================================================ */
+
+.on-focus-mode #write,
+.on-typewriter-mode #write {
+  /* 轻度去饱和，保持深色主题氛围 */
+  filter: saturate(0.88);
+}
+
+/* ============================================================================
+ * 焦点块高亮
+ * Focus Block Highlight
+ * 
+ * 当前聚焦的块获得轻微的背景高亮和发光效果
+ * ============================================================================ */
+
+.on-focus-mode #write .md-focus,
+.on-typewriter-mode #write .md-focus {
+  position: relative;
+  z-index: 2;
+  background: var(--anonymous-bg-tertiary);
+  box-shadow: 0 0 0 1px var(--anonymous-primary-alpha-30);
+  border-radius: var(--anonymous-radius-md);
+  transition: box-shadow var(--anonymous-focus-transition),
+    background-color var(--anonymous-focus-transition);
+}
+
+/* ============================================================================
+ * 非焦点区淡化
+ * Non-focus Area Dimming
+ * 
+ * 非当前聚焦的块会降低不透明度和轻微模糊
+ * ============================================================================ */
+
+.on-focus-mode #write .md-end-block:not(.md-focus):not(.md-focus-container),
+.on-typewriter-mode
+  #write
+  .md-end-block:not(.md-focus):not(.md-focus-container) {
+  opacity: var(--anonymous-focus-opacity);
+  filter: blur(var(--anonymous-focus-blur));
+  transition: opacity var(--anonymous-focus-transition),
+    filter var(--anonymous-focus-transition);
+}
+
+/* 焦点内元素保持清晰 */
+.on-focus-mode #write .md-focus *,
+.on-typewriter-mode #write .md-focus * {
+  opacity: 1 !important;
+  filter: none !important;
+}
+
+/* 焦点内代码块和数学公式增强可读性 */
+.on-focus-mode #write .md-focus pre,
+.on-typewriter-mode #write .md-focus pre,
+.on-focus-mode #write .md-focus mjx-container,
+.on-typewriter-mode #write .md-focus mjx-container {
+  filter: none;
+  opacity: 1;
+}
+
+/* ============================================================================
+ * 可访问性：减少动态效果
+ * Accessibility: Reduced Motion Support
+ * 
+ * 当用户系统设置了"减少动态效果"偏好时，
+ * 禁用所有动画和过渡效果，提升可访问性
+ * 参考: https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-reduced-motion
+ * ============================================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* 专注模式下禁用模糊效果 */
+  .on-focus-mode #write .md-end-block:not(.md-focus):not(.md-focus-container),
+  .on-typewriter-mode
+    #write
+    .md-end-block:not(.md-focus):not(.md-focus-container) {
+    filter: none;
+  }
+}

@@ -1,0 +1,23 @@
+{
+    "name": "local-backend-server",
+    "version": "0.2.0",
+    "private": true,
+    "author": "JasonCian",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/JasonCian/LocalBackendServer.git"
+    },
+    "description": "本地轻量级后端自用服务器",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js"
+    },
+    "dependencies": {
+        "node-cron": "^3.0.2",
+        "telegram": "^2.20.14"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    }
+}

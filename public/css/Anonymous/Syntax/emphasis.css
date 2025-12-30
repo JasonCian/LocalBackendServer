@@ -1,0 +1,127 @@
+/**
+ * ============================================================================
+ * Anonymous Theme - 强调样式 / Emphasis Styles
+ * ============================================================================
+ * 
+ * 文件: Anonymous/Syntax/emphasis.css
+ * 描述: 文本强调元素样式（粗体、斜体、下划线、删除线、高亮、键盘标记等）
+ *       Styles for text emphasis (bold, italic, underline, strikethrough, mark, kbd)
+ * 
+ * Markdown 语法 / Markdown Syntax:
+ * **粗体** 或 __粗体__
+ * *斜体* 或 _斜体_
+ * <u>下划线</u>
+ * ~~删除线~~
+ * ==高亮==
+ * <kbd>键盘标记</kbd>
+ * 
+ * 参考: https://support.typora.io/Add-Custom-CSS/
+ * ============================================================================
+ */
+
+/* ============================================================================
+ * 粗体样式 - Bold Styles
+ * ============================================================================ */
+
+/**
+ * 粗体文本
+ * 使用更重的字重和略浅的颜色以突出显示
+ */
+strong {
+  font-weight: 800;
+  color: var(--anonymous-text-bold);
+}
+
+/* ============================================================================
+ * 斜体样式 - Italic Styles
+ * ============================================================================ */
+
+/**
+ * 斜体文本
+ * 保持正常字重
+ */
+em {
+  font-weight: 400;
+  color: var(--anonymous-text-italic);
+}
+
+/* ============================================================================
+ * 下划线样式 - Underline Styles
+ * ============================================================================ */
+
+/**
+ * 下划线文本
+ * 使用偏移和加粗的下划线以提高可见性
+ */
+u {
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1.5px;
+}
+
+/* ============================================================================
+ * 删除线样式 - Strikethrough Styles
+ * ============================================================================ */
+
+/**
+ * 删除线文本
+ * 使用灰色文字和红色删除线
+ */
+del {
+  color: var(--anonymous-text-muted);
+  text-decoration: line-through;
+  -moz-text-decoration-color: var(--anonymous-error);
+  text-decoration-color: var(--anonymous-error);
+}
+
+/* ============================================================================
+ * 高亮样式 - Mark/Highlight Styles
+ * ============================================================================ */
+
+/**
+ * 高亮文本
+ * 使用主色背景和白色文字
+ */
+mark {
+  border-radius: var(--anonymous-radius-md);
+  background-color: var(--anonymous-primary);
+  padding: 0 4px;
+  color: rgb(250, 250, 250);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* ============================================================================
+ * 键盘标记样式 - Keyboard Styles
+ * ============================================================================ */
+
+/**
+ * 键盘按键标记
+ * 使用强调色背景和白色文字，模拟物理按键外观
+ */
+kbd {
+  display: inline-block;
+  border: none;
+  border-image: none;
+  border-radius: var(--anonymous-radius-md);
+  background: var(--anonymous-accent);
+  padding: 0 6px;
+  box-shadow: none;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  font-size: var(--anonymous-text-sm);
+  font-weight: 900;
+  color: rgb(250, 250, 250);
+}
+
+/* ============================================================================
+ * 上标和下标样式 - Superscript and Subscript Styles
+ * ============================================================================ */
+
+/**
+ * 上标和下标
+ * 使用较小的字号
+ */
+sup,
+sub {
+  font-size: var(--anonymous-text-xs);
+}

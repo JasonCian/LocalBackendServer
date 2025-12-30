@@ -1,0 +1,68 @@
+/**
+ * ============================================================================
+ * Anonymous Theme - 脚注样式 / Footnote Styles
+ * ============================================================================
+ * 
+ * 文件: Anonymous/Syntax/footnote.css
+ * 描述: 脚注的样式定义
+ *       Styles for footnotes
+ * 
+ * Markdown 语法 / Markdown Syntax:
+ * 这是一段带有脚注的文本[^1]。
+ * 
+ * [^1]: 这是脚注的内容。
+ * 
+ * 参考: https://support.typora.io/Add-Custom-CSS/
+ * ============================================================================
+ */
+
+/* ============================================================================
+ * 脚注引用样式 - Footnote Reference Styles
+ * ============================================================================ */
+
+/**
+ * 脚注上标引用
+ */
+sup.md-footnote {
+  background: transparent;
+  padding: 0 2px;
+  color: var(--anonymous-primary);
+}
+
+/**
+ * 脚注引用悬停状态
+ */
+sup.md-footnote:hover {
+  color: var(--anonymous-accent);
+  cursor: pointer;
+}
+
+/* ============================================================================
+ * 脚注定义区域样式 - Footnote Definition Styles
+ * ============================================================================ */
+
+/**
+ * 脚注区域和链接
+ */
+.footnotes,
+.footnotes a {
+  font-size: var(--anonymous-text-sm);
+  text-decoration: none;
+}
+
+/**
+ * 脚注定义名称的方括号
+ */
+.footnotes .md-def-name::before,
+.footnotes .md-def-name::after {
+  color: var(--anonymous-text-primary);
+}
+
+/**
+ * 脚注 URL 链接
+ */
+.footnotes .md-def-url,
+.md-link .md-url {
+  text-decoration: none;
+  color: var(--anonymous-primary);
+}

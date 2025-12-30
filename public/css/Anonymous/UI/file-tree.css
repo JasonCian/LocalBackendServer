@@ -1,0 +1,346 @@
+/**
+ * ============================================================================
+ * Anonymous Theme - 文件树样式 / File Tree Styles
+ * ============================================================================
+ * 
+ * 文件: Anonymous/UI/file-tree.css
+ * 描述: 文件列表和文件树的样式定义
+ *       Styles for file list and file tree
+ * 
+ * 参考: https://support.typora.io/Add-Custom-CSS/
+ * ============================================================================
+ */
+
+/* ============================================================================
+ * 文件列表样式 - File List Styles
+ * ============================================================================ */
+
+/**
+ * 文件列表容器
+ */
+#file-library-list,
+#file-library-search-result {
+  padding: 14px;
+}
+
+/**
+ * 文件列表项和搜索结果项
+ */
+#file-library-list .file-list-item,
+#file-library-search-result .ty-search-item {
+  margin-bottom: 8px;
+  border: 1px solid transparent;
+  border-bottom-color: var(--anonymous-border-default);
+}
+
+#file-library-list .file-list-item {
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+/**
+ * 激活状态的文件项
+ */
+#file-library-list .file-list-item.active,
+#file-library-search-result .ty-search-item.active {
+  border-radius: var(--anonymous-radius-md);
+  border: 1px solid var(--anonymous-primary);
+}
+
+#file-library-list .file-list-item.active {
+  padding: 6px 12px;
+}
+
+#file-library-search-result .ty-search-item.active {
+  padding: 6px 12px 6px 0;
+}
+
+/**
+ * 首个激活项顶部间距
+ */
+#file-library-list .file-list-item:first-of-type.active,
+#file-library-search-result .ty-search-item:first-of-type.active {
+  margin-top: 0;
+}
+
+/**
+ * 悬停状态
+ */
+#file-library-list .file-list-item:hover,
+#file-library-search-result .ty-search-item:hover {
+  border-radius: var(--anonymous-radius-md);
+  background: var(--anonymous-bg-secondary);
+  border-color: var(--anonymous-border-default);
+}
+
+#file-library-list .file-list-item:hover {
+  color: var(--anonymous-primary);
+}
+
+/**
+ * 悬停/激活项后的下一项边框
+ */
+#file-library-list .file-list-item:hover + .file-list-item:not(.active),
+#file-library-list .file-list-item.active + .file-list-item:not(.active),
+#file-library-search-result
+  .ty-search-item:hover
+  + .ty-search-item:not(.active),
+#file-library-search-result
+  .ty-search-item.active
+  + .ty-search-item:not(.active) {
+  border-top: 1px solid var(--anonymous-border-default);
+}
+
+/**
+ * 激活项悬停状态
+ */
+#file-library-list .file-list-item.active:hover,
+#file-library-search-result .ty-search-item.active:hover {
+  border-color: var(--anonymous-primary);
+}
+
+/**
+ * 搜索结果激活项
+ */
+#file-library-search-result .ty-search-item.active {
+  color: var(--anonymous-text-primary);
+}
+
+#file-library-search-result .ty-search-item.active .ty-search-item-line {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/**
+ * 文件时间和计数
+ */
+.file-list-item-time {
+  margin-right: 0;
+  padding-right: 0;
+}
+
+.file-list-item-count {
+  margin-right: 0;
+  border-radius: var(--anonymous-radius-sm);
+  padding: 0 6px;
+}
+
+#file-library-search-result .ty-search-item.active .file-list-item-count {
+  padding-right: 0;
+}
+
+/**
+ * 加载模板
+ */
+#sidebar-loading-template {
+  display: none;
+  margin-bottom: 5px;
+  border-radius: var(--anonymous-radius-md);
+  padding: 8px;
+}
+
+/**
+ * 搜索匹配文本高亮
+ */
+.ty-file-search-match-text {
+  background-color: var(--anonymous-accent-alpha-40);
+}
+
+/* ============================================================================
+ * 文件树样式 - File Tree Styles
+ * ============================================================================ */
+
+/**
+ * 文件树容器
+ */
+#file-library-tree {
+  box-sizing: border-box;
+  padding-top: 8px;
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+/**
+ * 文件节点根元素
+ */
+.file-node-root {
+  position: relative;
+  margin-left: 0 !important;
+  padding-left: 0 !important;
+}
+
+/**
+ * 文件树节点
+ */
+.file-tree-node {
+  margin-bottom: 1px;
+}
+
+/**
+ * 子节点缩进
+ */
+.file-node-children {
+  margin-left: 12px;
+}
+
+.file-node-root > .file-node-children {
+  margin-left: -2px;
+}
+
+/**
+ * 文件节点内容
+ */
+.file-tree-node > .file-node-content > .file-node-open-state + .file-node-icon {
+  margin-left: 4px;
+}
+
+.file-node-expanded
+  > .file-node-content
+  > .file-node-open-state
+  + .file-node-icon,
+.file-node-collapsed
+  > .file-node-content
+  > .file-node-open-state
+  + .file-node-icon {
+  margin-left: 3px;
+}
+
+/**
+ * 文件夹图标颜色
+ */
+.fa-folder:before,
+.fa-folder:after,
+.fa-caret-right,
+.fa-caret-down {
+  color: var(--anonymous-text-muted);
+}
+
+/**
+ * 展开/折叠状态
+ */
+.file-node-content .file-node-open-state {
+  position: relative;
+  padding-left: 3px;
+}
+
+.file-node-expanded .file-node-content .file-node-open-state {
+  padding-left: 3px;
+}
+
+/**
+ * 文件树连接线
+ */
+.file-node-content .file-node-open-state::after {
+  content: "";
+  position: absolute;
+  z-index: 20;
+  left: 0;
+  top: -21px;
+  width: 8px;
+  height: 32px;
+  border-left: 1px solid var(--anonymous-border-default);
+  border-bottom: 1px solid var(--anonymous-border-default);
+  background: transparent;
+}
+
+.file-node-expanded > .file-node-content .file-node-open-state::after {
+  left: -12px;
+  top: -21px;
+  width: 7px;
+}
+
+.file-node-root > .file-node-content .file-node-open-state::after {
+  display: none;
+}
+
+.file-tree-node:first-child > .file-node-content .file-node-open-state::after {
+  top: -11px;
+  height: 22px;
+}
+
+.file-node-expanded:first-child
+  > .file-node-content
+  .file-node-open-state::after {
+  top: -11px;
+}
+
+.file-tree-node:last-child > .file-node-content .file-node-open-state::after {
+  border-bottom-left-radius: var(--anonymous-radius-sm);
+}
+
+/**
+ * 折叠状态箭头
+ */
+.file-node-collapsed > .file-node-content .fa-caret-right {
+  margin-left: 9px;
+}
+
+/**
+ * 展开状态左边框
+ */
+.file-node-expanded {
+  margin-left: 8px;
+  border-left: 1px solid var(--anonymous-border-default);
+}
+
+.file-tree-node:last-child {
+  border-left-color: transparent;
+}
+
+.file-node-expanded > .file-node-content {
+  margin-left: 3px;
+}
+
+.file-node-root > .file-node-content {
+  margin-left: 0;
+}
+
+/**
+ * 文件节点内容区域
+ */
+.file-node-content {
+  position: relative;
+  padding-top: 3px;
+}
+
+/**
+ * 悬停背景
+ */
+.file-node-content::after {
+  content: "";
+  display: none;
+  position: absolute;
+  z-index: -1;
+  left: 6px;
+  top: 0;
+  width: calc(100% - 10px);
+  height: 29px;
+  background: var(--anonymous-bg-secondary);
+  border-radius: var(--anonymous-radius-md);
+}
+
+.file-library-file-node:hover > .file-node-content::after,
+.file-tree-node.active > .file-node-content::after {
+  display: block;
+}
+
+.file-library-file-node:hover
+  > .file-node-content
+  > .file-node-open-state:after,
+.file-tree-node.active > .file-node-content > .file-node-open-state:after {
+  width: 6px;
+}
+
+/**
+ * 隐藏默认背景
+ */
+.file-node-background {
+  display: none !important;
+}
+
+/**
+ * 聚焦状态
+ */
+.file-library-node:not(.file-node-root):focus > .file-node-content {
+  outline: none;
+}

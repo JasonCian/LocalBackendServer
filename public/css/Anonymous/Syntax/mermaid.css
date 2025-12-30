@@ -1,0 +1,51 @@
+/**
+ * ============================================================================
+ * Anonymous Theme - Mermaid 图表样式 / Mermaid Diagram Styles
+ * ============================================================================
+ * 
+ * 文件: Anonymous/Syntax/mermaid.css
+ * 描述: Mermaid 图表的样式定义
+ *       Styles for Mermaid diagrams
+ * 
+ * Markdown 语法 / Markdown Syntax:
+ * ```mermaid
+ * graph TD
+ *     A[开始] --> B[结束]
+ * ```
+ * 
+ * 参考: https://support.typora.io/Draw-Diagrams-With-Markdown/#mermaid-options
+ * ============================================================================
+ */
+
+/* ============================================================================
+ * Mermaid 图表面板样式 - Mermaid Diagram Panel Styles
+ * ============================================================================ */
+
+/**
+ * 图表面板基础样式
+ */
+.md-diagram .md-diagram-panel {
+  border-radius: var(--anonymous-radius-lg);
+  border-color: transparent !important;
+  background: var(--anonymous-bg-secondary);
+}
+
+/**
+ * 聚焦时的图表面板
+ */
+pre.md-focus .md-diagram-panel {
+  margin-top: 4px;
+}
+
+/* ============================================================================
+ * Mermaid 主题配置说明
+ * Mermaid Theme Configuration Notes
+ * 
+ * Mermaid 主题变量已在 Core/variables.css 中定义:
+ * --mermaid-theme: dark (可选: base, dark, forest, neutral, night)
+ * --mermaid-font-family: 字体族
+ * --mermaid-sequence-numbers: on/off
+ * --mermaid-flowchart-curve: linear/basis/cardinal
+ * 
+ * 这些变量会被 Typora 自动读取并应用到 Mermaid 图表
+ * ============================================================================ */
