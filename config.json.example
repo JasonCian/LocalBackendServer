@@ -3,6 +3,10 @@
   "host": "0.0.0.0",
   "directories": [
     {
+      "route": "/",
+      "path": "./public"
+    },
+    {
       "route": "/docs",
       "path": "D:/Examples/docs"
     },
@@ -20,6 +24,7 @@
   },
   "telegram": {
     "enabled": false,
+    "mount": "/telegram",
     "apiId": 0,
     "apiHash": "",
     "sessionFile": "./data/telegram-session.txt",

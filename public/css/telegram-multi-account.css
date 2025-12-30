@@ -1,0 +1,479 @@
+/* 
+ * Telegram 多账号管理界面 - 样式文件
+ * 包含所有 inline styles 的提取
+ */
+
+/* ============================================================================
+   CSS 变量与全局样式
+   ============================================================================ */
+:root {
+  --bg: #0f1220;
+  --bg2: #101526;
+  --fg: #e6e9ef;
+  --muted: #9aa0aa;
+  --primary: #6aa0ff;
+  --accent: #7a5cff;
+  --card: #141a2f;
+  --border: #1f2740;
+  --success: #7fd77f;
+  --error: #ff6b6b;
+  --warn: #ffd93d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 20px;
+  background: radial-gradient(1200px 600px at 20% 0%, #0a0d1a, #0f1220);
+  color: var(--fg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+header {
+  margin-bottom: 28px;
+}
+
+h1 {
+  font-size: 2em;
+  margin: 0 0 8px;
+}
+
+.subtitle {
+  color: var(--muted);
+  margin: 0;
+}
+
+/* ============================================================================
+   标签页 / Tabs
+   ============================================================================ */
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tab {
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}
+
+.tab:hover {
+  color: var(--fg);
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* ============================================================================
+   卡片 / Cards
+   ============================================================================ */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 20px;
+}
+
+.card h2 {
+  margin: 0 0 14px;
+  font-size: 1.1em;
+}
+
+/* ============================================================================
+   表单 / Forms
+   ============================================================================ */
+.form-row {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+label {
+  display: block;
+  color: var(--muted);
+  font-size: 0.9em;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #0d1224;
+  color: var(--fg);
+  font-size: 0.95em;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: #101526;
+}
+
+/* ============================================================================
+   按钮 / Buttons
+   ============================================================================ */
+.buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+button {
+  padding: 10px 14px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: var(--fg);
+  cursor: pointer;
+  font-size: 0.95em;
+}
+
+button.secondary {
+  background: #2a3150;
+}
+
+button.danger {
+  background: linear-gradient(135deg, var(--error), #d94444);
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================================================================
+   状态框 / Status Box
+   ============================================================================ */
+.status-box {
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 14px;
+  white-space: pre-wrap;
+  font-family: ui-monospace, monospace;
+  font-size: 0.85em;
+  background: #0d1224;
+  border: 1px solid var(--border);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.status-box.loading {
+  color: var(--warn);
+}
+
+.status-box.success {
+  color: var(--success);
+  border-color: var(--success);
+}
+
+.status-box.error {
+  color: var(--error);
+  border-color: var(--error);
+}
+
+/* ============================================================================
+   账号列表 / Account List
+   ============================================================================ */
+.account-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.account-item {
+  background: #0d1224;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.account-item.active {
+  border-color: var(--primary);
+  background: linear-gradient(135deg, rgba(106, 160, 255, 0.1), rgba(122, 92, 255, 0.1));
+}
+
+.account-info {
+  flex: 1;
+}
+
+.account-name {
+  font-weight: 600;
+  font-size: 1.05em;
+}
+
+.account-meta {
+  font-size: 0.85em;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.account-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.account-actions button {
+  padding: 6px 12px;
+  font-size: 0.85em;
+}
+
+/* ============================================================================
+   徽章 / Badges
+   ============================================================================ */
+.badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8em;
+}
+
+.badge.active {
+  background: var(--primary);
+  color: #0f1220;
+}
+
+.badge.connected {
+  background: var(--success);
+  color: #0f1220;
+}
+
+.badge.disconnected {
+  background: var(--error);
+  color: #fff;
+}
+
+.badge.authorized {
+  background: var(--success);
+  color: #0f1220;
+}
+
+.badge.unauthorized {
+  background: var(--muted);
+  color: #0f1220;
+}
+
+/* ============================================================================
+   任务项 / Task Item
+   ============================================================================ */
+.task-item {
+  background: #0d1224;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.task-item.disabled {
+  opacity: 0.6;
+}
+
+.task-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.task-title {
+  font-weight: 600;
+}
+
+.task-meta {
+  font-size: 0.85em;
+  color: var(--muted);
+}
+
+.task-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 0.9em;
+}
+
+.task-info-item {
+  color: var(--muted);
+}
+
+.task-info-item code {
+  background: #141a2f;
+  padding: 2px 4px;
+  border-radius: 4px;
+  color: var(--fg);
+}
+
+.empty {
+  text-align: center;
+  color: var(--muted);
+  padding: 20px;
+}
+
+/* ============================================================================
+   网格布局 / Grid Layouts
+   ============================================================================ */
+
+.add-account-form-grid {
+  display: grid;
+  grid-template-columns: 2fr 2fr 1fr;
+  gap: 10px;
+}
+
+/* 网格布局 - 发送任务表单 */
+.add-send-task-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+/* 网格布局 - 监听任务表单 */
+.add-listen-task-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+/* 状态框初始隐藏样式 */
+.status-hidden {
+  display: none;
+}
+
+/* 账号添加状态框 */
+#add-account-status {
+  margin-top: 10px;
+}
+
+/* 发送任务状态框 */
+#add-send-task-status {
+  margin-top: 10px;
+}
+
+/* 监听任务状态框 */
+#add-listen-task-status {
+  margin-top: 10px;
+}
+
+/* 发送消息状态框 */
+#send-status {
+  margin-top: 12px;
+}
+
+/* 登录模态框容器 */
+#login-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 登录模态框内容 */
+.login-modal-content {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px;
+  max-width: 500px;
+  width: 90%;
+}
+
+/* 登录模态框标题 */
+.login-modal-title {
+  margin: 0 0 16px;
+}
+
+/* 登录密码表单 */
+#login-password-form {
+  display: none;
+}
+
+/* 按钮组 - 登录模态框 */
+.login-buttons {
+  margin-top: 16px;
+}
+
+/* 登录模态框状态框 */
+#login-modal-status {
+  display: none;
+  margin-top: 12px;
+}
+
+/* 复选框标签样式 */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 复选框标签文本 */
+.checkbox-label-text {
+  color: var(--muted);
+  font-size: 0.9em;
+}
+
+/* 添加按钮右对齐 */
+.add-button-right {
+  margin-left: auto;
+}
+
+/* 按钮组顶部边距 */
+.buttons-margin-top {
+  margin-top: 16px;
+}
+
+/* 任务列表中的复选框标签 */
+.task-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.task-checkbox-label span {
+  color: var(--muted);
+  font-size: 0.85em;
+}

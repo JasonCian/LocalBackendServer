@@ -46,10 +46,18 @@ LocalBackendServer/
 │       ├── delete-routes.js # 删除
 │       └── telegram-routes.js # Telegram API
 ├── public/                  # 静态资源
-│   ├── telegram.html       # Telegram UI
-│   └── css/                # Markdown 主题
-│       ├── anonymous-dark.css
-│       └── anonymous-light.css
+│   ├── css/                # 功能性样式
+│   │   └── telegram-multi-account.css # Telegram 多账号UI
+│   ├── themes/             # 主题文件
+│   │   ├── anonymous-dark.css         # 深色主题
+│   │   ├── anonymous-light.css        # 亮色主题
+│   │   └── Anonymous/                 # Anonymous 主题模块
+│   │       ├── Core/
+│   │       ├── Syntax/
+│   │       ├── UI/
+│   │       ├── Components/
+│   │       └── browser-adapter.css
+│   └── telegram-multi-account.html    # 多账号管理界面
 ├── data/                    # 数据目录
 │   ├── telegram-session.txt # Telegram 会话
 │   └── telegram-tasks.json  # 定时任务
@@ -288,6 +296,47 @@ DELETE /telegram/api/tasks/:id     # 删除任务
 ## 📄 许可证
 
 本项目为个人开发工具，供学习和自用。
+
+## 🎨 CSS 文件组织
+
+项目采用清晰的 CSS 文件组织结构：
+
+### 目录映射
+
+```
+public/
+├── css/                           # 功能性 CSS（非主题）
+│   └── telegram-multi-account.css # Telegram 多账号管理界面样式
+│
+└── themes/                        # 所有主题文件
+    ├── anonymous-dark.css        # 深色主题（推荐）
+    ├── anonymous-light.css       # 亮色主题
+    └── Anonymous/                # 主题模块库
+        ├── Core/         # 核心变量和基础样式
+        ├── Syntax/       # Markdown 语法样式
+        ├── UI/           # 用户界面组件
+        ├── Components/   # 功能组件
+        └── browser-adapter.css    # 浏览器适配层
+```
+
+### 特点
+
+- ✅ **无内联样式** - 所有样式都在外部 CSS 文件中
+- ✅ **模块化主题** - Anonymous 主题拆分为可维护的子模块
+- ✅ **CSS 变量** - 使用 `--anonymous-*` 变量便于自定义
+- ✅ **易于扩展** - 简单添加新主题或新组件
+
+### CSS 路径引用
+
+```javascript
+// Markdown 页面（markdown-page.js）
+<link rel="stylesheet" href="/themes/${themeCss}.css">
+
+// 功能组件（如 Telegram 管理界面）
+<link rel="stylesheet" href="/css/telegram-multi-account.css">
+```
+
+详见 [CSS 文件组织文档](./docs/CSS-ORGANIZATION.md) 和 [快速参考](./docs/CSS-QUICK-REFERENCE.md)
 
 ## 🙏 致谢
 

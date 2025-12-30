@@ -109,8 +109,9 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // Telegram 服务路由：/telegram/*
-  if (requestPath && requestPath.startsWith('/telegram')) {
+  // Telegram 服务路由（可配置）
+  const telegramMount = config.telegram && config.telegram.mount ? config.telegram.mount : '/telegram';
+  if (requestPath && requestPath.startsWith(telegramMount)) {
     if (telegramService) {
       handleTelegram(req, res, requestPath, telegramService, appRoot, appendLog);
     } else {

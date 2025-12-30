@@ -70,7 +70,7 @@ function generateMarkdownPage(title, content, requestPath, theme, availableTheme
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
   <!-- 主题样式 -->
-  <link rel="stylesheet" href="/css/${themeCss}.css">
+  <link rel="stylesheet" href="/themes/${themeCss}.css">
   <style>
     * { box-sizing: border-box; }
     html, body { height: 100%; margin: 0; padding: 0; }
