@@ -28,6 +28,78 @@ class TelegramService {
     // 启动任务调度
     this.rescheduleAllTasks();
     this.startAllListenTasks();
+    
+    // 🔥 启动时预连接所有账号（异步，不阻塞启动）
+    this.preconnectAllAccounts();
+  }
+  
+  /**
+   * 预连接所有已授权的账号
+   * 确保开机启动后账号立即可用，无需等待首次 API 调用
+   */
+  async preconnectAllAccounts() {
+    const delayMs = 10000; // 启动后等待 10s，避免网络未就绪
+    const perAccountRetries = 3;
+    const retryIntervalMs = 30000; // 后台重试间隔 30s
+    const maxRetryRounds = 5; // 后台重试轮数上限
+
+    const connectOnce = async (account) => {
+      const session = this.accountManager.getSession(account.id);
+      if (!session) {
+        this.logger('WARN', `预连接跳过：找不到会话 ${account.id}`);
+        return false;
+      }
+      let lastError = null;
+      for (let attempt = 1; attempt <= perAccountRetries; attempt++) {
+        try {
+          const backoff = 2000 * attempt; // 2s,4s,6s
+          this.logger('INFO', `预连接账号 ${account.name || account.phone} (${account.id}) 尝试 ${attempt}/${perAccountRetries}`);
+          await session.ensureConnected();
+          const me = await session.getMe();
+          if (me) {
+            this.logger('INFO', `账号预连接成功: ${account.name || account.phone} -> ${me.username || me.firstName}`);
+            return true;
+          }
+          this.logger('WARN', `账号预连接失败（未授权）: ${account.name || account.phone}`);
+          return false;
+        } catch (e) {
+          lastError = e;
+          const msg = e && e.message ? e.message : String(e);
+          this.logger('WARN', `预连接失败 (${attempt}/${perAccountRetries}) ${account.name || account.phone}`, msg);
+          if (attempt < perAccountRetries) {
+            await new Promise(resolve => setTimeout(resolve, backoff));
+          }
+        }
+      }
+      if (lastError) {
+        const msg = lastError && lastError.message ? lastError.message : String(lastError);
+        this.logger('ERROR', `账号预连接最终失败 ${account.name || account.phone}`, msg);
+      }
+      return false;
+    };
+
+    const runPreconnectRound = async (round) => {
+      const accounts = this.accountManager.getAllAccounts();
+      const failed = [];
+      for (const account of accounts) {
+        const ok = await connectOnce(account);
+        if (!ok) failed.push(account.id);
+      }
+
+      if (failed.length && round < maxRetryRounds) {
+        this.logger('WARN', `预连接仍有失败账号 ${failed.join(', ')}，将在 ${retryIntervalMs / 1000}s 后进行第 ${round + 1} 轮重试`);
+        setTimeout(() => runPreconnectRound(round + 1), retryIntervalMs);
+      } else if (!failed.length) {
+        this.logger('INFO', '所有账号预连接完成');
+      } else {
+        this.logger('WARN', `预连接结束，仍有账号未成功: ${failed.join(', ')}`);
+      }
+    };
+
+    this.logger('INFO', `启动预连接调度，${delayMs / 1000}s 后开始尝试`);
+    setTimeout(() => {
+      runPreconnectRound(1).catch(e => this.logger('ERROR', '预连接执行异常', e && e.message));
+    }, delayMs);
   }
   
   /**

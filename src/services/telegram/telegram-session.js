@@ -95,8 +95,35 @@ class TelegramSession {
   async ensureConnected() {
     if (!this.enabledReal || !this.client) return false;
     if (!this.connected) {
-      await this.client.connect();
-      this.connected = true;
+      const maxRetries = 3;
+      let lastError = null;
+      
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          this.logger('INFO', `Telegram 客户端连接尝试 ${attempt}/${maxRetries}...`);
+          await this.client.connect();
+          this.connected = true;
+          this.logger('INFO', 'Telegram 客户端连接成功');
+          return true;
+        } catch (e) {
+          lastError = e;
+          const errMsg = e && e.message ? e.message : String(e);
+          this.logger('WARN', `Telegram 连接失败 (${attempt}/${maxRetries})`, errMsg);
+          
+          if (attempt < maxRetries) {
+            const delay = 2000 * attempt; // 递增延迟：2s, 4s
+            this.logger('INFO', `等待 ${delay}ms 后重试...`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+          }
+        }
+      }
+      
+      // 所有重试失败后记录最终错误
+      if (lastError) {
+        const errMsg = lastError && lastError.message ? lastError.message : String(lastError);
+        this.logger('ERROR', 'Telegram 客户端连接最终失败（已重试所有次数）', errMsg);
+      }
+      return false;
     }
     return true;
   }
@@ -309,14 +336,22 @@ class TelegramSession {
     let me = null;
     let authorized = false;
     let connected = false;
+    let error = null;
     
     if (this.enabledReal) {
       try {
-        await this.ensureConnected();
-        connected = !!this.client.connected;
-        me = await this.getMe();
-        authorized = !!me;
-      } catch (_) {}
+        const connectSuccess = await this.ensureConnected();
+        if (!connectSuccess) {
+          error = 'ensureConnected failed';
+        } else {
+          connected = !!this.client.connected;
+          me = await this.getMe();
+          authorized = !!me;
+        }
+      } catch (e) {
+        error = e && e.message ? e.message : String(e);
+        this.logger('ERROR', 'Telegram getHealth 异常', error);
+      }
     }
     
     return {
@@ -328,7 +363,8 @@ class TelegramSession {
         username: me.username,
         firstName: me.firstName,
         lastName: me.lastName
-      }
+      },
+      ...(error && { error })
     };
   }
 

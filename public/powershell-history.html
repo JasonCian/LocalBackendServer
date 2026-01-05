@@ -101,7 +101,7 @@
       <div class="card">
         <h2>➕ 自定义规则</h2>
         <p class="subtitle">高级选项：创建自己的隐私规则</p>
-        <div class="form-grid">
+        <div class="form-grid form-grid-2col">
           <div class="form-row">
             <label for="rule-name">规则名称</label>
             <input type="text" id="rule-name" placeholder="例: 隐藏内网IP" />
@@ -117,17 +117,24 @@
         </div>
         
         <!-- 关键字匹配模式 -->
-        <div id="keyword-mode" style="display: none;">
-          <div class="form-grid">
-            <div class="form-row">
-              <label>关键字（用|分隔多个）</label>
+        <div id="keyword-mode">
+          <div class="form-grid form-grid-2col">
+            <div class="form-row form-row-span-all">
+              <label for="rule-keywords">关键字（用|分隔多个）</label>
               <input type="text" id="rule-keywords" placeholder="例: password|passwd|pwd|secret" />
             </div>
             <div class="form-row">
-              <label>匹配方式</label>
+              <label for="rule-keyword-type">匹配方式</label>
               <select id="rule-keyword-type">
                 <option value="whole">完整词匹配</option>
                 <option value="partial">包含匹配</option>
+              </select>
+            </div>
+            <div class="form-row">
+              <label for="rule-maskMode-keyword">掩盖强度</label>
+              <select id="rule-maskMode-keyword">
+                <option value="weak">弱 - 用 * 保留位数（password=***）</option>
+                <option value="strong" selected>强 - 用 [MASKED] 隐藏（password=[MASKED]）</option>
               </select>
             </div>
           </div>
@@ -135,8 +142,8 @@
         
         <!-- 正则模式 -->
         <div id="regex-mode">
-          <div class="form-grid">
-            <div class="form-row">
+          <div class="form-grid form-grid-2col">
+            <div class="form-row form-row-span-all">
               <label for="rule-pattern">正则表达式</label>
               <input type="text" id="rule-pattern" placeholder="例: (password)\s*[=:]\s*([^\s]+)" />
             </div>
@@ -149,22 +156,19 @@
                 <option value="3">第3个括号内容</option>
               </select>
             </div>
+            <div class="form-row">
+              <label for="rule-maskMode">掩盖强度</label>
+              <select id="rule-maskMode">
+                <option value="weak">弱 - 用 * 保留位数（password=***）</option>
+                <option value="strong" selected>强 - 用 [MASKED] 隐藏（password=[MASKED]）</option>
+              </select>
+            </div>
           </div>
           <div class="hint-box">
-            💡 <strong>说明</strong>：正则表达式中用 <code>()</code> 括号标记部分。掩盖目标选择要隐藏的部分。
-            <br/>例：<code>(password)\s*[=:]\s*([^\s]+)</code> 有2个括号，选择第2个可只掩盖密码值
+            💡 <strong>说明</strong>：正则表达式中用 <code>()</code> 括号标记部分。掩盖目标选择要隐藏的部分。<br/>例：<code>(password)\s*[=:]\s*([^\s]+)</code> 有2个括号，选择第2个可只掩盖密码值
           </div>
         </div>
         
-        <div class="form-grid">
-          <div class="form-row">
-            <label for="rule-maskMode">掩盖强度</label>
-            <select id="rule-maskMode">
-              <option value="weak">弱 - 用 * 保留位数（password=***）</option>
-              <option value="strong" selected>强 - 用 [MASKED] 隐藏（password=[MASKED]）</option>
-            </select>
-          </div>
-        </div>
         <div class="buttons">
           <label class="checkbox-label">
             <input type="checkbox" id="rule-enabled" checked />
@@ -180,16 +184,16 @@
         <div id="rules-list" class="rules-list">
           <div class="empty">暂无规则</div>
         </div>
-        <div class="card rule-legend" style="margin-top: 20px; padding: 12px 16px; background: rgba(100, 150, 200, 0.05); border-left: 3px solid var(--anonymous-primary, #6db3f2);">
-          <h3 style="margin-bottom: 12px;">📖 掩盖强度说明</h3>
-          <div class="legend-items" style="display: grid; gap: 10px; font-size: 0.9em;">
+        <div class="card rule-legend">
+          <h3>📖 掩盖强度说明</h3>
+          <div class="legend-items">
             <div>
               <span class="badge info">弱掩盖</span> 保留字符位数，用 * 替换<br/>
-              <code style="background: rgba(0,0,0,0.1); padding: 2px 4px;">password=secret123</code> → <code>password=*************</code>
+              <code>password=secret123</code> → <code>password=*************</code>
             </div>
             <div>
               <span class="badge primary">强掩盖</span> 用 [MASKED] 替换整段<br/>
-              <code style="background: rgba(0,0,0,0.1); padding: 2px 4px;">password=secret123</code> → <code>password=[MASKED]</code>
+              <code>password=secret123</code> → <code>password=[MASKED]</code>
             </div>
             <div>
               <span class="badge muted">掩盖目标</span> 0=整个正则匹配；1/2/...=指定捕获分组<br/>
@@ -223,21 +227,23 @@
       <div class="card">
         <h2>⚡ 快捷指令（直接写入历史）</h2>
         <p class="subtitle">将常用指令添加到PowerShell历史，这样敲开头时可以用Tab补全整条指令</p>
-        <div class="form-grid">
+        <div class="form-grid form-grid-2col">
           <div class="form-row">
-            <label>PowerShell指令</label>
+            <label for="shortcut-command">PowerShell指令</label>
             <input type="text" id="shortcut-command" placeholder="例: git status、npm start 等" />
           </div>
           <div class="form-row">
-            <label>分类</label>
+            <label for="shortcut-category">分类</label>
             <input type="text" id="shortcut-category" placeholder="例: git, npm, custom" />
           </div>
-          <div class="form-row">
-            <label>描述</label>
+          <div class="form-row form-row-span-all">
+            <label for="shortcut-description">描述</label>
             <input type="text" id="shortcut-description" placeholder="简短描述此指令的作用" />
           </div>
         </div>
-        <button onclick="addShortcut()" class="btn-primary">添加到历史</button>
+        <div class="buttons">
+          <button onclick="addShortcut()" class="btn-primary">添加到历史</button>
+        </div>
         <div class="status-box status-hidden" id="add-shortcut-status"></div>
       </div>
 

@@ -33,10 +33,9 @@
             <label for="new-account-name">账号名称</label>
             <input id="new-account-name" type="text" placeholder="个人账号/工作账号" />
           </div>
-          <div class="form-row">
-            <label>&nbsp;</label>
-            <button onclick="addAccount()">添加账号</button>
-          </div>
+        </div>
+        <div class="buttons">
+          <button onclick="addAccount()" class="btn-primary">添加账号</button>
         </div>
         <div class="status-box status-hidden" id="add-account-status"></div>
       </div>
@@ -69,7 +68,7 @@
             <input id="send-task-to" type="text" placeholder="@username" />
           </div>
           <div class="form-row">
-            <label for="send-task-message">消息</label>
+            <label for="send-task-message">消息内容</label>
             <input id="send-task-message" type="text" placeholder="/sign" />
           </div>
         </div>

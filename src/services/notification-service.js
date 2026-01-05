@@ -11,6 +11,14 @@ const http = require('http');
 const https = require('https');
 
 /**
+ * 延迟函数
+ * @param {number} ms - 延迟毫秒数
+ */
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
  * 根据目标类型构建通知载荷
  * 
  * @param {Object} target - 通知目标配置 {type, url, headers, format}
@@ -132,34 +140,81 @@ function postJsonWebhook(targetUrl, payload, extraHeaders) {
 }
 
 /**
- * 发送通知到所有配置的目标
+ * 发送通知到所有配置的目标（支持重试）
  * 
  * @param {Array} targets - 通知目标数组
  * @param {string} title - 通知标题
  * @param {string} [detail] - 详细信息（可选）
  * @param {Function} logger - 日志记录函数
  * @param {Array} [photos] - 图片数组（可选）
+ * @param {Object} [options] - 重试选项 {maxRetries, initialDelay, retryDelay, exponentialBackoff}
  * @returns {Promise<void>}
  */
-async function notifyAll(targets, title, detail, logger, photos) {
+async function notifyAll(targets, title, detail, logger, photos, options) {
   if (!targets || !targets.length) return;
   
   const text = detail ? `${title}\n${detail}` : title;
+  const opts = {
+    maxRetries: 5,           // 最大重试次数
+    initialDelay: 3000,      // 初始延迟（等待网络就绪）
+    retryDelay: 2000,        // 重试间隔基础值
+    exponentialBackoff: true,// 使用指数退避
+    ...(options || {})
+  };
+  
+  // 初始延迟：等待网络就绪（开机启动场景）
+  if (opts.initialDelay > 0) {
+    await delay(opts.initialDelay);
+  }
   
   for (const target of targets) {
     const urlStr = target && (target.url || target.endpoint);
     if (!urlStr) continue;
     
     const payload = buildNotificationPayload(target, title, text, photos);
-    try {
-      await postJsonWebhook(urlStr, payload, target.headers);
-      if (logger) {
-        logger('INFO', `通知发送成功 -> ${urlStr}`);
+    let lastError = null;
+    let success = false;
+    
+    // 重试循环
+    for (let attempt = 1; attempt <= opts.maxRetries + 1; attempt++) {
+      try {
+        await postJsonWebhook(urlStr, payload, target.headers);
+        if (logger) {
+          const retryInfo = attempt > 1 ? ` (第${attempt}次尝试)` : '';
+          logger('INFO', `通知发送成功${retryInfo} -> ${urlStr}`);
+        }
+        success = true;
+        break; // 成功则退出重试循环
+      } catch (err) {
+        lastError = err;
+        const errMsg = err && err.message ? err.message : String(err);
+        const isNetworkError = errMsg.includes('ENOTFOUND') || 
+                               errMsg.includes('ETIMEDOUT') || 
+                               errMsg.includes('ECONNREFUSED') ||
+                               errMsg.includes('EAI_AGAIN');
+        
+        // 如果还有重试次数且是网络错误，则重试
+        if (attempt <= opts.maxRetries && isNetworkError) {
+          const retryDelay = opts.exponentialBackoff 
+            ? opts.retryDelay * Math.pow(1.5, attempt - 1)  // 指数退避
+            : opts.retryDelay;
+          
+          if (logger) {
+            logger('WARN', `通知发送失败，${Math.round(retryDelay/1000)}秒后重试 (${attempt}/${opts.maxRetries})`, `${urlStr}: ${errMsg}`);
+          }
+          
+          await delay(retryDelay);
+        } else {
+          // 非网络错误或重试次数用尽
+          break;
+        }
       }
-    } catch (err) {
-      if (logger) {
-        logger('ERROR', '通知发送失败', `${urlStr} ${err && err.message ? err.message : err}`);
-      }
+    }
+    
+    // 所有重试都失败后记录最终错误
+    if (!success && lastError && logger) {
+      const errMsg = lastError && lastError.message ? lastError.message : String(lastError);
+      logger('ERROR', '通知发送最终失败（已重试所有次数）', `${urlStr}: ${errMsg}`);
     }
   }
 }
@@ -167,5 +222,6 @@ async function notifyAll(targets, title, detail, logger, photos) {
 module.exports = {
   notifyAll,
   buildNotificationPayload,
-  postJsonWebhook
+  postJsonWebhook,
+  delay
 };

@@ -100,12 +100,28 @@ class TelegramTaskManager {
       }
       return;
     }
-
-    if (!cron) return;
     
-    const cronExpr = String(task.cron || '');
+    // 监听任务不需要cron调度
+    if (task.type === 'listen') {
+      return;
+    }
+
+    if (!cron) {
+      this.logger('WARN', 'node-cron 未安装，跳过任务调度', task.id);
+      return;
+    }
+    
+    // 自动转换5位Cron为6位格式
+    let cronExpr = String(task.cron || '').trim();
+    const parts = cronExpr.split(/\s+/);
+    if (parts.length === 5) {
+      // 标准Unix cron（分 时 日 月 周）-> node-cron（秒 分 时 日 月 周）
+      cronExpr = '0 ' + cronExpr;
+      this.logger('INFO', `自动转换Cron表达式: ${task.cron} -> ${cronExpr}`, task.id);
+    }
+    
     if (!cron.validate(cronExpr)) {
-      this.logger('ERROR', '无效的 cron 表达式', cronExpr);
+      this.logger('ERROR', `无效的 cron 表达式: ${cronExpr}（任务ID: ${task.id}）`, task.cron);
       return;
     }
     
@@ -227,7 +243,7 @@ class TelegramTaskManager {
       task = {
         id: makeTaskId(),
         type: 'send',
-        cron: String(taskData.cron || '* * * * *'),
+        cron: String(taskData.cron || '0 0 11 * * *'),
         to: String(taskData.to || '').trim(),
         message: String(taskData.message || '').trim(),
         enabled: taskData.enabled !== false,

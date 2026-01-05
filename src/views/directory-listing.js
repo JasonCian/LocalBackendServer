@@ -86,28 +86,49 @@ function generateDirectoryListing(dirPath, requestPath, route) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>目录浏览 - ${requestPath}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; }
-    body { 
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      margin: 0; padding: 20px; background: #f5f5f5; color: #333;
+    :root {
+      --bg: #1b1b1f;
+      --bg2: #282a32;
+      --card: #20232c;
+      --border: #464b50;
+      --fg: #f5f5f5;
+      --muted: #8fa5b5;
+      --primary: #6fa3ef;
+      --accent: #e5a545;
     }
-    .container { max-width: 1000px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-    h1 { padding: 20px; margin: 0; border-bottom: 1px solid #eee; font-size: 1.5em; word-break: break-all; }
-    .path { color: #666; font-weight: normal; }
+    body {
+      font-family: 'Space Grotesk', 'Segoe UI', system-ui, sans-serif;
+      margin: 0; padding: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(1100px 680px at 18% 6%, rgba(111, 163, 239, 0.09), transparent),
+                  radial-gradient(900px 540px at 82% 0%, rgba(229, 165, 69, 0.10), transparent),
+                  linear-gradient(135deg, #1b1b1f 0%, #1f2128 55%, #171821 100%);
+      color: var(--fg);
+    }
+    .container { max-width: 1080px; width: 95%; margin: 20px auto; background: rgba(32, 35, 44, 0.9); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,0.35); overflow: hidden; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+    h1 { padding: 18px 22px; margin: 0; border-bottom: 1px solid var(--border); font-size: 1.35em; word-break: break-all; letter-spacing: 0.1px; }
+    .path { color: var(--muted); font-weight: 400; }
     table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 12px 20px; text-align: left; border-bottom: 1px solid #eee; }
-    th { background: #fafafa; font-weight: 600; color: #666; }
-    tr:hover { background: #f8f9fa; }
-    a { color: #0066cc; text-decoration: none; }
+    th, td { padding: 12px 18px; text-align: left; border-bottom: 1px solid rgba(70,75,80,0.6); }
+    th { background: rgba(40,42,50,0.9); font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.82em; }
+    tr:hover { background: rgba(111,163,239,0.06); }
+    a { color: var(--primary); text-decoration: none; }
     a:hover { text-decoration: underline; }
-    .icon { margin-right: 8px; }
-    .size, .mtime { color: #888; font-size: 0.9em; }
-    .parent { background: #fafafa; }
-    .parent a { color: #666; }
-    @media (max-width: 600px) {
+    .icon { margin-right: 10px; }
+    .size, .mtime { color: var(--muted); font-size: 0.92em; }
+    .parent { background: rgba(111,163,239,0.05); }
+    .parent a { color: var(--fg); }
+    @media (max-width: 720px) {
       .mtime { display: none; }
-      th, td { padding: 10px; }
+      th, td { padding: 10px 12px; }
     }
   </style>
 </head>

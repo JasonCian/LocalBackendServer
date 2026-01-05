@@ -12,6 +12,15 @@ const fs = require('fs');
 const path = require('path');
 const TelegramSession = require('./telegram-session');
 
+// 同步睡眠，启动时等待磁盘/网络就绪（阻塞型，但只用于初始化短时间）
+const syncSleep = (ms) => {
+  try {
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+  } catch (_) {
+    // 在不支持 Atomics.wait 的环境中静默忽略
+  }
+};
+
 /**
  * 生成账号 ID
  * 
@@ -46,15 +55,51 @@ class TelegramAccountManager {
     
     // 加载账号列表
     this.loadAccounts();
+
+    // 开机早期可能磁盘/映射盘未就绪，如果初始加载为空则再尝试几次
+    if (this.accounts.size === 0) {
+      const retryDelays = [2000, 4000, 8000]; // 毫秒
+      retryDelays.forEach((delayMs, idx) => {
+        setTimeout(() => {
+          if (this.accounts.size > 0) return;
+          this.logger('WARN', `账号列表为空，尝试第 ${idx + 1} 次延迟重载`);
+          this.loadAccounts();
+        }, delayMs);
+      });
+    }
   }
   
   /**
    * 加载账号列表
    */
   loadAccounts() {
-    try {
-      if (fs.existsSync(this.accountsFile)) {
+    const maxAttempts = 5;
+    const baseDelay = 1000; // 1秒起步
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        this.logger('INFO', `尝试加载账号文件: ${this.accountsFile} (第${attempt}/${maxAttempts}次)`);
+
+        if (!fs.existsSync(this.accountsFile)) {
+          // 文件不存在时，等待下一次尝试；仅最后一次才创建空文件，避免开机磁盘未就绪时误写空
+          if (attempt < maxAttempts) {
+            this.logger('WARN', `账号文件不存在，等待重试: ${this.accountsFile}`);
+            syncSleep(baseDelay * attempt); // 递增等待
+            continue;
+          }
+
+          this.logger('WARN', `账号文件不存在，创建空文件: ${this.accountsFile}`);
+          const dir = path.dirname(this.accountsFile);
+          if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+          }
+          fs.writeFileSync(this.accountsFile, '[]', 'utf8');
+          return;
+        }
+
         const data = fs.readFileSync(this.accountsFile, 'utf8');
+        this.logger('INFO', `账号文件读取成功，内容长度: ${data.length} 字节`);
+
         const list = JSON.parse(data);
         if (Array.isArray(list)) {
           list.forEach(acc => {
@@ -63,10 +108,18 @@ class TelegramAccountManager {
               this.activeAccountId = acc.id;
             }
           });
+          this.logger('INFO', `成功加载 ${list.length} 个账号，活跃账号: ${this.activeAccountId || '无'}`);
+        } else {
+          this.logger('WARN', `账号文件格式错误，不是数组格式`);
+        }
+        return; // 成功加载后返回
+      } catch (e) {
+        this.logger('ERROR', `加载账号列表失败: ${this.accountsFile} (第${attempt}次)`, e && (e.stack || e.message));
+        if (attempt < maxAttempts) {
+          syncSleep(baseDelay * attempt);
+          continue;
         }
       }
-    } catch (e) {
-      this.logger('ERROR', '加载账号列表失败', e && e.message);
     }
   }
   
@@ -76,9 +129,14 @@ class TelegramAccountManager {
   saveAccounts() {
     try {
       const list = Array.from(this.accounts.values());
+      const dir = path.dirname(this.accountsFile);
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
       fs.writeFileSync(this.accountsFile, JSON.stringify(list, null, 2), 'utf8');
+      this.logger('INFO', `账号列表已保存: ${this.accountsFile} (共 ${list.length} 个账号)`);
     } catch (e) {
-      this.logger('ERROR', '保存账号列表失败', e && e.message);
+      this.logger('ERROR', `保存账号列表失败: ${this.accountsFile}`, e && (e.stack || e.message));
     }
   }
   
@@ -106,7 +164,8 @@ class TelegramAccountManager {
     const account = this.accounts.get(accountId);
     const sessionConfig = {
       ...this.config,
-      sessionFile: account.sessionFile
+      // 确保会话文件为绝对路径，避免服务启动时工作目录差异导致找不到已登录会话
+      sessionFile: path.resolve(this.appRoot, account.sessionFile)
     };
     
     const session = new TelegramSession(sessionConfig, this.appRoot, this.logger);
@@ -279,16 +338,23 @@ class TelegramAccountManager {
    */
   async getAllAccountsHealth() {
     const result = [];
+    const timeoutMs = 4000;
+    const timeoutMarker = Symbol('health-timeout');
+    const timeoutHealth = { mode: 'timeout', connected: false, authorized: false, error: 'health timeout' };
     
     for (const account of this.accounts.values()) {
       try {
         const session = this.getSession(account.id);
         if (session) {
-          const health = await session.getHealth();
-          result.push({
-            ...account,
-            health
-          });
+          const health = await Promise.race([
+            session.getHealth(),
+            new Promise(resolve => setTimeout(() => resolve(timeoutMarker), timeoutMs))
+          ]);
+          const finalHealth = health === timeoutMarker ? timeoutHealth : health;
+          if (health === timeoutMarker) {
+            this.logger('WARN', `账号健康检查超时，返回占位状态`, account.id);
+          }
+          result.push({ ...account, health: finalHealth });
         } else {
           result.push({
             ...account,

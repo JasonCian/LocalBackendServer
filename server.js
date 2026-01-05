@@ -191,6 +191,8 @@ server.listen(config.port, config.host, () => {
   
   appendLog('INFO', `服务器启动: http://${config.host}:${config.port}/`);
   appendLog('INFO', `启动时间: ${timestamp}`);
+  appendLog('INFO', `工作目录: ${appRoot}`);
+  appendLog('INFO', `Node版本: ${process.version}`);
   appendLog('INFO', `配置摘要:\n${getConfigSummary(config)}`);
 
   // 控制台美化输出
@@ -215,8 +217,28 @@ server.listen(config.port, config.host, () => {
   console.log('╚════════════════════════════════════════════════════════════╝');
   console.log('');
   
-  // 发送启动通知
-  notifyAll(config.services.notifications, '服务器启动', `${projectName} 在 ${timestamp} 启动成功`, appendLog).catch(() => {});
+  // 异步发送启动通知（带重试，不阻塞服务器）
+  (async () => {
+    try {
+      appendLog('INFO', '准备发送启动通知...');
+      await notifyAll(
+        config.services.notifications, 
+        '服务器启动', 
+        `${projectName} 在 ${timestamp} 启动成功\n监听地址: http://${config.host}:${config.port}/`,
+        appendLog,
+        null,
+        {
+          maxRetries: 5,
+          initialDelay: 3000,  // 等待3秒网络就绪
+          retryDelay: 2000,    // 每次重试间隔2秒起
+          exponentialBackoff: true
+        }
+      );
+      appendLog('INFO', '启动通知发送完成');
+    } catch (err) {
+      appendLog('WARN', '启动通知发送异常（已尽力重试）', err && err.message);
+    }
+  })();
 });
 
 /**
