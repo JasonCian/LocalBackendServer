@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Telegram 多账号管理 · 本地轻量级后端</title>
-  <link rel="stylesheet" href="/css/telegram-multi-account.css" />
+  <link rel="stylesheet" href="/public/css/telegram-multi-account.css" />
 </head>
 <body>
   <div class="container">
@@ -154,26 +154,24 @@
     </div>
 
     <!-- 登录模态框 -->
-    <div id="login-modal">
+    <div id="login-modal" class="status-hidden">
       <div class="login-modal-content">
         <h2 class="login-modal-title">🔐 登录账号</h2>
-        <div id="login-code-form">
+        <form id="login-form" onsubmit="return handleLoginFormSubmit(event)">
           <div class="form-row">
             <label for="login-code">验证码</label>
-            <input id="login-code" type="text" placeholder="输入验证码" />
+            <input id="login-code" type="text" placeholder="输入验证码" autocomplete="off" />
           </div>
-        </div>
-        <div id="login-password-form">
           <div class="form-row">
-            <label for="login-password">二步密码</label>
-            <input id="login-password" type="password" placeholder="输入二步密码" />
+            <label for="login-password">二步密码 <span id="password-hint" style="font-size: 0.8em; color: var(--fg-secondary); display: none;\">(如需要)</span></label>
+            <input id="login-password" type="password" placeholder="输入二步密码（如需要）" autocomplete="current-password" />
           </div>
-        </div>
-        <div class="buttons login-buttons">
-          <button onclick="verifyLogin()">提交</button>
-          <button class="secondary" onclick="closeLoginModal()">取消</button>
-        </div>
-        <div class="status-box" id="login-modal-status"></div>
+          <div class="buttons login-buttons">
+            <button type="submit">提交</button>
+            <button type="button" class="secondary" onclick="closeLoginModal()">取消</button>
+          </div>
+        </form>
+        <div class="status-box status-hidden" id="login-modal-status"></div>
       </div>
     </div>
   </div>
@@ -377,6 +375,12 @@
       }
     }
 
+    function handleLoginFormSubmit(event) {
+      event.preventDefault();
+      verifyLogin();
+      return false;
+    }
+
     async function verifyLogin() {
       if (!currentLoginStateId || !currentLoginAccountId) {
         alert('会话已过期');
@@ -384,14 +388,19 @@
       }
 
       const code = document.getElementById('login-code').value.trim();
-      const password = document.getElementById('login-password').value;
+      const password = document.getElementById('login-password').value.trim();
+
+      if (!code) {
+        showStatus('login-modal-status', '请输入验证码', 'error');
+        return;
+      }
 
       showStatus('login-modal-status', '验证中...', 'loading');
       try {
         const data = await fetchAPI(`${API_BASE}/api/verify`, 'POST', {
           stateId: currentLoginStateId,
           code,
-          password,
+          password: password || undefined,
           accountId: currentLoginAccountId
         });
 
@@ -402,9 +411,15 @@
               closeLoginModal();
               loadAccounts();
             }, 1000);
-          } else if (data.needPassword) {
-            showStatus('login-modal-status', '验证码正确。\n请输入二步密码。', 'success');
-            document.getElementById('login-password-form').classList.remove('status-hidden');
+          } else if (data.needPassword && !password) {
+            // 需要二步密码但用户没填，显示提示
+            showStatus('login-modal-status', '✓ 验证码正确\n\n请在下方输入二步密码后重新提交', 'success');
+            document.getElementById('password-hint').style.display = 'inline';
+            document.getElementById('login-password').focus();
+            document.getElementById('login-code').disabled = true;
+          } else {
+            // 密码验证失败或其他错误
+            showStatus('login-modal-status', '失败: ' + (data.message || '验证失败'), 'error');
           }
         } else {
           showStatus('login-modal-status', '失败: ' + (data.message || 'unknown'), 'error');
@@ -432,7 +447,9 @@
     function closeLoginModal() {
       document.getElementById('login-modal').classList.add('status-hidden');
       document.getElementById('login-code').value = '';
+      document.getElementById('login-code').disabled = false;
       document.getElementById('login-password').value = '';
+      document.getElementById('password-hint').style.display = 'none';
       document.getElementById('login-modal-status').classList.add('status-hidden');
       currentLoginAccountId = null;
       currentLoginStateId = null;

@@ -19,6 +19,9 @@
  */
 
 const http = require('http');
+const https = require('https');
+const fs = require('fs');
+const path = require('path');
 const url = require('url');
 
 // 导入工具模块
@@ -32,12 +35,13 @@ const { loadConfig, getConfigSummary } = require('./src/config');
 const { applyCorsHeaders, handleOptionsRequest } = require('./src/middleware/cors');
 
 // 导入视图生成器
-const { generateHomePage } = require('./src/views/home-page');
+const { generateStartPage } = require('./src/views/start-page');
 
 // 导入服务
 const { notifyAll } = require('./src/services/notification-service');
 const TelegramService = require('./src/services/telegram/telegram-service');
 const PowerShellHistoryService = require('./src/services/powershell-history/powershell-history');
+const FileService = require('./src/services/file-service/file-service');
 
 // 导入路由处理器
 const { handleFileRequest } = require('./src/routes/file-routes');
@@ -45,6 +49,9 @@ const { handleUpload } = require('./src/routes/upload-routes');
 const { handleDelete } = require('./src/routes/delete-routes');
 const { handleTelegram } = require('./src/routes/telegram-routes');
 const { handlePowerShellHistory } = require('./src/routes/powershell-history-routes');
+const { handleFileService } = require('./src/routes/file-service-routes');
+const { handleSearch } = require('./src/routes/search-routes');
+const { handleBingDaily } = require('./src/routes/bing-routes');
 
 // 加载配置
 const config = loadConfig(appRoot, appendLog);
@@ -84,112 +91,217 @@ if (config.services && config.services.powershellHistory && config.services.powe
   }
 }
 
+// 初始化文件服务（如果启用）
+let fileService = null;
+if (config.services && config.services.fileService && config.services.fileService.enabled) {
+  try {
+    fileService = new FileService(config, appRoot, appendLog);
+    appendLog('INFO', '文件服务初始化成功');
+  } catch (e) {
+    appendLog('ERROR', '文件服务初始化失败', e && (e.stack || e.message));
+  }
+}
+
 /**
  * HTTP 请求处理器
  */
-const server = http.createServer((req, res) => {
-  const parsedUrl = url.parse(req.url);
-  let requestPath = parsedUrl.pathname;
-  const queryString = parsedUrl.query;
+const server = (function() {
+  // 抽取请求处理器，便于根据配置创建 HTTP 或 HTTPS 服务器
+  function requestHandler(req, res) {
+    const parsedUrl = url.parse(req.url);
+    let requestPath = parsedUrl.pathname;
+    const queryString = parsedUrl.query;
 
-  // 基础请求日志
+    // 基础请求日志
+    try {
+      appendLog('INFO', `Request ${req.method} ${requestPath || ''}${queryString ? '?' + queryString : ''}`);
+    } catch (e) {
+      // 忽略日志错误
+    }
+    
+    // 应用 CORS 头
+    applyCorsHeaders(res, config.cors);
+    
+    // 处理 OPTIONS 预检请求
+    if (req.method === 'OPTIONS') {
+      handleOptionsRequest(res);
+      return;
+    }
+    
+    // 处理文件上传：POST /upload
+    if (req.method === 'POST' && (requestPath === '/upload' || requestPath.startsWith('/upload/'))) {
+      handleUpload(req, res, config, appendLog).catch(err => {
+        appendLog('ERROR', '上传错误', err && err.message);
+        res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ success: false, message: err.message }));
+      });
+      return;
+    }
+
+    // 处理文件删除：POST /delete
+    if (req.method === 'POST' && requestPath === '/delete') {
+      handleDelete(req, res, config, appendLog).catch(err => {
+        appendLog('ERROR', '删除错误', err && err.message);
+        res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ success: false, message: err.message }));
+      });
+      return;
+    }
+
+    // Telegram 服务路由（可配置）
+    const telegramMount = config.services && config.services.telegram && config.services.telegram.mount ? config.services.telegram.mount : '/telegram';
+    if (requestPath && requestPath.startsWith(telegramMount)) {
+      if (telegramService) {
+        handleTelegram(req, res, requestPath, telegramService, appRoot, appendLog, telegramMount);
+      } else {
+        res.writeHead(503, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ success: false, message: 'Telegram 服务未启用' }));
+      }
+      return;
+    }
+    
+    // PowerShell History 服务路由（可配置）
+    const psHistoryMount = config.services && config.services.powershellHistory && config.services.powershellHistory.mount 
+      ? config.services.powershellHistory.mount 
+      : '/powershell';
+    if (requestPath && requestPath.startsWith(psHistoryMount)) {
+      if (psHistoryService) {
+        handlePowerShellHistory(req, res, requestPath, psHistoryService, appendLog, psHistoryMount);
+      } else {
+        res.writeHead(503, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ success: false, message: 'PowerShell History 服务未启用' }));
+      }
+      return;
+    }
+    
+    // 文件服务路由（可配置）
+    const fileMount = config.services && config.services.fileService && config.services.fileService.mount
+      ? config.services.fileService.mount
+      : '/file';
+    if (requestPath && requestPath.startsWith(fileMount)) {
+      if (fileService) {
+        handleFileService(req, res, requestPath, fileService, appendLog, fileMount);
+      } else {
+        res.writeHead(503, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ success: false, message: '文件服务未启用' }));
+      }
+      return;
+    }
+    
+    // 只允许 GET 和 HEAD 请求用于文件下载
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      res.writeHead(405, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ success: false, message: '方法不允许' }));
+      return;
+    }
+    
+    // 根路径：显示起始页（浏览器主页）
+    if (requestPath === '/' || requestPath === '') {
+      const html = generateStartPage(config);
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(html);
+      return;
+    }
+    
+    // 站内搜索路由
+    if (requestPath === '/search') {
+      handleSearch(req, res, queryString, config, appendLog);
+      return;
+    }
+
+    // Bing 每日图片代理
+    if (requestPath === '/api/bing-daily') {
+      handleBingDaily(req, res, appendLog);
+      return;
+    }
+    
+    // 解析路径，匹配目录映射
+    const resolved = resolveFilePath(requestPath, config.directories);
+    
+    if (!resolved) {
+      res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end('<h1>404 - 未找到</h1><p>请求的路径未配置目录映射</p>');
+      return;
+    }
+    
+    // 处理文件请求
+    handleFileRequest(req, res, resolved, requestPath, queryString, config);
+  }
+
+  // 根据配置选择创建 HTTP 或 HTTPS 服务器
   try {
-    appendLog('INFO', `Request ${req.method} ${requestPath || ''}${queryString ? '?' + queryString : ''}`);
+    if (config.tls && config.tls.enabled) {
+      const pfxPathRaw = config.tls.pfx || '';
+      const pfxPath = pfxPathRaw ? (path.isAbsolute(pfxPathRaw) ? pfxPathRaw : path.join(appRoot, pfxPathRaw)) : '';
+      const passphrase = (config.tls.passphrase && String(config.tls.passphrase)) || undefined;
+
+      const keyPath = path.isAbsolute(config.tls.key || '') ? (config.tls.key || '') : path.join(appRoot, (config.tls.key || './certs/localhost.key'));
+      const certPath = path.isAbsolute(config.tls.cert || '') ? (config.tls.cert || '') : path.join(appRoot, (config.tls.cert || './certs/localhost.crt'));
+
+      // 可选：证书链（CA）
+      let caList = [];
+      try {
+        const caRaw = config.tls && config.tls.ca;
+        if (caRaw) {
+          const caArray = Array.isArray(caRaw) ? caRaw : [caRaw];
+          for (const caItem of caArray) {
+            const caPath = path.isAbsolute(caItem || '') ? (caItem || '') : path.join(appRoot, (caItem || ''));
+            if (caPath && fs.existsSync(caPath)) {
+              caList.push(fs.readFileSync(caPath));
+            } else {
+              appendLog('WARN', `TLS CA 文件不存在: ${caPath}`);
+            }
+          }
+        }
+      } catch (e) {
+        appendLog('WARN', '加载 TLS CA 链失败', e && (e.stack || e.message));
+      }
+
+      // 优先 PFX
+      if (pfxPath && fs.existsSync(pfxPath)) {
+        const options = { pfx: fs.readFileSync(pfxPath) };
+        if (passphrase) options.passphrase = passphrase;
+        if (caList.length > 0) options.ca = caList;
+        appendLog('INFO', `HTTPS 使用 PFX 证书: ${pfxPath}`);
+        return https.createServer(options, requestHandler);
+      }
+
+      // 其次 key/cert
+      if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
+        const options = { key: fs.readFileSync(keyPath), cert: fs.readFileSync(certPath) };
+        if (caList.length > 0) options.ca = caList;
+        appendLog('INFO', `HTTPS 使用 Key/Cert: ${keyPath}, ${certPath}`);
+        return https.createServer(options, requestHandler);
+      }
+
+      appendLog('WARN', `TLS 启用但未找到有效证书（PFX: ${pfxPath || '未配置'}；KEY/CERT: ${keyPath}, ${certPath}），回退 HTTP`);
+      return http.createServer(requestHandler);
+    } else {
+      return http.createServer(requestHandler);
+    }
   } catch (e) {
-    // 忽略日志错误
+    appendLog('ERROR', '创建服务器失败，回退到 HTTP', e && (e.stack || e.message));
+    return http.createServer(requestHandler);
   }
-  
-  // 应用 CORS 头
-  applyCorsHeaders(res, config.cors);
-  
-  // 处理 OPTIONS 预检请求
-  if (req.method === 'OPTIONS') {
-    handleOptionsRequest(res);
-    return;
-  }
-  
-  // 处理文件上传：POST /upload
-  if (req.method === 'POST' && (requestPath === '/upload' || requestPath.startsWith('/upload/'))) {
-    handleUpload(req, res, config, appendLog).catch(err => {
-      appendLog('ERROR', '上传错误', err && err.message);
-      res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
-      res.end(JSON.stringify({ success: false, message: err.message }));
-    });
-    return;
-  }
-
-  // 处理文件删除：POST /delete
-  if (req.method === 'POST' && requestPath === '/delete') {
-    handleDelete(req, res, config, appendLog).catch(err => {
-      appendLog('ERROR', '删除错误', err && err.message);
-      res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
-      res.end(JSON.stringify({ success: false, message: err.message }));
-    });
-    return;
-  }
-
-  // Telegram 服务路由（可配置）
-  const telegramMount = config.services && config.services.telegram && config.services.telegram.mount ? config.services.telegram.mount : '/telegram';
-  if (requestPath && requestPath.startsWith(telegramMount)) {
-    if (telegramService) {
-      handleTelegram(req, res, requestPath, telegramService, appRoot, appendLog, telegramMount);
-    } else {
-      res.writeHead(503, { 'Content-Type': 'application/json; charset=utf-8' });
-      res.end(JSON.stringify({ success: false, message: 'Telegram 服务未启用' }));
-    }
-    return;
-  }
-  
-  // PowerShell History 服务路由（可配置）
-  const psHistoryMount = config.services && config.services.powershellHistory && config.services.powershellHistory.mount 
-    ? config.services.powershellHistory.mount 
-    : '/powershell';
-  if (requestPath && requestPath.startsWith(psHistoryMount)) {
-    if (psHistoryService) {
-      handlePowerShellHistory(req, res, requestPath, psHistoryService, appendLog, psHistoryMount);
-    } else {
-      res.writeHead(503, { 'Content-Type': 'application/json; charset=utf-8' });
-      res.end(JSON.stringify({ success: false, message: 'PowerShell History 服务未启用' }));
-    }
-    return;
-  }
-  
-  // 只允许 GET 和 HEAD 请求用于文件下载
-  if (req.method !== 'GET' && req.method !== 'HEAD') {
-    res.writeHead(405, { 'Content-Type': 'application/json; charset=utf-8' });
-    res.end(JSON.stringify({ success: false, message: '方法不允许' }));
-    return;
-  }
-  
-  // 根路径：显示首页
-  if (requestPath === '/' || requestPath === '') {
-    const html = generateHomePage(config);
-    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-    res.end(html);
-    return;
-  }
-  
-  // 解析路径，匹配目录映射
-  const resolved = resolveFilePath(requestPath, config.directories);
-  
-  if (!resolved) {
-    res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
-    res.end('<h1>404 - 未找到</h1><p>请求的路径未配置目录映射</p>');
-    return;
-  }
-  
-  // 处理文件请求
-  handleFileRequest(req, res, resolved, requestPath, queryString, config);
-});
+})();
 
 /**
  * 启动服务器
  */
-server.listen(config.port, config.host, () => {
+// 启动服务器（支持 TLS 端口与可选的 HTTP->HTTPS 重定向）
+const useTls = !!(config.tls && config.tls.enabled);
+const listenPort = useTls ? (config.tls.port || 443) : (config.port || 80);
+const listenHost = config.host || '0.0.0.0';
+
+server.listen(listenPort, listenHost, () => {
   const timestamp = new Date().toLocaleString('zh-CN');
   const projectName = (config.projectName && String(config.projectName).trim()) || '本地文件服务器';
   
-  appendLog('INFO', `服务器启动: http://${config.host}:${config.port}/`);
+  if (useTls) {
+    appendLog('INFO', `服务器启动: https://${config.host}:${listenPort}/`);
+  } else {
+    appendLog('INFO', `服务器启动: http://${config.host}:${listenPort}/`);
+  }
   appendLog('INFO', `启动时间: ${timestamp}`);
   appendLog('INFO', `工作目录: ${appRoot}`);
   appendLog('INFO', `Node版本: ${process.version}`);
@@ -200,7 +312,11 @@ server.listen(config.port, config.host, () => {
   console.log('╔════════════════════════════════════════════════════════════╗');
   console.log(`║          📁 ${projectName} 已启动`.padEnd(63) + '║');
   console.log('╠════════════════════════════════════════════════════════════╣');
-  console.log(`║  🌐 访问地址: http://${config.host}:${config.port}/`.padEnd(63) + '║');
+  if (useTls) {
+    console.log(`║  🌐 访问地址: https://${config.host}:${listenPort}/`.padEnd(63) + '║');
+  } else {
+    console.log(`║  🌐 访问地址: http://${config.host}:${listenPort}/`.padEnd(63) + '║');
+  }
   console.log(`║  📅 启动时间: ${timestamp}`.padEnd(63) + '║');
   console.log('╠════════════════════════════════════════════════════════════╣');
   console.log('║  📂 目录映射:                                              ║');
@@ -240,6 +356,27 @@ server.listen(config.port, config.host, () => {
     }
   })();
 });
+
+// 可选：HTTP -> HTTPS 重定向（当启用 tls.redirectHttp 且 TLS 正在使用不同端口时）
+if (useTls && config.tls && config.tls.redirectHttp) {
+  try {
+    const redirectPort = config.port || 80;
+    if (redirectPort !== listenPort) {
+      const redirectServer = http.createServer((req, res) => {
+        const hostHeader = req.headers.host ? req.headers.host.split(':')[0] : config.host || 'localhost';
+        const target = `https://${hostHeader}:${listenPort}${req.url}`;
+        res.writeHead(301, { Location: target });
+        res.end();
+      });
+
+      redirectServer.listen(redirectPort, listenHost, () => {
+        appendLog('INFO', `HTTP->HTTPS 重定向已启用: http://${listenHost}:${redirectPort}/ -> https://${listenHost}:${listenPort}/`);
+      });
+    }
+  } catch (e) {
+    appendLog('WARN', '启动 HTTP->HTTPS 重定向失败', e && (e.stack || e.message));
+  }
+}
 
 /**
  * 错误处理

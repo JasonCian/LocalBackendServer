@@ -91,11 +91,15 @@ async function handleTelegram(req, res, requestPath, telegramService, appRoot, l
       const body = await parseJsonBody(req);
       const { stateId, code, password, accountId } = body || {};
       
+      logger('INFO', `[/api/verify] 收到验证请求`, `stateId=${stateId}, code=${code ? 'YES' : 'NO'}, password=${password ? 'YES' : 'NO'}, accountId=${accountId}`);
+      
       try {
         const result = await telegramService.verify(stateId, code, password, accountId);
+        logger('INFO', `[/api/verify] 验证结果`, JSON.stringify(result));
         return sendJSON(res, 200, result);
       } catch (e) {
-        logger('ERROR', 'Telegram 验证失败', e && (e.stack || e.message));
+        const errMsg = e && (e.stack || e.message);
+        logger('ERROR', 'Telegram 验证失败', errMsg);
         return sendJSON(res, 400, { success: false, message: e && e.message ? e.message : '验证失败' });
       }
     }

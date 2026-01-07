@@ -8,8 +8,8 @@ const fs = require('fs');
 const path = require('path');
 const url = require('url');
 const { getMimeType } = require('../utils/mime');
-const { generateDirectoryListing } = require('../views/directory-listing');
-const { generateMarkdownPage } = require('../views/markdown-page');
+const { generateDirectoryListing } = require('../services/file-service/directory-listing');
+const { generateMarkdownPage } = require('../services/file-service/markdown-page');
 
 /**
  * 提供原始文件

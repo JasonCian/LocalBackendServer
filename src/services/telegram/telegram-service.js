@@ -47,8 +47,20 @@ class TelegramService {
       const session = this.accountManager.getSession(account.id);
       if (!session) {
         this.logger('WARN', `预连接跳过：找不到会话 ${account.id}`);
-        return false;
+        return 'skip'; // 跳过，不重试
       }
+      
+      // 🔧 先检查健康状态，跳过明确未授权的账号
+      try {
+        const health = await session.getHealth();
+        if (!health.authorized && health.mode !== 'mock') {
+          this.logger('INFO', `预连接跳过：账号未授权 ${account.name || account.phone}`);
+          return 'skip'; // 未授权账号返回'skip'，不计入失败重试
+        }
+      } catch (e) {
+        // 健康检查失败，继续尝试连接
+      }
+      
       let lastError = null;
       for (let attempt = 1; attempt <= perAccountRetries; attempt++) {
         try {
@@ -58,10 +70,10 @@ class TelegramService {
           const me = await session.getMe();
           if (me) {
             this.logger('INFO', `账号预连接成功: ${account.name || account.phone} -> ${me.username || me.firstName}`);
-            return true;
+            return true; // 成功
           }
           this.logger('WARN', `账号预连接失败（未授权）: ${account.name || account.phone}`);
-          return false;
+          return 'skip'; // 未授权也跳过，不重试
         } catch (e) {
           lastError = e;
           const msg = e && e.message ? e.message : String(e);
@@ -75,15 +87,15 @@ class TelegramService {
         const msg = lastError && lastError.message ? lastError.message : String(lastError);
         this.logger('ERROR', `账号预连接最终失败 ${account.name || account.phone}`, msg);
       }
-      return false;
+      return false; // 连接失败（有异常），需要重试
     };
 
     const runPreconnectRound = async (round) => {
       const accounts = this.accountManager.getAllAccounts();
       const failed = [];
       for (const account of accounts) {
-        const ok = await connectOnce(account);
-        if (!ok) failed.push(account.id);
+        const result = await connectOnce(account);
+        if (result === false) failed.push(account.id); // 只有false才计入失败，'skip'和true都不重试
       }
 
       if (failed.length && round < maxRetryRounds) {

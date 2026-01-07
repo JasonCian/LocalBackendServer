@@ -33,21 +33,44 @@
     },
     "powershellHistory": {
       "enabled": false,
-      "mount": "/psh",
-      "historyPath": "C:\\Users\\{user_name}\\AppData\\Roaming\\Microsoft\\Windows\\PowerShell\\PSReadLine\\ConsoleHost_history.txt",
+      "mount": "/powershell",
+      "historyPath": "C:\\Users\\{YourUsername}\\AppData\\Roaming\\Microsoft\\Windows\\PowerShell\\PSReadLine\\ConsoleHost_history.txt",
       "configFile": "./data/ps-history-config.json"
+    },
+    "fileService": {
+      "enabled": true,
+      "mount": "/file"
     },
     "notifications": [
       {
         "type": "dingtalk",
         "format": "markdown",
-        "url": "https://oapi.dingtalk.com/robot/send?access_token=********"
+        "url": "https://oapi.dingtalk.com/robot/send?access_token=YOUR_ACCESS_TOKEN_HERE"
       },
       {
         "type": "feishu",
-        "url": "https://open.feishu.cn/open-apis/bot/v2/hook/********"
+        "url": "https://open.feishu.cn/open-apis/bot/v2/hook/YOUR_WEBHOOK_TOKEN_HERE"
       }
     ]
+  },
+  "startpage": {
+    "searchEngines": [
+      { "name": "Google", "url": "https://www.google.com/search?q=%s", "icon": "🔍" },
+      { "name": "Bing", "url": "https://www.bing.com/search?q=%s", "icon": "🅱️" },
+      { "name": "DuckDuckGo", "url": "https://duckduckgo.com/?q=%s", "icon": "🦆" },
+      { "name": "Baidu", "url": "https://www.baidu.com/s?wd=%s", "icon": "🅱️" },
+      { "name": "站内搜索", "url": "/search?q=%s", "icon": "📄" }
+    ],
+    "defaultSearchEngine": 0,
+    "bookmarks": [
+      { "title": "文件服务", "url": "/file", "icon": "📁", "color": "#6fa3ef" },
+      { "title": "Telegram", "url": "/telegram", "icon": "📱", "color": "#0088cc" },
+      { "title": "PowerShell", "url": "/powershell", "icon": "💻", "color": "#012456" },
+      { "title": "GitHub", "url": "https://github.com", "icon": "🐙", "color": "#24292e" },
+      { "title": "Stack Overflow", "url": "https://stackoverflow.com", "icon": "📚", "color": "#f48024" }
+    ],
+    "useBingDaily": true,
+    "customBackground": ""
   },
   "projectName": "本地轻量级后端自用服务器"
 }

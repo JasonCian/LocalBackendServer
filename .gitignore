@@ -8,3 +8,9 @@
 /docs
 /.git
 /package-lock.json
+/certs
+/scripts
+/tests
+/.vscode
+.DS_Store
+.env

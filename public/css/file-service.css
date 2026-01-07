@@ -1,0 +1,141 @@
+/**
+ * File Service - 文件服务样式
+ * 基于统一设计系统
+ */
+
+/* 导入共享变量 */
+@import './_shared-variables.css';
+
+/* ============================================
+   📄 文件服务特定样式
+   ============================================ */
+
+header {
+  text-align: center;
+  margin-bottom: var(--spacing-3xl);
+}
+
+h1 {
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-semibold);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-accent));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: var(--spacing-md);
+}
+
+.subtitle {
+  font-size: var(--font-size-lg);
+  color: var(--fg-secondary);
+}
+
+.nav-links {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+  margin-top: var(--spacing-lg);
+}
+
+.nav-link {
+  padding: 10px 20px;
+  background: rgba(167, 139, 250, 0.1);
+  border: 1px solid rgba(167, 139, 250, 0.3);
+  border-radius: var(--radius-md);
+  color: var(--color-primary);
+  text-decoration: none;
+  font-size: var(--font-size-sm);
+  transition: all var(--transition-normal);
+}
+
+.nav-link:hover {
+  background: rgba(111, 163, 239, 0.2);
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+}
+
+.section {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
+  box-shadow: var(--card-shadow);
+}
+
+h2 {
+  font-size: var(--font-size-2xl);
+  margin-bottom: var(--spacing-lg);
+  color: var(--fg-primary);
+}
+
+.dir-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--spacing-lg);
+}
+
+.dir-item {
+  padding: var(--spacing-lg);
+  background: var(--bg-secondary);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-normal);
+  text-decoration: none;
+  color: var(--fg-primary);
+  display: flex;
+  gap: var(--spacing-md);
+}
+
+.dir-item:hover {
+  border-color: var(--color-primary);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(111, 163, 239, 0.25);
+  text-decoration: none;
+}
+
+.dir-icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(111, 163, 239, 0.15);
+  border-radius: var(--radius-md);
+}
+
+.dir-info {
+  flex: 1;
+}
+
+.dir-route {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-medium);
+  margin-bottom: var(--spacing-xs);
+}
+
+.dir-path {
+  font-size: var(--font-size-sm);
+  color: var(--fg-secondary);
+  font-family: var(--font-family-mono);
+}
+
+footer {
+  text-align: center;
+  margin-top: var(--spacing-3xl);
+  padding-top: var(--spacing-xl);
+  border-top: 1px solid var(--card-border);
+  color: var(--fg-secondary);
+  font-size: var(--font-size-sm);
+}
+
+/* ============================================
+   📱 响应式适配
+   ============================================ */
+@media (max-width: 768px) {
+  .dir-list {
+    grid-template-columns: 1fr;
+  }
+}

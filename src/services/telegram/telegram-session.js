@@ -194,34 +194,45 @@ class TelegramSession {
    * @returns {Promise<Object>} {success, authorized?, needPassword?, phone?}
    */
   async verify(stateId, code, password) {
+    this.logger('INFO', `[verify] 验证请求`, `stateId=${stateId}, code=${code ? 'YES' : 'NO'}, password=${password ? 'YES' : 'NO'}`);
+    
     const s = this.mockSessions.get(stateId);
     if (!s) {
+      this.logger('ERROR', `[verify] stateId 不存在`, stateId);
       throw new Error('无效的 stateId');
     }
+    
+    this.logger('INFO', `[verify] 当前状态`, `status=${s.status}, mode=${this.enabledReal ? 'real' : 'mock'}`);
     
     if (!this.enabledReal) {
       // 模拟模式
       if (s.status === 'code_sent') {
         if (!code || String(code).trim() !== s.code) {
+          this.logger('WARN', `[verify] 验证码错误 (mock模式)`);
           throw new Error('验证码错误');
         }
         s.status = 'authorized';
+        this.logger('INFO', `[verify] mock 模式验证成功`);
         return { success: true, authorized: true, phone: s.phone };
       }
       if (s.status === 'password_required') {
         if (!password) {
-          throw new Error('需要提供二步密码');
+          this.logger('INFO', `[verify] mock 模式需要密码`);
+          return { success: true, needPassword: true, message: '需要二步密码' };
         }
         s.status = 'authorized';
+        this.logger('INFO', `[verify] mock 模式密码验证成功`);
         return { success: true, authorized: true, phone: s.phone };
       }
       throw new Error('状态不允许验证');
     }
     
     // 真实模式
+    this.logger('INFO', `[verify] 进入真实模式验证流程`);
     await this.ensureConnected();
     if (s.status === 'code_sent') {
       try {
+        this.logger('INFO', `[verify] 调用 auth.SignIn`);
         await this.client.invoke(new Api.auth.SignIn({
           phoneNumber: s.phone,
           phoneCodeHash: s.phoneCodeHash,
@@ -229,11 +240,14 @@ class TelegramSession {
         }));
         await this.saveSession();
         s.status = 'authorized';
+        this.logger('INFO', `[verify] auth.SignIn 成功，用户已授权`);
         return { success: true, authorized: true, phone: s.phone };
       } catch (e) {
         const msg = e && e.message ? String(e.message) : '';
+        this.logger('WARN', `[verify] auth.SignIn 异常`, `${msg}`);
         if (msg.includes('SESSION_PASSWORD_NEEDED')) {
           s.status = 'password_required';
+          this.logger('INFO', `[verify] 需要二步密码`);
           return { success: true, needPassword: true, message: '验证码通过，需要二步密码' };
         }
         throw e;
@@ -242,9 +256,11 @@ class TelegramSession {
     
     if (s.status === 'password_required') {
       if (!password) {
-        throw new Error('需要提供二步密码');
+        this.logger('INFO', `[verify] 需要输入二步密码`);
+        return { success: true, needPassword: true, message: '需要二步密码' };
       }
       try {
+        this.logger('INFO', `[verify] 验证二步密码开始`);
         // 获取密码信息
         const passwordSrpResult = await this.client.invoke(new Api.account.GetPassword());
         
@@ -259,6 +275,7 @@ class TelegramSession {
         
         await this.saveSession();
         s.status = 'authorized';
+        this.logger('INFO', `[verify] 二步密码验证成功，用户已授权`);
         return { success: true, authorized: true, phone: s.phone };
       } catch (e) {
         this.logger('ERROR', '二步密码校验失败', e && (e.stack || e.message));

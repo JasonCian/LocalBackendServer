@@ -78,7 +78,18 @@ function generateDirectoryListing(dirPath, requestPath, route) {
       return a.name.localeCompare(b.name, 'zh-CN');
     });
     
-    const parentPath = requestPath === route ? null : path.posix.dirname(requestPath);
+    // 计算上级目录路径
+    let parentPath;
+    if (requestPath === route || requestPath === route + '/') {
+      // 在挂载点根目录，返回文件服务页
+      parentPath = '/file';
+    } else {
+      parentPath = path.posix.dirname(requestPath);
+      // 如果计算出的上级是根路径，改为返回文件服务页
+      if (parentPath === '/' || parentPath === '') {
+        parentPath = '/file';
+      }
+    }
     
     const html = `<!DOCTYPE html>
 <html lang="zh-CN">
@@ -86,46 +97,69 @@ function generateDirectoryListing(dirPath, requestPath, route) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>目录浏览 - ${requestPath}</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; }
     :root {
-      --bg: #1b1b1f;
-      --bg2: #282a32;
-      --card: #20232c;
-      --border: #464b50;
-      --fg: #f5f5f5;
-      --muted: #8fa5b5;
-      --primary: #6fa3ef;
-      --accent: #e5a545;
+      --bg-primary: #1b1b1f;
+      --bg-secondary: #282a32;
+      --card-bg: #20232c;
+      --border-color: #464b50;
+      --fg-primary: #f5f5f5;
+      --fg-secondary: #8fa5b5;
+      --color-primary: #6fa3ef;
+      --color-accent: #e5a545;
+      --transition-normal: 0.3s ease;
+      --radius-lg: 14px;
+      --font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+      --font-family-mono: 'Consolas', 'Monaco', 'Courier New', monospace;
     }
     body {
-      font-family: 'Space Grotesk', 'Segoe UI', system-ui, sans-serif;
+      font-family: var(--font-family);
       margin: 0; padding: 0;
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: radial-gradient(1100px 680px at 18% 6%, rgba(111, 163, 239, 0.09), transparent),
-                  radial-gradient(900px 540px at 82% 0%, rgba(229, 165, 69, 0.10), transparent),
+      background: radial-gradient(1100px 680px at 18% 6%, rgba(167, 139, 250, 0.09), transparent),
+                  radial-gradient(900px 540px at 82% 0%, rgba(45, 212, 191, 0.08), transparent),
                   linear-gradient(135deg, #1b1b1f 0%, #1f2128 55%, #171821 100%);
-      color: var(--fg);
+      color: var(--fg-primary);
     }
-    .container { max-width: 1080px; width: 95%; margin: 20px auto; background: rgba(32, 35, 44, 0.9); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,0.35); overflow: hidden; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
-    h1 { padding: 18px 22px; margin: 0; border-bottom: 1px solid var(--border); font-size: 1.35em; word-break: break-all; letter-spacing: 0.1px; }
-    .path { color: var(--muted); font-weight: 400; }
+    .container { 
+      max-width: 1080px; width: 95%; margin: 20px auto; 
+      background: rgba(32, 35, 44, 0.9); 
+      border: 1px solid var(--border-color); 
+      border-radius: var(--radius-lg); 
+      box-shadow: 0 20px 60px rgba(0,0,0,0.35); 
+      overflow: hidden; 
+      backdrop-filter: blur(6px); 
+      -webkit-backdrop-filter: blur(6px); 
+    }
+    h1 { 
+      padding: 18px 22px; margin: 0; 
+      border-bottom: 1px solid var(--border-color); 
+      font-size: 1.35em; 
+      word-break: break-all; 
+      letter-spacing: 0.1px; 
+    }
+    .path { color: var(--fg-secondary); font-weight: 400; }
     table { width: 100%; border-collapse: collapse; }
-    th, td { padding: 12px 18px; text-align: left; border-bottom: 1px solid rgba(70,75,80,0.6); }
-    th { background: rgba(40,42,50,0.9); font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.82em; }
+    th, td { 
+      padding: 12px 18px; text-align: left; 
+      border-bottom: 1px solid rgba(70,75,80,0.6); 
+    }
+    th { 
+      background: rgba(40,42,50,0.9); 
+      font-weight: 600; 
+      color: var(--fg-secondary); 
+    }
     tr:hover { background: rgba(111,163,239,0.06); }
-    a { color: var(--primary); text-decoration: none; }
+    a { color: var(--color-primary); text-decoration: none; }
     a:hover { text-decoration: underline; }
     .icon { margin-right: 10px; }
-    .size, .mtime { color: var(--muted); font-size: 0.92em; }
+    .size, .mtime { color: var(--fg-secondary); font-size: 0.92em; }
     .parent { background: rgba(111,163,239,0.05); }
-    .parent a { color: var(--fg); }
+    .parent a { color: var(--fg-primary); }
     @media (max-width: 720px) {
       .mtime { display: none; }
       th, td { padding: 10px 12px; }
@@ -134,7 +168,10 @@ function generateDirectoryListing(dirPath, requestPath, route) {
 </head>
 <body>
   <div class="container">
-    <h1><span class="path">${requestPath}</span></h1>
+    <h1>
+      <a href="/file" style="color: var(--muted); text-decoration: none; margin-right: 12px; font-size: 0.7em;">← 文件服务</a>
+      <span class="path">${requestPath}</span>
+    </h1>
     <table>
       <thead>
         <tr>
@@ -144,7 +181,7 @@ function generateDirectoryListing(dirPath, requestPath, route) {
         </tr>
       </thead>
       <tbody>
-        ${parentPath !== null ? `<tr class="parent"><td colspan="3"><a href="${parentPath || '/'}">⬆️ 返回上级目录</a></td></tr>` : ''}
+        <tr class="parent"><td colspan="3"><a href="${parentPath}">⬆️ 返回上级目录</a></td></tr>
         ${items.map(item => `
         <tr>
           <td><span class="icon">${item.icon}</span><a href="${item.href}">${item.name}</a></td>
