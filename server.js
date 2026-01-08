@@ -7,6 +7,7 @@
  * - Markdown 渲染（Marked + highlight.js + KaTeX）
  * - 文件上传/删除 API（PicList 兼容）
  * - Telegram 服务（登录、消息发送、任务调度）
+ * - WebSocket 实时推送（消息、文件变化）
  * - 通知推送（钉钉、飞书、自定义 Webhook）
  * - CORS 支持
  * - Windows 服务模式（NSSM）
@@ -22,6 +23,7 @@ const http = require('http');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
+const WebSocket = require('ws');
 
 // 导入工具模块
 const { appendLog } = require('./src/utils/logger');
@@ -31,13 +33,21 @@ const { appRoot } = require('./src/utils/path-resolver');
 const { loadConfig, getConfigSummary } = require('./src/config');
 const ServiceFactory = require('./src/services/service-factory');
 const Router = require('./src/routes/router');
+const WebSocketManager = require('./src/services/websocket-manager');
+const PerformanceCollector = require('./src/utils/performance-collector');
 const { notifyAll } = require('./src/services/notification-service');
 
 // 加载配置
 const config = loadConfig(appRoot, appendLog);
 
-// 初始化服务工厂
-const serviceFactory = new ServiceFactory(config, appRoot, appendLog);
+// 初始化性能收集器
+const perfCollector = new PerformanceCollector(appendLog);
+
+// 初始化 WebSocket 管理器（先创建）
+const wsManager = new WebSocketManager(appendLog);
+
+// 初始化服务工厂（注入 wsManager）
+const serviceFactory = new ServiceFactory(config, appRoot, appendLog, wsManager);
 let initResults = null;
 
 (async () => {
@@ -65,8 +75,29 @@ const server = (function() {
       return;
     }
 
+    // 记录请求开始时间
+    const startTime = Date.now();
+
+    // 拦截原始 end 方法以记录性能数据
+    const originalEnd = res.end;
+    res.end = function(...args) {
+      const responseTime = Date.now() - startTime;
+      const statusCode = res.statusCode;
+      const success = statusCode >= 200 && statusCode < 400;
+
+      // 记录到性能收集器
+      if (perfCollector) {
+        perfCollector.recordRequest(responseTime, success);
+      }
+
+      // 调用原始 end 方法
+      return originalEnd.apply(res, args);
+    };
+
     // 使用路由分发器处理请求
-    const router = new Router(config, serviceFactory, appendLog, appRoot);
+    const router = new Router(config, serviceFactory, appendLog, appRoot, perfCollector);
+    // 注入 WebSocket 管理器
+    router.setWebSocketManager(wsManager);
     router.handle(req, res);
   }
 
@@ -126,6 +157,24 @@ const server = (function() {
     return http.createServer(requestHandler);
   }
 })();
+
+/**
+ * WebSocket 升级处理
+ */
+server.on('upgrade', (req, socket, head) => {
+  // 只允许 /ws 路径升级为 WebSocket
+  if (req.url === '/ws' || req.url === '/ws/') {
+    const wss = new WebSocket.Server({ noServer: true });
+
+    wss.handleUpgrade(req, socket, head, (ws) => {
+      wsManager.handleConnection(ws);
+    });
+  } else {
+    // 拒绝其他路径的升级
+    socket.write('HTTP/1.1 400 Bad Request\r\n\r\n');
+    socket.destroy();
+  }
+});
 
 /**
  * 启动服务器
@@ -253,7 +302,16 @@ process.on('unhandledRejection', (reason) => {
  */
 process.on('SIGINT', async () => {
   appendLog('INFO', '接收到 SIGINT 信号，正在关闭服务器...');
-  
+
+  // 关闭 WebSocket 连接
+  try {
+    if (wsManager) {
+      await wsManager.shutdown();
+    }
+  } catch (err) {
+    appendLog('WARN', 'WebSocket 关闭异常', err.message);
+  }
+
   // 优雅关闭服务
   try {
     if (serviceFactory) {
@@ -261,6 +319,15 @@ process.on('SIGINT', async () => {
     }
   } catch (err) {
     appendLog('WARN', '服务关闭异常', err.message);
+  }
+
+  // 清理性能收集器
+  try {
+    if (perfCollector) {
+      perfCollector.shutdown();
+    }
+  } catch (err) {
+    appendLog('WARN', '性能收集器关闭异常', err.message);
   }
 
   server.close(() => {
@@ -271,7 +338,16 @@ process.on('SIGINT', async () => {
 
 process.on('SIGTERM', async () => {
   appendLog('INFO', '接收到 SIGTERM 信号，正在关闭服务器...');
-  
+
+  // 关闭 WebSocket 连接
+  try {
+    if (wsManager) {
+      await wsManager.shutdown();
+    }
+  } catch (err) {
+    appendLog('WARN', 'WebSocket 关闭异常', err.message);
+  }
+
   // 优雅关闭服务
   try {
     if (serviceFactory) {
@@ -279,6 +355,15 @@ process.on('SIGTERM', async () => {
     }
   } catch (err) {
     appendLog('WARN', '服务关闭异常', err.message);
+  }
+
+  // 清理性能收集器
+  try {
+    if (perfCollector) {
+      perfCollector.shutdown();
+    }
+  } catch (err) {
+    appendLog('WARN', '性能收集器关闭异常', err.message);
   }
 
   server.close(() => {

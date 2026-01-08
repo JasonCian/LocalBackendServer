@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebSocket 实时推送演示</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 900px;
+      width: 100%;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      padding: 30px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel:first-child {
+      border-right: 1px solid #e0e0e0;
+      background: #f9f9f9;
+    }
+
+    @media (max-width: 768px) {
+      .panel:first-child {
+        border-right: none;
+        border-bottom: 1px solid #e0e0e0;
+      }
+    }
+
+    h1 {
+      font-size: 24px;
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    h2 {
+      font-size: 16px;
+      color: #666;
+      margin-top: 20px;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      background: white;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      border: 1px solid #e0e0e0;
+    }
+
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #ccc;
+      animation: pulse 2s infinite;
+    }
+
+    .status-dot.connected {
+      background: #4caf50;
+    }
+
+    .status-dot.disconnected {
+      background: #f44336;
+      animation: none;
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
+      }
+      50% {
+        box-shadow: 0 0 0 5px rgba(76, 175, 80, 0);
+      }
+    }
+
+    .status-text {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    input[type='text'] {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    button {
+      padding: 10px 15px;
+      background: #667eea;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #5568d3;
+    }
+
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    button.danger {
+      background: #f44336;
+    }
+
+    button.danger:hover {
+      background: #da190b;
+    }
+
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      background: white;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+      padding: 12px;
+      font-size: 12px;
+      font-family: 'Courier New', monospace;
+    }
+
+    .message {
+      margin-bottom: 8px;
+      padding: 8px;
+      background: #f5f5f5;
+      border-left: 3px solid #667eea;
+      border-radius: 4px;
+      word-break: break-all;
+    }
+
+    .message.event {
+      border-left-color: #4caf50;
+    }
+
+    .message.error {
+      border-left-color: #f44336;
+      background: #ffebee;
+    }
+
+    .message.info {
+      border-left-color: #2196f3;
+      background: #e3f2fd;
+    }
+
+    .timestamp {
+      color: #999;
+      font-size: 11px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .stat-item {
+      background: white;
+      padding: 12px;
+      border-radius: 6px;
+      border: 1px solid #e0e0e0;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: bold;
+      color: #667eea;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: #999;
+      margin-top: 4px;
+    }
+
+    .clear-btn {
+      background: #ff9800;
+      font-size: 12px;
+      padding: 8px 12px;
+      margin-top: 10px;
+    }
+
+    .clear-btn:hover {
+      background: #f57c00;
+    }
+
+    .code-block {
+      background: #f5f5f5;
+      padding: 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      overflow-x: auto;
+      margin-top: 10px;
+      border: 1px solid #e0e0e0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 左侧：控制面板 -->
+    <div class="panel">
+      <h1>🚀 WebSocket 实时推送</h1>
+
+      <!-- 连接状态 -->
+      <div class="status">
+        <div class="status-dot disconnected" id="statusDot"></div>
+        <div class="status-text" id="statusText">未连接</div>
+      </div>
+
+      <!-- 连接控制 -->
+      <div class="controls">
+        <input type="text" id="wsUrl" placeholder="WebSocket 地址" />
+        <button id="connectBtn" onclick="connect()">连接</button>
+        <button id="disconnectBtn" onclick="disconnect()" disabled>断开连接</button>
+      </div>
+
+      <!-- 频道订阅 -->
+      <h2>📡 频道订阅</h2>
+      <div class="controls">
+        <input
+          type="text"
+          id="channelInput"
+          placeholder="频道名称 (如: telegram.messages)"
+          value="telegram.messages"
+        />
+        <button id="subscribeBtn" onclick="subscribe()" disabled>订阅</button>
+        <button id="unsubscribeBtn" onclick="unsubscribe()" disabled>取消订阅</button>
+      </div>
+
+      <!-- 统计信息 -->
+      <h2>📊 实时统计</h2>
+      <div class="stats">
+        <div class="stat-item">
+          <div class="stat-value" id="messagesCount">0</div>
+          <div class="stat-label">已接收消息</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="uptime">0s</div>
+          <div class="stat-label">连接时长</div>
+        </div>
+      </div>
+
+      <!-- 示例代码 -->
+      <h2>💻 JavaScript 示例</h2>
+      <div class="code-block">
+        <code>
+const ws = new WebSocket('ws://localhost/ws');<br />
+<br />
+ws.onopen = () => {<br />
+&nbsp;&nbsp;ws.send(JSON.stringify({<br />
+&nbsp;&nbsp;&nbsp;&nbsp;type: 'subscribe',<br />
+&nbsp;&nbsp;&nbsp;&nbsp;channel: 'telegram.messages'<br />
+&nbsp;&nbsp;}));<br />
+};<br />
+<br />
+ws.onmessage = (e) => {<br />
+&nbsp;&nbsp;const msg = JSON.parse(e.data);<br />
+&nbsp;&nbsp;console.log(msg);<br />
+};
+        </code>
+      </div>
+    </div>
+
+    <!-- 右侧：消息流 -->
+    <div class="panel">
+      <h1>📨 消息流</h1>
+
+      <div class="messages" id="messages"></div>
+
+      <button class="clear-btn" onclick="clearMessages()">清空日志</button>
+    </div>
+  </div>
+
+  <script>
+    let ws = null;
+    let isConnected = false;
+    let messageCount = 0;
+    let connectionStart = null;
+    let uptimeInterval = null;
+
+    // 自动连接到当前服务器
+    function getWebSocketUrl() {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const host = window.location.host;
+      return `${protocol}//${host}/ws`;
+    }
+
+    function updateStatus(connected, message) {
+      isConnected = connected;
+      const dot = document.getElementById('statusDot');
+      const text = document.getElementById('statusText');
+
+      if (connected) {
+        dot.classList.remove('disconnected');
+        dot.classList.add('connected');
+      } else {
+        dot.classList.remove('connected');
+        dot.classList.add('disconnected');
+      }
+
+      text.textContent = message;
+    }
+
+    function addMessage(type, content) {
+      const messagesDiv = document.getElementById('messages');
+      const msg = document.createElement('div');
+      msg.className = `message ${type}`;
+
+      const timestamp = new Date().toLocaleTimeString();
+      msg.innerHTML = `
+        <span class="timestamp">[${timestamp}]</span>
+        <br />
+        ${escapeHtml(content)}
+      `;
+
+      messagesDiv.appendChild(msg);
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+      if (type === 'event') {
+        messageCount++;
+        document.getElementById('messagesCount').textContent = messageCount;
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function connect() {
+      if (isConnected) {
+        addMessage('info', '已经连接');
+        return;
+      }
+
+      const wsUrl = document.getElementById('wsUrl').value || getWebSocketUrl();
+      document.getElementById('wsUrl').value = wsUrl;
+
+      ws = new WebSocket(wsUrl);
+
+      ws.onopen = () => {
+        updateStatus(true, '已连接');
+        document.getElementById('connectBtn').disabled = true;
+        document.getElementById('disconnectBtn').disabled = false;
+        document.getElementById('subscribeBtn').disabled = false;
+        document.getElementById('unsubscribeBtn').disabled = false;
+
+        addMessage('info', `WebSocket 已连接: ${wsUrl}`);
+
+        // 启动计时器
+        connectionStart = Date.now();
+        if (uptimeInterval) clearInterval(uptimeInterval);
+        uptimeInterval = setInterval(updateUptime, 1000);
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          const typeClass =
+            data.type === 'event' ||
+            data.type === 'subscribed' ||
+            data.type === 'unsubscribed' ||
+            data.type === 'welcome'
+              ? 'event'
+              : 'info';
+          addMessage(typeClass, JSON.stringify(data, null, 2));
+        } catch (e) {
+          addMessage('error', `消息解析失败: ${e.message}`);
+        }
+      };
+
+      ws.onerror = (error) => {
+        addMessage('error', `WebSocket 错误: ${error.message || '连接错误'}`);
+      };
+
+      ws.onclose = () => {
+        updateStatus(false, '已断开连接');
+        document.getElementById('connectBtn').disabled = false;
+        document.getElementById('disconnectBtn').disabled = true;
+        document.getElementById('subscribeBtn').disabled = true;
+        document.getElementById('unsubscribeBtn').disabled = true;
+
+        if (uptimeInterval) clearInterval(uptimeInterval);
+
+        addMessage('info', 'WebSocket 连接已关闭');
+      };
+    }
+
+    function disconnect() {
+      if (ws) {
+        ws.close();
+        ws = null;
+      }
+    }
+
+    function subscribe() {
+      if (!isConnected || !ws) {
+        addMessage('error', '未连接');
+        return;
+      }
+
+      const channel = document.getElementById('channelInput').value.trim();
+      if (!channel) {
+        addMessage('error', '请输入频道名称');
+        return;
+      }
+
+      ws.send(JSON.stringify({ type: 'subscribe', channel }));
+      addMessage('info', `正在订阅频道: ${channel}`);
+    }
+
+    function unsubscribe() {
+      if (!isConnected || !ws) {
+        addMessage('error', '未连接');
+        return;
+      }
+
+      const channel = document.getElementById('channelInput').value.trim();
+      if (!channel) {
+        addMessage('error', '请输入频道名称');
+        return;
+      }
+
+      ws.send(JSON.stringify({ type: 'unsubscribe', channel }));
+      addMessage('info', `正在取消订阅频道: ${channel}`);
+    }
+
+    function clearMessages() {
+      document.getElementById('messages').innerHTML = '';
+      messageCount = 0;
+      document.getElementById('messagesCount').textContent = '0';
+    }
+
+    function updateUptime() {
+      if (!connectionStart) return;
+      const elapsed = Math.floor((Date.now() - connectionStart) / 1000);
+      document.getElementById('uptime').textContent = `${elapsed}s`;
+    }
+
+    // 初始化
+    window.addEventListener('load', () => {
+      document.getElementById('wsUrl').value = getWebSocketUrl();
+    });
+  </script>
+</body>
+</html>

@@ -38,7 +38,14 @@ function handleFileService(req, res, requestPath, fileService, logger, mount = '
         return;
       }
       
-      const html = fs.readFileSync(htmlPath, 'utf8');
+      let html = fs.readFileSync(htmlPath, 'utf8');
+      // 配置驱动的静态前缀替换（默认 /public）
+      try {
+        const assetsMount = (fileService && fileService.config && fileService.config.assets && fileService.config.assets.mount) || '/public';
+        if (assetsMount !== '/public') {
+          html = html.replace(/href="\/public\//g, `href="${assetsMount}/`).replace(/src="\/public\//g, `src="${assetsMount}/`);
+        }
+      } catch (_) {}
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end(html);
       return;

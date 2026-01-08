@@ -11,10 +11,11 @@ const TelegramTaskManager = require('./telegram-tasks');
  * Telegram 服务类（支持多账号）
  */
 class TelegramService {
-  constructor(config, appRoot, logger, notifyCallback) {
+  constructor(config, appRoot, logger, notifyCallback, wsManager) {
     this.config = config;
     this.logger = logger;
     this.notifyCallback = notifyCallback;
+    this.wsManager = wsManager;
     
     // 初始化账号管理器
     this.accountManager = new TelegramAccountManager(config, appRoot, logger);
@@ -249,6 +250,26 @@ class TelegramService {
               );
             } catch (e) {
               this.logger('ERROR', '监听任务通知发送失败', e && e.message);
+            }
+          }
+          
+          // 🔥 实时推送消息到 WebSocket 订阅者
+          if (this.wsManager) {
+            try {
+              const messageData = {
+                taskId: task.id,
+                channel: task.channel,
+                accountId: accountId,
+                sender: senderName,
+                text: messageText,
+                messageId: messageId,
+                timestamp: timestamp,
+                photoCount: photos.length,
+                photos: photos.length > 0 ? photos : undefined
+              };
+              this.wsManager.publish('telegram.messages', messageData);
+            } catch (e) {
+              this.logger('WARN', '消息 WebSocket 推送失败', e && e.message);
             }
           }
           

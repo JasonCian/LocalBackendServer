@@ -15,7 +15,8 @@
     },
     "dependencies": {
         "node-cron": "^3.0.2",
-        "telegram": "^2.20.14"
+        "telegram": "^2.20.14",
+        "ws": "^8.13.0"
     },
     "engines": {
         "node": ">=18.0.0"

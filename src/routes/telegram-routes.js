@@ -53,11 +53,14 @@ function sendJSON(res, code, obj) {
  * @param {Function} logger - 日志函数
  * @param {string} mountPath - 挂载路径（默认 /telegram）
  */
-async function handleTelegram(req, res, requestPath, telegramService, appRoot, logger, mountPath = '/telegram') {
+async function handleTelegram(req, res, requestPath, telegramService, appRoot, logger, mountPath = '/telegram', assetsMount = '/public') {
   try {
     // GET /telegram -> 多账号管理页面
     if (req.method === 'GET' && (requestPath === mountPath || requestPath === mountPath + '/')) {
-      const html = fs.readFileSync(path.join(appRoot, 'public', 'telegram-multi-account.html'), 'utf8');
+      let html = fs.readFileSync(path.join(appRoot, 'public', 'telegram-multi-account.html'), 'utf8');
+      if (assetsMount && assetsMount !== '/public') {
+        html = html.replace(/href="\/public\//g, `href="${assetsMount}/`).replace(/src="\/public\//g, `src="${assetsMount}/`);
+      }
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
       res.end(html);
       return;
@@ -66,7 +69,11 @@ async function handleTelegram(req, res, requestPath, telegramService, appRoot, l
     // GET /telegram/legacy -> 原单账号页面
     if (req.method === 'GET' && requestPath === `${mountPath}/legacy`) {
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-      res.end(getTelegramPageHTML(appRoot, logger));
+      let legacy = getTelegramPageHTML(appRoot, logger);
+      if (assetsMount && assetsMount !== '/public') {
+        legacy = legacy.replace(/href="\/public\//g, `href="${assetsMount}/`).replace(/src="\/public\//g, `src="${assetsMount}/`);
+      }
+      res.end(legacy);
       return;
     }
 

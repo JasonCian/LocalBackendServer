@@ -50,7 +50,7 @@ function generateBreadcrumb(requestPath) {
  * @param {Array} availableThemes - 可用主题列表
  * @returns {string} 完整的 HTML 页面
  */
-function generateMarkdownPage(title, content, requestPath, theme, availableThemes = ['anonymous-dark', 'anonymous-light']) {
+function generateMarkdownPage(title, content, requestPath, theme, availableThemes = ['anonymous-dark', 'anonymous-light'], assetsMount = '/public') {
   // 规范化主题名称
   let themeCss = theme || 'anonymous-dark';
   themeCss = themeCss.replace(/\.css$/i, '');
@@ -81,7 +81,7 @@ function generateMarkdownPage(title, content, requestPath, theme, availableTheme
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   
   <!-- Anonymous Theme - 完整主题样式系统 -->
-  <link rel="stylesheet" href="/public/themes/${themeCss}.css">
+  <link rel="stylesheet" href="${assetsMount}/themes/${themeCss}.css">
   
   <style>
     /* ==========================================================================

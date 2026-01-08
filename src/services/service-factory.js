@@ -11,16 +11,18 @@
 const TelegramService = require('./telegram/telegram-service');
 const PowerShellHistoryService = require('./powershell-history/powershell-history');
 const FileService = require('./file-service/file-service');
+const FileWatcherService = require('./file-watcher-service');
 const { notifyAll } = require('./notification-service');
 
 /**
  * 服务工厂类
  */
 class ServiceFactory {
-  constructor(config, appRoot, logger) {
+  constructor(config, appRoot, logger, wsManager) {
     this.config = config;
     this.appRoot = appRoot;
     this.logger = logger;
+    this.wsManager = wsManager;
     this.services = {};
     this.serviceInstances = {};
   }
@@ -34,6 +36,7 @@ class ServiceFactory {
       telegram: null,
       psHistory: null,
       fileService: null,
+      fileWatcher: null,
       errors: []
     };
 
@@ -68,6 +71,17 @@ class ServiceFactory {
       const errMsg = `文件服务初始化失败: ${err.message}`;
       this.logger('ERROR', errMsg, err.stack);
       results.errors.push({ service: 'fileService', error: err });
+    }
+
+    // 初始化文件监听服务
+    try {
+      if (this._isServiceEnabled('fileService')) {
+        results.fileWatcher = this._initFileWatcher();
+      }
+    } catch (err) {
+      const errMsg = `文件监听服务初始化失败: ${err.message}`;
+      this.logger('ERROR', errMsg, err.stack);
+      results.errors.push({ service: 'fileWatcher', error: err });
     }
 
     return results;
@@ -133,7 +147,8 @@ class ServiceFactory {
             );
           }
         }
-      }
+      },
+      this.wsManager
     );
 
     this.serviceInstances.telegram = service;
@@ -179,6 +194,23 @@ class ServiceFactory {
   }
 
   /**
+   * 私有方法：初始化文件监听服务
+   */
+  _initFileWatcher() {
+    const service = new FileWatcherService(
+      this.config,
+      this.appRoot,
+      this.logger,
+      this.wsManager
+    );
+
+    this.serviceInstances.fileWatcher = service;
+    this.logger('INFO', '✅ 文件监听服务初始化成功');
+
+    return service;
+  }
+
+  /**
    * 获取指定服务实例
    */
   getService(serviceName) {
@@ -215,6 +247,17 @@ class ServiceFactory {
         this.logger('INFO', '✅ PowerShell History 服务已停止');
       } catch (err) {
         this.logger('WARN', 'PowerShell History 服务停止失败', err.message);
+      }
+    }
+
+    // 关闭文件监听服务
+    const fileWatcher = this.serviceInstances.fileWatcher;
+    if (fileWatcher && typeof fileWatcher.shutdown === 'function') {
+      try {
+        await fileWatcher.shutdown();
+        this.logger('INFO', '✅ 文件监听服务已停止');
+      } catch (err) {
+        this.logger('WARN', '文件监听服务停止失败', err.message);
       }
     }
 

@@ -51,7 +51,7 @@ function sendJSON(res, statusCode, data) {
  * @param {Function} logger - 日志函数
  * @param {string} mountPath - 挂载路径（默认 /powershell）
  */
-async function handlePowerShellHistory(req, res, requestPath, service, logger, mountPath = '/powershell') {
+async function handlePowerShellHistory(req, res, requestPath, service, logger, mountPath = '/powershell', assetsMount = '/public') {
   try {
     const parsedUrl = url.parse(req.url, true);
     const pathname = parsedUrl.pathname;
@@ -61,7 +61,10 @@ async function handlePowerShellHistory(req, res, requestPath, service, logger, m
     if (req.method === 'GET' && (pathname === mountPath || pathname === mountPath + '/')) {
       const htmlPath = path.resolve(__dirname, '../../public/powershell-history.html');
       if (fs.existsSync(htmlPath)) {
-        const html = fs.readFileSync(htmlPath, 'utf8');
+        let html = fs.readFileSync(htmlPath, 'utf8');
+        if (assetsMount && assetsMount !== '/public') {
+          html = html.replace(/href="\/public\//g, `href="${assetsMount}/`).replace(/src="\/public\//g, `src="${assetsMount}/`);
+        }
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
         res.end(html);
       } else {
