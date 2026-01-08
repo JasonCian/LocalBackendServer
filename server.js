@@ -22,210 +22,52 @@ const http = require('http');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
-const url = require('url');
 
 // 导入工具模块
 const { appendLog } = require('./src/utils/logger');
-const { appRoot, resolveFilePath } = require('./src/utils/path-resolver');
+const { appRoot } = require('./src/utils/path-resolver');
 
-// 导入配置模块
+// 导入配置和新模块
 const { loadConfig, getConfigSummary } = require('./src/config');
-
-// 导入中间件
-const { applyCorsHeaders, handleOptionsRequest } = require('./src/middleware/cors');
-
-// 导入视图生成器
-const { generateStartPage } = require('./src/views/start-page');
-
-// 导入服务
+const ServiceFactory = require('./src/services/service-factory');
+const Router = require('./src/routes/router');
 const { notifyAll } = require('./src/services/notification-service');
-const TelegramService = require('./src/services/telegram/telegram-service');
-const PowerShellHistoryService = require('./src/services/powershell-history/powershell-history');
-const FileService = require('./src/services/file-service/file-service');
-
-// 导入路由处理器
-const { handleFileRequest } = require('./src/routes/file-routes');
-const { handleUpload } = require('./src/routes/upload-routes');
-const { handleDelete } = require('./src/routes/delete-routes');
-const { handleTelegram } = require('./src/routes/telegram-routes');
-const { handlePowerShellHistory } = require('./src/routes/powershell-history-routes');
-const { handleFileService } = require('./src/routes/file-service-routes');
-const { handleSearch } = require('./src/routes/search-routes');
-const { handleBingDaily } = require('./src/routes/bing-routes');
 
 // 加载配置
 const config = loadConfig(appRoot, appendLog);
 
-// 初始化 Telegram 服务（如果启用）
-let telegramService = null;
-if (config.services && config.services.telegram && config.services.telegram.enabled) {
-  try {
-    telegramService = new TelegramService(
-      config.services.telegram,
-      appRoot,
-      appendLog,
-      async (title, detail) => {
-        await notifyAll(config.services.notifications, title, detail, appendLog);
-      }
-    );
-    appendLog('INFO', 'Telegram 服务初始化成功');
-  } catch (e) {
-    appendLog('ERROR', 'Telegram 服务初始化失败', e && (e.stack || e.message));
-  }
-}
+// 初始化服务工厂
+const serviceFactory = new ServiceFactory(config, appRoot, appendLog);
+let initResults = null;
 
-// 初始化 PowerShell History 服务（如果启用）
-let psHistoryService = null;
-if (config.services && config.services.powershellHistory && config.services.powershellHistory.enabled) {
+(async () => {
   try {
-    psHistoryService = new PowerShellHistoryService(
-      config.services.powershellHistory,
-      appRoot,
-      appendLog
-    );
-    // 启动实时监听
-    psHistoryService.start();
-    appendLog('INFO', 'PowerShell History 服务初始化成功，已启动实时监听');
-  } catch (e) {
-    appendLog('ERROR', 'PowerShell History 服务初始化失败', e && (e.stack || e.message));
+    initResults = await serviceFactory.initializeAll();
+    if (initResults.errors.length > 0) {
+      appendLog('WARN', `服务初始化有 ${initResults.errors.length} 个错误，部分功能可能不可用`);
+    }
+  } catch (err) {
+    appendLog('ERROR', '服务初始化异常', err.message);
   }
-}
-
-// 初始化文件服务（如果启用）
-let fileService = null;
-if (config.services && config.services.fileService && config.services.fileService.enabled) {
-  try {
-    fileService = new FileService(config, appRoot, appendLog);
-    appendLog('INFO', '文件服务初始化成功');
-  } catch (e) {
-    appendLog('ERROR', '文件服务初始化失败', e && (e.stack || e.message));
-  }
-}
+})();
 
 /**
  * HTTP 请求处理器
+ * 
+ * 使用路由分发器处理所有请求
  */
 const server = (function() {
-  // 抽取请求处理器，便于根据配置创建 HTTP 或 HTTPS 服务器
   function requestHandler(req, res) {
-    const parsedUrl = url.parse(req.url);
-    let requestPath = parsedUrl.pathname;
-    const queryString = parsedUrl.query;
-
-    // 基础请求日志
-    try {
-      appendLog('INFO', `Request ${req.method} ${requestPath || ''}${queryString ? '?' + queryString : ''}`);
-    } catch (e) {
-      // 忽略日志错误
-    }
-    
-    // 应用 CORS 头
-    applyCorsHeaders(res, config.cors);
-    
-    // 处理 OPTIONS 预检请求
-    if (req.method === 'OPTIONS') {
-      handleOptionsRequest(res);
-      return;
-    }
-    
-    // 处理文件上传：POST /upload
-    if (req.method === 'POST' && (requestPath === '/upload' || requestPath.startsWith('/upload/'))) {
-      handleUpload(req, res, config, appendLog).catch(err => {
-        appendLog('ERROR', '上传错误', err && err.message);
-        res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
-        res.end(JSON.stringify({ success: false, message: err.message }));
-      });
+    // 确保服务工厂初始化完成
+    if (!serviceFactory) {
+      res.writeHead(503, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ success: false, message: '服务正在初始化中' }));
       return;
     }
 
-    // 处理文件删除：POST /delete
-    if (req.method === 'POST' && requestPath === '/delete') {
-      handleDelete(req, res, config, appendLog).catch(err => {
-        appendLog('ERROR', '删除错误', err && err.message);
-        res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
-        res.end(JSON.stringify({ success: false, message: err.message }));
-      });
-      return;
-    }
-
-    // Telegram 服务路由（可配置）
-    const telegramMount = config.services && config.services.telegram && config.services.telegram.mount ? config.services.telegram.mount : '/telegram';
-    if (requestPath && requestPath.startsWith(telegramMount)) {
-      if (telegramService) {
-        handleTelegram(req, res, requestPath, telegramService, appRoot, appendLog, telegramMount);
-      } else {
-        res.writeHead(503, { 'Content-Type': 'application/json; charset=utf-8' });
-        res.end(JSON.stringify({ success: false, message: 'Telegram 服务未启用' }));
-      }
-      return;
-    }
-    
-    // PowerShell History 服务路由（可配置）
-    const psHistoryMount = config.services && config.services.powershellHistory && config.services.powershellHistory.mount 
-      ? config.services.powershellHistory.mount 
-      : '/powershell';
-    if (requestPath && requestPath.startsWith(psHistoryMount)) {
-      if (psHistoryService) {
-        handlePowerShellHistory(req, res, requestPath, psHistoryService, appendLog, psHistoryMount);
-      } else {
-        res.writeHead(503, { 'Content-Type': 'application/json; charset=utf-8' });
-        res.end(JSON.stringify({ success: false, message: 'PowerShell History 服务未启用' }));
-      }
-      return;
-    }
-    
-    // 文件服务路由（可配置）
-    const fileMount = config.services && config.services.fileService && config.services.fileService.mount
-      ? config.services.fileService.mount
-      : '/file';
-    if (requestPath && requestPath.startsWith(fileMount)) {
-      if (fileService) {
-        handleFileService(req, res, requestPath, fileService, appendLog, fileMount);
-      } else {
-        res.writeHead(503, { 'Content-Type': 'application/json; charset=utf-8' });
-        res.end(JSON.stringify({ success: false, message: '文件服务未启用' }));
-      }
-      return;
-    }
-    
-    // 只允许 GET 和 HEAD 请求用于文件下载
-    if (req.method !== 'GET' && req.method !== 'HEAD') {
-      res.writeHead(405, { 'Content-Type': 'application/json; charset=utf-8' });
-      res.end(JSON.stringify({ success: false, message: '方法不允许' }));
-      return;
-    }
-    
-    // 根路径：显示起始页（浏览器主页）
-    if (requestPath === '/' || requestPath === '') {
-      const html = generateStartPage(config);
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-      res.end(html);
-      return;
-    }
-    
-    // 站内搜索路由
-    if (requestPath === '/search') {
-      handleSearch(req, res, queryString, config, appendLog);
-      return;
-    }
-
-    // Bing 每日图片代理
-    if (requestPath === '/api/bing-daily') {
-      handleBingDaily(req, res, appendLog);
-      return;
-    }
-    
-    // 解析路径，匹配目录映射
-    const resolved = resolveFilePath(requestPath, config.directories);
-    
-    if (!resolved) {
-      res.writeHead(404, { 'Content-Type': 'text/html; charset=utf-8' });
-      res.end('<h1>404 - 未找到</h1><p>请求的路径未配置目录映射</p>');
-      return;
-    }
-    
-    // 处理文件请求
-    handleFileRequest(req, res, resolved, requestPath, queryString, config);
+    // 使用路由分发器处理请求
+    const router = new Router(config, serviceFactory, appendLog, appRoot);
+    router.handle(req, res);
   }
 
   // 根据配置选择创建 HTTP 或 HTTPS 服务器
@@ -409,16 +251,36 @@ process.on('unhandledRejection', (reason) => {
 /**
  * 优雅关闭
  */
-process.on('SIGINT', () => {
+process.on('SIGINT', async () => {
   appendLog('INFO', '接收到 SIGINT 信号，正在关闭服务器...');
+  
+  // 优雅关闭服务
+  try {
+    if (serviceFactory) {
+      await serviceFactory.shutdown();
+    }
+  } catch (err) {
+    appendLog('WARN', '服务关闭异常', err.message);
+  }
+
   server.close(() => {
     appendLog('INFO', '服务器已关闭');
     process.exit(0);
   });
 });
 
-process.on('SIGTERM', () => {
+process.on('SIGTERM', async () => {
   appendLog('INFO', '接收到 SIGTERM 信号，正在关闭服务器...');
+  
+  // 优雅关闭服务
+  try {
+    if (serviceFactory) {
+      await serviceFactory.shutdown();
+    }
+  } catch (err) {
+    appendLog('WARN', '服务关闭异常', err.message);
+  }
+
   server.close(() => {
     appendLog('INFO', '服务器已关闭');
     process.exit(0);
