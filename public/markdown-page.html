@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="anonymous-dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Markdown Preview</title>
+  <link rel="stylesheet" href="/public/markdown-page.css" />
+  <link id="theme-stylesheet" rel="stylesheet" href="/public/themes/anonymous-dark.css" />
+  <link rel="stylesheet" href="/public/vendor/katex.min.css" />
+</head>
+<body class="typora-export">
+  <div class="page-shell">
+    <header class="page-header">
+      <div class="file-info">
+        <div class="file-title" id="page-title">Markdown Preview</div>
+        <div class="file-path">/</div>
+      </div>
+      <div class="file-meta" id="frontmatter-meta"></div>
+      <nav class="header-actions" aria-label="页面操作">
+        <label class="theme-switch" for="theme-switcher">主题</label>
+        <select id="theme-switcher" class="theme-select" aria-label="切换主题"></select>
+        <a class="action-link" href="#">RAW</a>
+      </nav>
+    </header>
+    <main class="content-wrapper">
+      <article id="write" class="typora-export"></article>
+    </main>
+  </div>
+
+  <script>
+    window.__MARKDOWN_PAGE_CONTEXT__ = window.__MARKDOWN_PAGE_CONTEXT__ || {
+      version: "static",
+      title: "Markdown Preview",
+      requestPath: "/",
+      theme: "anonymous-light",
+      themes: [],
+      assetsMount: "/public",
+      tocMarker: "__MD_TOC_PLACEHOLDER__",
+      frontMatter: {},
+      markdownBase64: "",
+    };
+  </script>
+  <script src="/public/vendor/markdown-it/markdown-it.min.js"></script>
+  <script src="/public/vendor/markdown-it/markdown-it-footnote.min.js"></script>
+  <script src="/public/vendor/markdown-it/markdown-it-sub.min.js"></script>
+  <script src="/public/vendor/markdown-it/markdown-it-sup.min.js"></script>
+  <script src="/public/vendor/markdown-it/markdown-it-mark.min.js"></script>
+  <script src="/public/vendor/markdown-it/markdown-it-task-lists.min.js"></script>
+  <script src="/public/vendor/highlight.min.js"></script>
+  <script src="/public/vendor/mermaid.min.js"></script>
+  <script src="/public/vendor/katex.min.js"></script>
+  <script src="/public/vendor/auto-render.min.js"></script>
+  <script src="/public/js/markdown-page-runtime.js"></script>
+</body>
+</html>

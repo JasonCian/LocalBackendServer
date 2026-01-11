@@ -1,396 +1,201 @@
-/**
- * Markdown 页面视图生成器
- * 
- * 生成 Markdown 渲染页面，集成：
- * - Marked.js (GFM) - Markdown 解析
- * - highlight.js - 代码语法高亮
- * - KaTeX - LaTeX 数学公式
- * - Mermaid - 流程图/时序图
- * - Anonymous Theme - 完整主题样式系统
- * 
- * 设计原则：
- * - 最小化内联样式，依赖主题 CSS
- * - 保持 HTML 结构简洁
- * - JavaScript 仅处理必要的客户端渲染
- */
+"use strict";
 
-const path = require('path');
-const { escapeHtml } = require('../../utils/html-escape');
+const fs = require("fs");
+const path = require("path");
+const { escapeHtml } = require("../../utils/html-escape");
 
 /**
- * 生成面包屑导航 HTML
- * 
- * @param {string} requestPath - HTTP 请求路径
- * @returns {string} 面包屑导航 HTML
+ * Bump this when the template/runtime changes so cached pages invalidate.
  */
-function generateBreadcrumb(requestPath) {
-  const parts = requestPath.split('/').filter(Boolean);
-  let html = '<a href="/file">文件服务</a>';
-  let currentPath = '';
-  
-  parts.forEach((part, index) => {
-    currentPath += '/' + part;
-    if (index === parts.length - 1) {
-      html += ' / ' + part;
-    } else {
-      html += ' / <a href="' + currentPath + '/">' + part + '</a>';
-    }
-  });
-  
-  return html;
+const MARKDOWN_PAGE_VERSION = "2026.01.09";
+
+const DEFAULT_THEME = "anonymous-dark";
+let cachedThemes = null;
+// 使用无 Markdown 特殊符号的标记，避免被 markdown-it 解析为粗体/斜体
+const TOC_MARKER = "MD-T0C-T0KEN";
+
+/**
+ * Remove YAML front matter and return the remaining body plus parsed fields.
+ * Only shallow key/value pairs and simple dash arrays are parsed to avoid
+ * pulling in a YAML dependency.
+ */
+function stripFrontMatter(markdown = "") {
+	const frontMatterRegex = /^---\s*\r?\n([\s\S]*?)\r?\n---\s*\r?\n?/;
+	const match = markdown.match(frontMatterRegex);
+
+	if (!match) {
+		return { body: markdown, frontMatter: {}, rawFrontMatter: "" };
+	}
+
+	const rawBlock = match[1] || "";
+	const frontMatter = {};
+	let currentKey = null;
+
+	rawBlock.split(/\r?\n/).forEach((line) => {
+		const trimmed = line.trim();
+		if (!trimmed) return;
+
+		const keyMatch = trimmed.match(/^([A-Za-z0-9_-]+)\s*:\s*(.*)$/);
+		if (keyMatch) {
+			currentKey = keyMatch[1];
+			const value = keyMatch[2];
+			if (value === "") {
+				frontMatter[currentKey] = [];
+			} else {
+				frontMatter[currentKey] = value.trim();
+				currentKey = null;
+			}
+			return;
+		}
+
+		if (currentKey && Array.isArray(frontMatter[currentKey])) {
+			const item = trimmed.replace(/^[-\s]+/, "").trim();
+			if (item) {
+				frontMatter[currentKey].push(item);
+			}
+		}
+	});
+
+	const body = markdown.replace(frontMatterRegex, "");
+	return { body, frontMatter, rawFrontMatter: rawBlock };
+}
+
+function normalizeAssetsMount(mount) {
+	if (!mount || typeof mount !== "string") return "/public";
+	let normalized = mount.trim();
+	if (!normalized.startsWith("/")) normalized = `/${normalized}`;
+	if (normalized.endsWith("/")) normalized = normalized.slice(0, -1);
+	return normalized || "/public";
+}
+
+function sanitizeThemeName(theme, list) {
+	const candidate = (theme || "").toString().trim();
+	if (!/^[A-Za-z0-9_-]+$/.test(candidate)) return DEFAULT_THEME;
+	if (Array.isArray(list) && list.length > 0 && !list.includes(candidate)) {
+		return DEFAULT_THEME;
+	}
+	return candidate;
+}
+function loadThemeList() {
+	if (Array.isArray(cachedThemes) && cachedThemes.length) return cachedThemes;
+
+	const themesDir = path.resolve(__dirname, "../../../public/themes");
+	try {
+		const files = fs.readdirSync(themesDir, { withFileTypes: true });
+		const themes = files
+			.filter((dirent) => dirent.isFile() && dirent.name.endsWith(".css"))
+			.map((dirent) => dirent.name.replace(/\.css$/i, ""))
+			.filter((name) => /^[A-Za-z0-9_-]+$/.test(name));
+
+		cachedThemes = themes.length ? themes : [DEFAULT_THEME];
+	} catch (_) {
+		cachedThemes = [DEFAULT_THEME];
+	}
+
+	return cachedThemes;
+}
+
+
+function encodeBase64Utf8(text) {
+	return Buffer.from(text || "", "utf8").toString("base64");
 }
 
 /**
- * 生成 Markdown 渲染页面 HTML
- * 
- * @param {string} title - 页面标题
- * @param {string} content - Markdown 原始内容
- * @param {string} requestPath - HTTP 请求路径
- * @param {string} theme - 主题名称 (anonymous-dark/anonymous-light)
- * @param {Array} availableThemes - 可用主题列表
- * @returns {string} 完整的 HTML 页面
+ * Build HTML for a markdown document. Rendering is deferred to the browser
+ * using markdown-it + plugins so we do not pull markdown dependencies into
+ * the server. Assets are loaded from the configured mount (default /public).
+ *
+ * @param {string} title - Document title fallback when front matter is empty
+ * @param {string} markdownContent - Raw markdown content
+ * @param {string} requestPath - Request path for display/back links
+ * @param {string} theme - Theme name under public/themes (Typora-compatible)
+ * @param {string} highlightTheme - Reserved for future highlight theme switch
+ * @param {string} assetsMount - Static assets mount (default /public)
+ * @returns {string} Full HTML page string
  */
-function generateMarkdownPage(title, content, requestPath, theme, availableThemes = ['anonymous-dark', 'anonymous-light'], assetsMount = '/public') {
-  // 规范化主题名称
-  let themeCss = theme || 'anonymous-dark';
-  themeCss = themeCss.replace(/\.css$/i, '');
-  
-  // 判断是否为暗色主题（用于 highlight.js 和 Mermaid 主题）
-  const isDarkTheme = themeCss.includes('dark') || themeCss === 'night';
-  
-  return `<!DOCTYPE html>
-<html lang="zh-CN">
+function generateMarkdownPage(
+	title,
+	markdownContent,
+	requestPath,
+	theme = DEFAULT_THEME,
+	highlightTheme,
+	assetsMount = "/public"
+) {
+	const themeList = loadThemeList();
+	const { body, frontMatter } = stripFrontMatter(markdownContent || "");
+	const safeTheme = sanitizeThemeName(theme, themeList);
+	const mount = normalizeAssetsMount(assetsMount);
+	const filePathLabel = requestPath || "/";
+	const preferredTitle =
+		(frontMatter && frontMatter.title) || title || "Markdown Document";
+
+	const payload = {
+		version: MARKDOWN_PAGE_VERSION,
+		title: preferredTitle,
+		requestPath: filePathLabel,
+		theme: safeTheme,
+		themes: themeList,
+		assetsMount: mount,
+		tocMarker: TOC_MARKER,
+		frontMatter,
+		markdownBase64: encodeBase64Utf8(body.replace(/\[toc\]/gi, TOC_MARKER)),
+		highlightTheme: highlightTheme || null
+	};
+
+	const contextJson = JSON.stringify(payload).replace(/<\/(script)/gi, "<\\/$1");
+
+	return `<!DOCTYPE html>
+<html lang="zh-CN" data-theme="${escapeHtml(safeTheme)}">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title}</title>
-  
-  <!-- Marked.js v11+ - GFM Markdown 解析 -->
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  
-  <!-- highlight.js v11.9.0 - 代码语法高亮 -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github${isDarkTheme ? '-dark' : ''}.min.css">
-  <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
-  
-  <!-- KaTeX v0.16.9 - LaTeX 数学公式渲染 -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
-  
-  <!-- Mermaid v10 - 流程图/时序图/甘特图 -->
-  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-  
-  <!-- Anonymous Theme - 完整主题样式系统 -->
-  <link rel="stylesheet" href="${assetsMount}/themes/${themeCss}.css">
-  
-  <style>
-    /* ==========================================================================
-     * 最小化样式覆盖 - Minimal Style Overrides
-     * 主要样式由 Anonymous 主题提供
-     * ========================================================================== */
-    
-    * { box-sizing: border-box; }
-    html, body { height: 100%; margin: 0; padding: 0; }
-    
-    body {
-      display: flex;
-      flex-direction: column;
-      background: var(--anonymous-bg-primary);
-      color: var(--anonymous-text-primary);
-    }
-    
-    /* 顶部导航栏 */
-    .navbar {
-      background: var(--anonymous-bg-secondary);
-      border-bottom: 1px solid var(--anonymous-border-default);
-      padding: 12px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 12px;
-      backdrop-filter: blur(8px);
-      flex-shrink: 0;
-    }
-    
-    .navbar-left {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      flex-wrap: wrap;
-    }
-    
-    .navbar a {
-      color: var(--anonymous-primary);
-      text-decoration: none;
-      font-size: 14px;
-    }
-    
-    .navbar a:hover {
-      color: var(--anonymous-primary-hover);
-      text-decoration: underline;
-    }
-    
-    .breadcrumb {
-      font-size: 14px;
-      color: var(--anonymous-text-muted);
-    }
-    
-    .breadcrumb a {
-      color: var(--anonymous-primary);
-    }
-    
-    /* 主题选择器 */
-    .theme-selector {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    
-    .theme-selector label {
-      font-size: 13px;
-      color: var(--anonymous-text-muted);
-    }
-    
-    .theme-selector select {
-      padding: 6px 10px;
-      border-radius: 6px;
-      border: 1px solid var(--anonymous-border-default);
-      background: var(--anonymous-bg-primary);
-      color: var(--anonymous-text-primary);
-      font-size: 13px;
-      cursor: pointer;
-    }
-    
-    /* 内容区域 - 让主题接管 #write 样式 */
-    .content-wrapper {
-      flex: 1;
-      overflow: auto;
-      padding: 24px 16px 32px;
-    }
-    
-    /* 加载提示 */
-    #write.loading {
-      text-align: center;
-      padding: 50px;
-      color: var(--anonymous-text-muted);
-    }
-    
-    /* 原始内容隐藏 */
-    #raw-content {
-      display: none;
-    }
-    
-    /* 返回顶部按钮 */
-    .back-to-top {
-      position: fixed;
-      bottom: 30px;
-      right: 30px;
-      width: 42px;
-      height: 42px;
-      background: var(--anonymous-primary);
-      color: white;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      font-size: 18px;
-      opacity: 0;
-      transition: opacity 0.3s;
-      z-index: 1000;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    }
-    
-    .back-to-top.visible {
-      opacity: 0.8;
-    }
-    
-    .back-to-top:hover {
-      opacity: 1;
-      background: var(--anonymous-primary-hover);
-    }
-    
-    /* 打印时隐藏导航 */
-    @media print {
-      .navbar, .back-to-top {
-        display: none;
-      }
-      .content-wrapper {
-        overflow: visible;
-      }
-    }
-  </style>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta name="generator" content="LocalBackendServer markdown-page ${MARKDOWN_PAGE_VERSION}" />
+	<meta name="markdown-source" content="${escapeHtml(filePathLabel)}" />
+	<title>${escapeHtml(preferredTitle)} - Markdown Preview</title>
+	<link rel="stylesheet" href="${mount}/markdown-page.css?v=${MARKDOWN_PAGE_VERSION}" />
+	<link id="theme-stylesheet" rel="stylesheet" href="${mount}/themes/${safeTheme}.css?v=${MARKDOWN_PAGE_VERSION}" />
+	<link rel="stylesheet" href="${mount}/vendor/katex.min.css" />
 </head>
-<body>
-  <!-- 顶部导航栏 -->
-  <nav class="navbar">
-    <div class="navbar-left">
-      <a href="javascript:history.back()">← 返回</a>
-      <span class="breadcrumb">${generateBreadcrumb(requestPath)}</span>
-    </div>
-    <div class="theme-selector">
-      <label for="theme-select">主题：</label>
-      <select id="theme-select" onchange="changeTheme(this.value)">
-        ${availableThemes.map(t => {
-          const displayName = t.replace('anonymous-', '').replace(/^./, c => c.toUpperCase());
-          return `<option value="${t}" ${t === themeCss ? 'selected' : ''}>${displayName}</option>`;
-        }).join('')}
-      </select>
-    </div>
-  </nav>
-  
-  <!-- 内容渲染区域 - 使用 #write 以匹配 Anonymous 主题 -->
-  <div class="content-wrapper">
-    <div id="write" class="loading">正在加载 Markdown 内容...</div>
-  </div>
-  
-  <!-- 原始 Markdown 内容（隐藏） -->
-  <pre id="raw-content">${escapeHtml(content)}</pre>
-  
-  <!-- 返回顶部按钮 -->
-  <button class="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">↑</button>
-  
-  <script>
-    // =========================================================================
-    // Markdown 渲染脚本
-    // =========================================================================
-    
-    (function() {
-      try {
-        // ---------------------------------------------------------------------
-        // 1. 初始化库配置
-        // ---------------------------------------------------------------------
-        
-        // Mermaid 初始化
-        mermaid.initialize({
-          startOnLoad: false,
-          theme: '${isDarkTheme ? 'dark' : 'default'}',
-          securityLevel: 'loose',
-          fontFamily: 'var(--anonymous-font-family)'
-        });
-        
-        // Marked.js 配置 - GFM 模式，允许 HTML
-        marked.setOptions({
-          gfm: true,
-          breaks: true,
-          headerIds: true,
-          mangle: false,
-          highlight: function(code, lang) {
-            if (lang && hljs.getLanguage(lang)) {
-              try {
-                return hljs.highlight(code, { language: lang }).value;
-              } catch (e) {
-                console.warn('代码高亮失败:', e);
-              }
-            }
-            return hljs.highlightAuto(code).value;
-          }
-        });
-        
-        // ---------------------------------------------------------------------
-        // 2. 获取原始内容并预处理
-        // ---------------------------------------------------------------------
-        
-        const rawContent = document.getElementById('raw-content').textContent;
-        
-        // ---------------------------------------------------------------------
-        // 3. 使用 Marked 渲染为 HTML
-        // ---------------------------------------------------------------------
-        
-        const writeDiv = document.getElementById('write');
-        writeDiv.innerHTML = marked.parse(rawContent);
-        writeDiv.classList.remove('loading');
-        
-        // ---------------------------------------------------------------------
-        // 4. 后处理增强
-        // ---------------------------------------------------------------------
-        
-        // KaTeX 数学公式渲染
-        renderMathInElement(writeDiv, {
-          delimiters: [
-            {left: '$$', right: '$$', display: true},
-            {left: '$', right: '$', display: false},
-            {left: '\\\\[', right: '\\\\]', display: true},
-            {left: '\\\\(', right: '\\\\)', display: false}
-          ],
-          throwOnError: false
-        });
-        
-        // 任务列表增强（GFM 已支持，此处添加额外样式）
-        writeDiv.querySelectorAll('li').forEach(li => {
-          const firstChild = li.firstChild;
-          if (firstChild && firstChild.nodeName === 'INPUT' && firstChild.type === 'checkbox') {
-            li.classList.add('task-list-item');
-          }
-        });
-        
-        // Mermaid 图表渲染
-        const mermaidBlocks = writeDiv.querySelectorAll('pre code.language-mermaid');
-        mermaidBlocks.forEach((block, index) => {
-          const code = block.textContent;
-          const container = document.createElement('div');
-          container.className = 'mermaid';
-          container.textContent = code;
-          block.parentElement.replaceWith(container);
-        });
-        
-        // 执行 Mermaid 渲染
-        if (mermaidBlocks.length > 0) {
-          mermaid.run();
-        }
-        
-        // 图片相对路径处理
-        const basePath = '${path.posix.dirname(requestPath)}/';
-        writeDiv.querySelectorAll('img').forEach(img => {
-          const src = img.getAttribute('src');
-          if (src && !src.startsWith('http') && !src.startsWith('/') && !src.startsWith('data:')) {
-            img.src = basePath + src;
-          }
-        });
-        
-        // ---------------------------------------------------------------------
-        // 5. 返回顶部按钮交互
-        // ---------------------------------------------------------------------
-        
-        const backToTopBtn = document.querySelector('.back-to-top');
-        window.addEventListener('scroll', function() {
-          if (window.scrollY > 300) {
-            backToTopBtn.classList.add('visible');
-          } else {
-            backToTopBtn.classList.remove('visible');
-          }
-        });
-        
-      } catch (error) {
-        console.error('Markdown 渲染错误:', error);
-        const writeDiv = document.getElementById('write');
-        writeDiv.classList.remove('loading');
-        writeDiv.innerHTML = \`
-          <div style="padding: 40px; text-align: center; color: var(--anonymous-danger);">
-            <h2>❌ 渲染失败</h2>
-            <p>Markdown 内容渲染时发生错误，请检查浏览器控制台获取详细信息。</p>
-            <pre style="text-align: left; background: var(--anonymous-bg-secondary); padding: 16px; border-radius: 8px; overflow: auto;">\${error.stack || error.message}</pre>
-          </div>
-        \`;
-      }
-    })();
-    
-    // =========================================================================
-    // 主题切换函数
-    // =========================================================================
-    
-    function changeTheme(theme) {
-      const url = new URL(window.location.href);
-      url.searchParams.set('theme', theme);
-      window.location.href = url.toString();
-    }
-  </script>
+<body class="typora-export">
+	<div class="page-shell">
+		<header class="page-header">
+			<div class="file-info">
+				<div class="file-title" id="page-title">${escapeHtml(preferredTitle)}</div>
+				<div class="file-path">${escapeHtml(filePathLabel)}</div>
+			</div>
+			<div class="file-meta" id="frontmatter-meta"></div>
+			<nav class="header-actions" aria-label="页面操作">
+				<label class="theme-switch" for="theme-switcher">主题</label>
+				<select id="theme-switcher" class="theme-select" aria-label="切换主题">
+					${(themeList || [safeTheme]).map((t) => `<option value="${t}"${t === safeTheme ? " selected" : ""}>${t}</option>`).join("")}
+				</select>
+				<a class="action-link" href="${escapeHtml(filePathLabel)}?raw=1">RAW</a>
+			</nav>
+		</header>
+		<main class="content-wrapper">
+			<article id="write" class="typora-export"></article>
+		</main>
+	</div>
+
+	<script>window.__MARKDOWN_PAGE_CONTEXT__ = ${contextJson};</script>
+	<script src="${mount}/vendor/markdown-it/markdown-it.min.js"></script>
+	<script src="${mount}/vendor/markdown-it/markdown-it-footnote.min.js"></script>
+	<script src="${mount}/vendor/markdown-it/markdown-it-sub.min.js"></script>
+	<script src="${mount}/vendor/markdown-it/markdown-it-sup.min.js"></script>
+	<script src="${mount}/vendor/markdown-it/markdown-it-mark.min.js"></script>
+	<script src="${mount}/vendor/markdown-it/markdown-it-task-lists.min.js"></script>
+	<script src="${mount}/vendor/highlight.min.js"></script>
+	<script src="${mount}/vendor/mermaid.min.js"></script>
+	<script src="${mount}/vendor/katex.min.js"></script>
+	<script src="${mount}/vendor/auto-render.min.js"></script>
+	<script src="${mount}/js/markdown-page-runtime.js?v=${MARKDOWN_PAGE_VERSION}"></script>
 </body>
 </html>`;
 }
 
 module.exports = {
-  generateMarkdownPage,
-  generateBreadcrumb
+	generateMarkdownPage,
+	MARKDOWN_PAGE_VERSION,
+	stripFrontMatter
 };
-
-

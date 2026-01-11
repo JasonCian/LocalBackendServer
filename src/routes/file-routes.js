@@ -11,7 +11,7 @@ const url = require('url');
 const { getMimeType } = require('../utils/mime');
 const { globalCache } = require('../utils/cache-manager');
 const { generateDirectoryListing } = require('../services/file-service/directory-listing');
-const { generateMarkdownPage } = require('../services/file-service/markdown-page');
+const { generateMarkdownPage, MARKDOWN_PAGE_VERSION } = require('../services/file-service/markdown-page');
 
 // 常量
 const LARGE_FILE_THRESHOLD = 10 * 1024 * 1024; // 10MB 以上用流式传输
@@ -128,7 +128,7 @@ function serveFile(filePath, res, requestPath, queryString, markdownConfig, stat
     }
 
     // 生成缓存 key（基于文件路径、主题和修改时间）
-    const cacheKey = `md:${filePath}:${theme}:${stat.mtime.getTime()}`;
+    const cacheKey = `md:${filePath}:${theme}:${stat.mtime.getTime()}:${MARKDOWN_PAGE_VERSION}`;
 
     // 检查缓存
     const cachedHtml = globalCache.get(cacheKey, 'markdown');
