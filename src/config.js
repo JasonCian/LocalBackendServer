@@ -26,17 +26,31 @@ const defaultConfig = {
   port: 8080,
   host: '127.0.0.1',
   directories: [{ route: '/', path: './public' }],
+  uploadDir: undefined,
   cors: true,
   showIndex: true,
   markdown: {
     enabled: true,
     theme: 'anonymous-dark.css'
   },
+  assets: {
+    enabled: true,
+    mount: '/public',
+    path: './public',
+    cacheMaxAge: 3600
+  },
   telegram: {
     enabled: false
   },
   notifications: [],
-  projectName: '本地轻量级后端'
+  projectName: '本地轻量级后端',
+  startpage: {
+    searchEngines: [],
+    defaultSearchEngine: 0,
+    bookmarks: [],
+    useBingDaily: false,
+    customBackground: ''
+  }
 };
 
 /**
@@ -48,11 +62,11 @@ const defaultConfig = {
  */
 function loadConfig(appRoot, logger) {
   const configPath = path.join(appRoot, 'config.json');
-  let config;
+  let raw;
 
   try {
     const configData = fs.readFileSync(configPath, 'utf8');
-    config = JSON.parse(configData);
+    raw = JSON.parse(configData);
     
     if (logger) {
       logger('INFO', '配置文件加载成功', configPath);
@@ -61,17 +75,36 @@ function loadConfig(appRoot, logger) {
     if (logger) {
       logger('ERROR', '配置文件读取失败，使用默认配置', err.message);
     }
-    config = { ...defaultConfig };
+    raw = { ...defaultConfig };
   }
 
-  // 合并默认配置（确保所有必需字段存在）
-  config = {
-    ...defaultConfig,
-    ...config,
+  // 支持分组结构 server/paths/features/services，同时兼容旧字段
+  const serverCfg = raw.server || {};
+  const pathsCfg = raw.paths || {};
+  const featuresCfg = raw.features || {};
+
+  let config = {
+    port: serverCfg.port ?? raw.port ?? defaultConfig.port,
+    host: serverCfg.host ?? raw.host ?? defaultConfig.host,
+    cors: serverCfg.cors ?? raw.cors ?? defaultConfig.cors,
+    showIndex: serverCfg.showIndex ?? raw.showIndex ?? defaultConfig.showIndex,
+    projectName: serverCfg.projectName ?? raw.projectName ?? defaultConfig.projectName,
+    directories: pathsCfg.directories ?? raw.directories ?? defaultConfig.directories,
+    uploadDir: pathsCfg.uploadDir ?? raw.uploadDir ?? defaultConfig.uploadDir,
     markdown: {
       ...defaultConfig.markdown,
-      ...(config.markdown || {})
-    }
+      ...(featuresCfg.markdown || raw.markdown || {})
+    },
+    assets: {
+      ...defaultConfig.assets,
+      ...(pathsCfg.assets || raw.assets || {})
+    },
+    tls: serverCfg.tls ?? raw.tls ?? null,
+    startpage: {
+      ...defaultConfig.startpage,
+      ...(featuresCfg.startpage || raw.startpage || {})
+    },
+    services: raw.services || {}
   };
 
   // 尝试加载外部 Telegram 配置（兼容性）
@@ -95,7 +128,7 @@ function loadConfig(appRoot, logger) {
   config = _normalizeConfig(config);
 
   // 验证关键配置
-  config = _validateConfig(config, logger);
+  config = _validateConfig(config, logger, appRoot);
 
   return config;
 }
@@ -125,13 +158,18 @@ function _normalizeConfig(config) {
     config.services.notifications = [];
   }
 
+  // 确保 assets 对象存在
+  if (!config.assets || typeof config.assets !== 'object') {
+    config.assets = { ...defaultConfig.assets };
+  }
+
   return config;
 }
 
 /**
  * 私有方法：验证配置
  */
-function _validateConfig(config, logger) {
+function _validateConfig(config, logger, appRoot) {
   const issues = [];
 
   // 验证端口
@@ -160,6 +198,54 @@ function _validateConfig(config, logger) {
   // 验证 showIndex
   if (!validationRules.showIndex(config.showIndex)) {
     config.showIndex = defaultConfig.showIndex;
+  }
+
+  // 验证 uploadDir
+  if (config.uploadDir && typeof config.uploadDir !== 'string') {
+    issues.push('uploadDir 需为字符串路径，已移除');
+    delete config.uploadDir;
+  }
+
+  // 验证 assets
+  if (config.assets) {
+    const mount = String(config.assets.mount || '').trim();
+    const pathVal = config.assets.path;
+    const reserved = ['/upload', '/delete', '/api', '/ws'];
+
+    if (!mount.startsWith('/')) {
+      issues.push(`assets.mount 必须以 / 开头，已回退为 ${defaultConfig.assets.mount}`);
+      config.assets.mount = defaultConfig.assets.mount;
+    }
+
+    if (!pathVal || typeof pathVal !== 'string') {
+      issues.push('assets.path 必须为有效字符串，已回退默认');
+      config.assets.path = defaultConfig.assets.path;
+    }
+
+    if (reserved.includes(mount)) {
+      issues.push(`assets.mount ${mount} 与保留路由冲突，已禁用静态资源映射`);
+      config.assets.enabled = false;
+    }
+  }
+
+  // 验证 TLS 证书存在性（开启才检查）
+  if (config.tls && config.tls.enabled) {
+    const pfxPathRaw = config.tls.pfx || '';
+    const keyPathRaw = config.tls.key || '';
+    const certPathRaw = config.tls.cert || '';
+
+    const pfxPath = pfxPathRaw ? (path.isAbsolute(pfxPathRaw) ? pfxPathRaw : path.join(appRoot, pfxPathRaw)) : '';
+    const keyPath = keyPathRaw ? (path.isAbsolute(keyPathRaw) ? keyPathRaw : path.join(appRoot, keyPathRaw)) : '';
+    const certPath = certPathRaw ? (path.isAbsolute(certPathRaw) ? certPathRaw : path.join(appRoot, certPathRaw)) : '';
+
+    const hasPfx = pfxPath && fs.existsSync(pfxPath);
+    const hasKeyCert = keyPath && certPath && fs.existsSync(keyPath) && fs.existsSync(certPath);
+
+    if (!hasPfx && !hasKeyCert) {
+      const errMsg = '启用 TLS 但未找到有效证书文件（pfx 或 key/cert）';
+      if (logger) logger('ERROR', errMsg);
+      throw new Error(errMsg);
+    }
   }
 
   // 记录验证问题

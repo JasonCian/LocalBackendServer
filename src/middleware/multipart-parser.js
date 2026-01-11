@@ -9,6 +9,7 @@
  */
 
 const querystring = require('querystring');
+const MAX_BODY_SIZE = 80 * 1024 * 1024; // 80MB 防御性上限
 
 /**
  * 解析 JSON 或表单编码的请求体
@@ -72,6 +73,10 @@ function parseMultipart(req) {
     
     req.on('data', chunk => {
       data = Buffer.concat([data, chunk]);
+      if (data.length > MAX_BODY_SIZE) {
+        reject(new Error('请求体过大'));
+        req.destroy();
+      }
     });
     
     req.on('end', () => {

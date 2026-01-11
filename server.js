@@ -45,6 +45,11 @@ const perfCollector = new PerformanceCollector(appendLog);
 
 // 初始化 WebSocket 管理器（先创建）
 const wsManager = new WebSocketManager(appendLog);
+// 全局复用单个 WebSocket.Server，避免为每次 upgrade 创建新实例
+const wss = new WebSocket.Server({ noServer: true });
+wss.on('connection', (ws) => {
+  wsManager.handleConnection(ws);
+});
 
 // 初始化服务工厂（注入 wsManager）
 const serviceFactory = new ServiceFactory(config, appRoot, appendLog, wsManager);
@@ -164,8 +169,6 @@ const server = (function() {
 server.on('upgrade', (req, socket, head) => {
   // 只允许 /ws 路径升级为 WebSocket
   if (req.url === '/ws' || req.url === '/ws/') {
-    const wss = new WebSocket.Server({ noServer: true });
-
     wss.handleUpgrade(req, socket, head, (ws) => {
       wsManager.handleConnection(ws);
     });
@@ -231,7 +234,7 @@ server.listen(listenPort, listenHost, () => {
       await notifyAll(
         config.services.notifications, 
         '服务器启动', 
-        `${projectName} 在 ${timestamp} 启动成功\n监听地址: http://${config.host}:${config.port}/`,
+        `${projectName} 在 ${timestamp} 启动成功\n监听地址: ${useTls ? 'https' : 'http'}://${config.host}:${listenPort}/`,
         appendLog,
         null,
         {
@@ -308,6 +311,9 @@ process.on('SIGINT', async () => {
     if (wsManager) {
       await wsManager.shutdown();
     }
+    if (wss) {
+      wss.close();
+    }
   } catch (err) {
     appendLog('WARN', 'WebSocket 关闭异常', err.message);
   }
@@ -343,6 +349,9 @@ process.on('SIGTERM', async () => {
   try {
     if (wsManager) {
       await wsManager.shutdown();
+    }
+    if (wss) {
+      wss.close();
     }
   } catch (err) {
     appendLog('WARN', 'WebSocket 关闭异常', err.message);

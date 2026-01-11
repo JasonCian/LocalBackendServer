@@ -12,6 +12,18 @@ const fs = require('fs');
 const path = require('path');
 const { parseMultipart } = require('../middleware/multipart-parser');
 const { appRoot } = require('../utils/path-resolver');
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 单文件上限 50MB
+const MAX_TOTAL_SIZE = 80 * 1024 * 1024; // 单次请求总上限 80MB
+const BLOCKED_EXTS = ['.exe', '.bat', '.cmd', '.sh', '.ps1', '.js', '.mjs', '.cjs'];
+
+function writeBufferToFile(targetPath, buffer) {
+  return new Promise((resolve, reject) => {
+    const stream = fs.createWriteStream(targetPath);
+    stream.on('error', reject);
+    stream.on('finish', resolve);
+    stream.end(buffer);
+  });
+}
 
 /**
  * 处理文件上传请求
@@ -24,6 +36,13 @@ const { appRoot } = require('../utils/path-resolver');
 async function handleUpload(req, res, config, logger) {
   try {
     const { fields, files } = await parseMultipart(req);
+
+    const totalSize = (files || []).reduce((sum, f) => sum + (f.size || 0), 0);
+    if (totalSize > MAX_TOTAL_SIZE) {
+      res.writeHead(413, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ success: false, message: '总上传大小超出限制' }));
+      return;
+    }
     
     if (!files || files.length === 0) {
       res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -78,6 +97,25 @@ async function handleUpload(req, res, config, logger) {
         });
         continue;
       }
+
+      const ext = path.extname(safeFilename).toLowerCase();
+      if (BLOCKED_EXTS.includes(ext)) {
+        results.push({
+          success: false,
+          filename: safeFilename,
+          message: '文件类型不允许'
+        });
+        continue;
+      }
+
+      if (file.size > MAX_FILE_SIZE) {
+        results.push({
+          success: false,
+          filename: safeFilename,
+          message: '文件过大'
+        });
+        continue;
+      }
       
       const filePath = path.join(normalizedBase, safeFilename);
       const normalizedPath = path.normalize(filePath);
@@ -93,7 +131,7 @@ async function handleUpload(req, res, config, logger) {
       }
       
       try {
-        fs.writeFileSync(filePath, file.content);
+        await writeBufferToFile(filePath, file.content);
         
         // 生成访问URL
         let accessUrl = `/${safeFilename}`;
@@ -183,7 +221,8 @@ async function handleUpload(req, res, config, logger) {
     if (logger) {
       logger('ERROR', '上传处理错误', err && err.message);
     }
-    res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+    const status = err && err.message && err.message.includes('过大') ? 413 : 500;
+    res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify({
       success: false,
       message: err.message

@@ -478,18 +478,34 @@ function generateStartPage(config) {
     // 加载背景
     async function loadBackground() {
       const bgElement = document.getElementById('background');
-      
+      const cacheKey = 'bingDailyBg';
+
+      // 1) 自定义背景：直接应用
       if (customBackground) {
         bgElement.style.backgroundImage = 'url(' + customBackground + ')';
         return;
       }
-      
+
+      // 2) Bing 背景：先用本地缓存立即展示，再异步刷新
       if (useBingDaily) {
         try {
-          // 通过本地代理避免 CORS 限制
-          const response = await fetch('/api/bing-daily');
+          const cached = localStorage.getItem(cacheKey);
+          if (cached) {
+            try {
+              const parsed = JSON.parse(cached);
+              if (parsed && parsed.imageUrl) {
+                bgElement.style.backgroundImage = 'url(' + parsed.imageUrl + ')';
+              }
+            } catch (_) {}
+          }
+
+          // 异步刷新（按日期刷新，避免频繁闪烁）
+          const response = await fetch('/api/bing-daily', { cache: 'no-cache' });
           const data = await response.json();
           if (data && data.success && data.imageUrl) {
+            const today = new Date().toISOString().slice(0, 10);
+            const cachePayload = { imageUrl: data.imageUrl, date: today };
+            localStorage.setItem(cacheKey, JSON.stringify(cachePayload));
             bgElement.style.backgroundImage = 'url(' + data.imageUrl + ')';
           }
         } catch (err) {

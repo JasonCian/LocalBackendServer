@@ -120,6 +120,11 @@ class WebSocketManager extends EventEmitter {
 
     this.logger('INFO', `[WS] 客户端连接: ${clientId}`);
 
+    // 心跳 pong 标记存活
+    socket.on('pong', () => {
+      client.isAlive = true;
+    });
+
     // 处理消息
     socket.on('message', (data) => {
       try {
@@ -133,6 +138,7 @@ class WebSocketManager extends EventEmitter {
 
     // 处理关闭
     socket.on('close', () => {
+      this._removeClientFromAllChannels(clientId);
       this.clients.delete(clientId);
       this.stats.activeConnections--;
       this.logger('INFO', `[WS] 客户端断开: ${clientId}`);
@@ -235,13 +241,25 @@ class WebSocketManager extends EventEmitter {
     }
   }
 
+  _removeClientFromAllChannels(clientId) {
+    this.channels.forEach((subscribers, channel) => {
+      if (subscribers.has(clientId)) {
+        subscribers.delete(clientId);
+        if (subscribers.size === 0) {
+          this.channels.delete(channel);
+        }
+      }
+    });
+  }
+
   /**
    * 私有方法：发送心跳
    */
   _sendHeartbeats() {
+    const now = Date.now();
     const heartbeat = {
       type: 'heartbeat',
-      timestamp: Date.now(),
+      timestamp: now,
       stats: {
         activeConnections: this.stats.activeConnections,
         messagesReceived: this.stats.messagesReceived,
@@ -249,11 +267,22 @@ class WebSocketManager extends EventEmitter {
       }
     };
 
-    this.clients.forEach(client => {
-      if (!client.send(heartbeat)) {
-        // 发送失败，标记为死亡
+    this.clients.forEach((client, clientId) => {
+      if (!client.isAlive) {
+        client.close(4000, 'Heartbeat timeout');
+        return;
+      }
+
+      client.isAlive = false;
+
+      // 发送 ws ping（底层 pong）并同步发逻辑心跳包
+      try {
+        client.socket.ping();
+      } catch (err) {
         client.isAlive = false;
       }
+
+      client.send(heartbeat);
     });
   }
 
