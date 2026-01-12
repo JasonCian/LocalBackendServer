@@ -23,6 +23,7 @@ const { handleFileService } = require('./file-service-routes');
 const { handleSearch } = require('./search-routes');
 const { handleBingDaily } = require('./bing-routes');
 const { handleStaticAssets } = require('./static-routes');
+const { handleSystemMetrics } = require('./system-metrics-routes');
 
 /**
  * 路由分发器类
@@ -39,6 +40,7 @@ class Router {
     this.telegramMount = serviceFactory.getServiceMount('telegram');
     this.psHistoryMount = serviceFactory.getServiceMount('powershellHistory');
     this.fileMount = serviceFactory.getServiceMount('fileService');
+    this.systemMetricsMount = serviceFactory.getServiceMount('systemMetrics');
   }
 
   /**
@@ -204,6 +206,23 @@ class Router {
             fileService,
             this.logger,
             this.fileMount
+          );
+        }
+
+        // 3.3.1 系统监控路由
+        if (this.systemMetricsMount && requestPath.startsWith(this.systemMetricsMount)) {
+          const sysService = this.serviceFactory.getService('systemMetrics');
+          if (!sysService) {
+            return this._serviceNotAvailable(res, '系统监控');
+          }
+          return handleSystemMetrics(
+            req,
+            res,
+            requestPath,
+            sysService,
+            this.logger,
+            this.systemMetricsMount,
+            (this.config.services && this.config.services.systemMetrics && this.config.services.systemMetrics.token) || ''
           );
         }
 

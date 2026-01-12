@@ -13,6 +13,7 @@ const PowerShellHistoryService = require('./powershell-history/powershell-histor
 const FileService = require('./file-service/file-service');
 const FileWatcherService = require('./file-watcher-service');
 const { notifyAll } = require('./notification-service');
+const SystemMetricsService = require('./system-metrics');
 
 /**
  * 服务工厂类
@@ -37,6 +38,7 @@ class ServiceFactory {
       psHistory: null,
       fileService: null,
       fileWatcher: null,
+      systemMetrics: null,
       errors: []
     };
 
@@ -84,6 +86,17 @@ class ServiceFactory {
       results.errors.push({ service: 'fileWatcher', error: err });
     }
 
+    // 初始化系统监控服务
+    try {
+      if (this._isServiceEnabled('systemMetrics')) {
+        results.systemMetrics = this._initSystemMetrics();
+      }
+    } catch (err) {
+      const errMsg = `系统监控服务初始化失败: ${err.message}`;
+      this.logger('ERROR', errMsg, err.stack);
+      results.errors.push({ service: 'systemMetrics', error: err });
+    }
+
     return results;
   }
 
@@ -111,6 +124,11 @@ class ServiceFactory {
         return (
           services.fileService &&
           services.fileService.enabled === true
+        );
+      case 'systemMetrics':
+        return (
+          services.systemMetrics &&
+          services.systemMetrics.enabled === true
         );
       default:
         return false;
@@ -211,6 +229,18 @@ class ServiceFactory {
   }
 
   /**
+   * 私有方法：初始化系统监控服务
+   */
+  _initSystemMetrics() {
+    const cfg = this.config.services.systemMetrics;
+    const service = new SystemMetricsService(cfg, this.logger);
+    service.start();
+    this.serviceInstances.systemMetrics = service;
+    this.logger('INFO', '✅ 系统监控服务初始化成功');
+    return service;
+  }
+
+  /**
    * 获取指定服务实例
    */
   getService(serviceName) {
@@ -231,6 +261,8 @@ class ServiceFactory {
         return (services.powershellHistory && services.powershellHistory.mount) || '/powershell';
       case 'fileService':
         return (services.fileService && services.fileService.mount) || '/file';
+      case 'systemMetrics':
+        return (services.systemMetrics && services.systemMetrics.mount) || '/metrics';
       default:
         return null;
     }
@@ -261,6 +293,17 @@ class ServiceFactory {
       }
     }
 
+    // 关闭系统监控服务
+    const sysMetrics = this.serviceInstances.systemMetrics;
+    if (sysMetrics && typeof sysMetrics.stop === 'function') {
+      try {
+        sysMetrics.stop();
+        this.logger('INFO', '✅ 系统监控服务已停止');
+      } catch (err) {
+        this.logger('WARN', '系统监控服务停止失败', err.message);
+      }
+    }
+
     // 其他服务的清理逻辑可在此扩展
   }
 
@@ -278,6 +321,9 @@ class ServiceFactory {
     }
     if (this.serviceInstances.fileService) {
       summary.push('• 文件服务');
+    }
+    if (this.serviceInstances.systemMetrics) {
+      summary.push('• 系统监控');
     }
 
     return summary.length > 0

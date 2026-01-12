@@ -41,6 +41,16 @@
       "enabled": true,
       "mount": "/file"
     },
+    "systemMetrics": {
+      "enabled": true,
+      "mount": "/metrics",
+      "sampleIntervalMs": 500,
+      "historySeconds": 30,
+      "topN": 5,
+      "allowSSE": true,
+      "token": "",
+      "netInterface": ""
+    },
     "notifications": [
       {
         "type": "dingtalk",

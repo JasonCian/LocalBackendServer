@@ -50,6 +50,18 @@ const defaultConfig = {
     bookmarks: [],
     useBingDaily: false,
     customBackground: ''
+  },
+  services: {
+    systemMetrics: {
+      enabled: false,
+      mount: '/metrics',
+      sampleIntervalMs: 250,
+      historySeconds: 60,
+      topN: 5,
+      allowSSE: true,
+      token: '',
+      netInterface: ''
+    }
   }
 };
 
@@ -152,6 +164,14 @@ function _normalizeConfig(config) {
   if (!config.services.fileService) {
     config.services.fileService = { enabled: false };
   }
+  if (!config.services.systemMetrics) {
+    config.services.systemMetrics = { ...defaultConfig.services.systemMetrics };
+  } else {
+    config.services.systemMetrics = {
+      ...defaultConfig.services.systemMetrics,
+      ...config.services.systemMetrics
+    };
+  }
 
   // 确保 notifications 是数组
   if (!Array.isArray(config.services.notifications)) {
@@ -248,6 +268,22 @@ function _validateConfig(config, logger, appRoot) {
     }
   }
 
+  // 验证 systemMetrics
+  if (config.services && config.services.systemMetrics) {
+    const sysCfg = config.services.systemMetrics;
+    const toNumberOrDefault = (val, def) => (typeof val === 'number' && val > 0 ? val : def);
+
+    sysCfg.sampleIntervalMs = toNumberOrDefault(sysCfg.sampleIntervalMs, defaultConfig.services.systemMetrics.sampleIntervalMs);
+    sysCfg.historySeconds = toNumberOrDefault(sysCfg.historySeconds, defaultConfig.services.systemMetrics.historySeconds);
+    sysCfg.topN = toNumberOrDefault(sysCfg.topN, defaultConfig.services.systemMetrics.topN);
+
+    const mountRaw = String(sysCfg.mount || '').trim();
+    if (!mountRaw.startsWith('/')) {
+      issues.push('systemMetrics.mount 必须以 / 开头，已回退默认值');
+      sysCfg.mount = defaultConfig.services.systemMetrics.mount;
+    }
+  }
+
   // 记录验证问题
   if (issues.length > 0 && logger) {
     issues.forEach(issue => {
@@ -274,6 +310,7 @@ function getConfigSummary(config) {
     showIndex: config.showIndex ? '启用' : '禁用',
     markdown: config.markdown?.enabled ? '启用' : '禁用',
     telegram: config.services?.telegram?.enabled ? '启用' : '禁用',
+    systemMetrics: config.services?.systemMetrics?.enabled ? '启用' : '禁用',
     notifications: (config.services?.notifications || []).length
   };
   
