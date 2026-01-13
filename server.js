@@ -71,42 +71,41 @@ let initResults = null;
  * 
  * 使用路由分发器处理所有请求
  */
-const server = (function() {
-  function requestHandler(req, res) {
-    // 确保服务工厂初始化完成
-    if (!serviceFactory) {
-      res.writeHead(503, { 'Content-Type': 'application/json; charset=utf-8' });
-      res.end(JSON.stringify({ success: false, message: '服务正在初始化中' }));
-      return;
-    }
-
-    // 记录请求开始时间
-    const startTime = Date.now();
-
-    // 拦截原始 end 方法以记录性能数据
-    const originalEnd = res.end;
-    res.end = function(...args) {
-      const responseTime = Date.now() - startTime;
-      const statusCode = res.statusCode;
-      const success = statusCode >= 200 && statusCode < 400;
-
-      // 记录到性能收集器
-      if (perfCollector) {
-        perfCollector.recordRequest(responseTime, success);
-      }
-
-      // 调用原始 end 方法
-      return originalEnd.apply(res, args);
-    };
-
-    // 使用路由分发器处理请求
-    const router = new Router(config, serviceFactory, appendLog, appRoot, perfCollector);
-    // 注入 WebSocket 管理器
-    router.setWebSocketManager(wsManager);
-    router.handle(req, res);
+function requestHandler(req, res) {
+  // 确保服务工厂初始化完成
+  if (!serviceFactory) {
+    res.writeHead(503, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end(JSON.stringify({ success: false, message: '服务正在初始化中' }));
+    return;
   }
 
-  // 根据配置选择创建 HTTP 或 HTTPS 服务器
+  // 记录请求开始时间
+  const startTime = Date.now();
+
+  // 拦截原始 end 方法以记录性能数据
+  const originalEnd = res.end;
+  res.end = function(...args) {
+    const responseTime = Date.now() - startTime;
+    const statusCode = res.statusCode;
+    const success = statusCode >= 200 && statusCode < 400;
+
+    // 记录到性能收集器
+    if (perfCollector) {
+      perfCollector.recordRequest(responseTime, success);
+    }
+
+    // 调用原始 end 方法
+    return originalEnd.apply(res, args);
+  };
+
+  // 使用路由分发器处理请求
+  const router = new Router(config, serviceFactory, appendLog, appRoot, perfCollector);
+  // 注入 WebSocket 管理器
+  router.setWebSocketManager(wsManager);
+  router.handle(req, res);
+}
+
+function createPrimaryServer() {
   try {
     if (config.tls && config.tls.enabled) {
       const pfxPathRaw = config.tls.pfx || '';
@@ -154,30 +153,36 @@ const server = (function() {
 
       appendLog('WARN', `TLS 启用但未找到有效证书（PFX: ${pfxPath || '未配置'}；KEY/CERT: ${keyPath}, ${certPath}），回退 HTTP`);
       return http.createServer(requestHandler);
-    } else {
-      return http.createServer(requestHandler);
     }
+
+    return http.createServer(requestHandler);
   } catch (e) {
     appendLog('ERROR', '创建服务器失败，回退到 HTTP', e && (e.stack || e.message));
     return http.createServer(requestHandler);
   }
-})();
+}
+
+const server = createPrimaryServer();
+let extraHttpServer = null;
 
 /**
  * WebSocket 升级处理
  */
-server.on('upgrade', (req, socket, head) => {
-  // 只允许 /ws 路径升级为 WebSocket
-  if (req.url === '/ws' || req.url === '/ws/') {
-    wss.handleUpgrade(req, socket, head, (ws) => {
-      wsManager.handleConnection(ws);
-    });
-  } else {
-    // 拒绝其他路径的升级
-    socket.write('HTTP/1.1 400 Bad Request\r\n\r\n');
-    socket.destroy();
-  }
-});
+function attachUpgradeHandler(srv) {
+  if (!srv) return;
+  srv.on('upgrade', (req, socket, head) => {
+    if (req.url === '/ws' || req.url === '/ws/') {
+      wss.handleUpgrade(req, socket, head, (ws) => {
+        wsManager.handleConnection(ws);
+      });
+    } else {
+      socket.write('HTTP/1.1 400 Bad Request\r\n\r\n');
+      socket.destroy();
+    }
+  });
+}
+
+attachUpgradeHandler(server);
 
 /**
  * 启动服务器
@@ -186,6 +191,9 @@ server.on('upgrade', (req, socket, head) => {
 const useTls = !!(config.tls && config.tls.enabled);
 const listenPort = useTls ? (config.tls.port || 443) : (config.port || 80);
 const listenHost = config.host || '0.0.0.0';
+const httpListenPort = useTls && config.tls && config.tls.enableHttp
+  ? (config.tls.httpPort || config.port || 80)
+  : null;
 
 server.listen(listenPort, listenHost, () => {
   const timestamp = new Date().toLocaleString('zh-CN');
@@ -195,6 +203,9 @@ server.listen(listenPort, listenHost, () => {
     appendLog('INFO', `服务器启动: https://${config.host}:${listenPort}/`);
   } else {
     appendLog('INFO', `服务器启动: http://${config.host}:${listenPort}/`);
+  }
+  if (httpListenPort) {
+    appendLog('INFO', `额外 HTTP 启动: http://${config.host}:${httpListenPort}/`);
   }
   appendLog('INFO', `启动时间: ${timestamp}`);
   appendLog('INFO', `工作目录: ${appRoot}`);
@@ -210,6 +221,9 @@ server.listen(listenPort, listenHost, () => {
     console.log(`║  🌐 访问地址: https://${config.host}:${listenPort}/`.padEnd(63) + '║');
   } else {
     console.log(`║  🌐 访问地址: http://${config.host}:${listenPort}/`.padEnd(63) + '║');
+  }
+  if (httpListenPort) {
+    console.log(`║  🌐 访问地址: http://${config.host}:${httpListenPort}/`.padEnd(63) + '║');
   }
   console.log(`║  📅 启动时间: ${timestamp}`.padEnd(63) + '║');
   console.log('╠════════════════════════════════════════════════════════════╣');
@@ -251,8 +265,20 @@ server.listen(listenPort, listenHost, () => {
   })();
 });
 
-// 可选：HTTP -> HTTPS 重定向（当启用 tls.redirectHttp 且 TLS 正在使用不同端口时）
-if (useTls && config.tls && config.tls.redirectHttp) {
+if (useTls && httpListenPort) {
+  try {
+    extraHttpServer = http.createServer(requestHandler);
+    attachUpgradeHandler(extraHttpServer);
+    extraHttpServer.listen(httpListenPort, listenHost, () => {
+      appendLog('INFO', `HTTP 已启用（并行）: http://${listenHost}:${httpListenPort}/`);
+    });
+  } catch (e) {
+    appendLog('WARN', '启动并行 HTTP 失败', e && (e.stack || e.message));
+  }
+}
+
+// 可选：HTTP -> HTTPS 重定向（当启用 tls.redirectHttp 且未开启并行 HTTP 时）
+if (useTls && config.tls && config.tls.redirectHttp && !httpListenPort) {
   try {
     const redirectPort = config.port || 80;
     if (redirectPort !== listenPort) {
@@ -279,13 +305,19 @@ server.on('error', (err) => {
   appendLog('ERROR', '服务器错误', `${err.code || ''} ${err.message || ''}`);
   
   if (err.code === 'EADDRINUSE') {
-    appendLog('ERROR', `端口 ${config.port} 已被占用，请修改配置文件中的端口号`);
+    appendLog('ERROR', `端口 ${listenPort} 已被占用，请修改配置文件中的端口号`);
   } else if (err.code === 'EACCES') {
-    appendLog('ERROR', `没有权限访问端口 ${config.port}（可能需要管理员权限）`);
+    appendLog('ERROR', `没有权限访问端口 ${listenPort}（可能需要管理员权限）`);
   }
   
   process.exit(1);
 });
+
+if (extraHttpServer) {
+  extraHttpServer.on('error', (err) => {
+    appendLog('ERROR', 'HTTP 并行服务器错误', `${err.code || ''} ${err.message || ''}`);
+  });
+}
 
 /**
  * 进程异常处理
@@ -336,6 +368,15 @@ process.on('SIGINT', async () => {
     appendLog('WARN', '性能收集器关闭异常', err.message);
   }
 
+  // 关闭并行 HTTP 服务（如果存在）
+  try {
+    if (extraHttpServer) {
+      extraHttpServer.close();
+    }
+  } catch (err) {
+    appendLog('WARN', 'HTTP 并行服务关闭异常', err.message);
+  }
+
   server.close(() => {
     appendLog('INFO', '服务器已关闭');
     process.exit(0);
@@ -373,6 +414,15 @@ process.on('SIGTERM', async () => {
     }
   } catch (err) {
     appendLog('WARN', '性能收集器关闭异常', err.message);
+  }
+
+  // 关闭并行 HTTP 服务（如果存在）
+  try {
+    if (extraHttpServer) {
+      extraHttpServer.close();
+    }
+  } catch (err) {
+    appendLog('WARN', 'HTTP 并行服务关闭异常', err.message);
   }
 
   server.close(() => {

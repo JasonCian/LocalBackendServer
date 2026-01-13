@@ -1,26 +1,54 @@
 {
-  "port": 80,
-  "host": "0.0.0.0",
-  "directories": [
-    {
-      "route": "/",
-      "path": "./public"
-    },
-    {
-      "route": "/docs",
-      "path": "D:/Examples/docs"
-    },
-    {
-      "route": "/uploads",
-      "path": "D:/Examples/uploads"
+  "server": {
+    "host": "0.0.0.0",
+    "port": 80,
+    "cors": true,
+    "showIndex": true,
+    "projectName": "本地轻量级后端自用服务器",
+    "tls": {
+      "enabled": false,
+      "enableHttp": true,
+      "port": 443,
+      "httpPort": 80,
+      "pfx": "./certs/localhost.pfx",
+      "passphrase": "",
+      "key": "./certs/localhost.key",
+      "cert": "./certs/localhost.crt",
+      "redirectHttp": false
     }
-  ],
-  "uploadDir": "D:/Examples/uploads",
-  "cors": true,
-  "showIndex": true,
-  "markdown": {
-    "enabled": true,
-    "theme": "anonymous-dark"
+  },
+  "paths": {
+    "directories": [
+      { "route": "/", "path": "./public" },
+      { "route": "/uploads", "path": "./data/uploads" }
+    ],
+    "uploadDir": "./data/uploads",
+    "assets": {
+      "enabled": true,
+      "mount": "/public",
+      "path": "./public",
+      "cacheMaxAge": 3600
+    }
+  },
+  "features": {
+    "markdown": {
+      "enabled": true,
+      "theme": "anonymous-dark"
+    },
+    "startpage": {
+      "searchEngines": [
+        { "name": "Google", "url": "https://www.google.com/search?q=%s", "icon": "🔍" },
+        { "name": "Bing", "url": "https://www.bing.com/search?q=%s", "icon": "🅱️" },
+        { "name": "站内搜索", "url": "/search?q=%s", "icon": "📄" }
+      ],
+      "defaultSearchEngine": 0,
+      "bookmarks": [
+        { "title": "文件服务", "url": "/file", "icon": "📁", "color": "#6fa3ef" },
+        { "title": "Telegram", "url": "/telegram", "icon": "📱", "color": "#0088cc" }
+      ],
+      "useBingDaily": false,
+      "customBackground": ""
+    }
   },
   "services": {
     "telegram": {
@@ -34,18 +62,19 @@
     "powershellHistory": {
       "enabled": false,
       "mount": "/powershell",
-      "historyPath": "C:\\Users\\{YourUsername}\\AppData\\Roaming\\Microsoft\\Windows\\PowerShell\\PSReadLine\\ConsoleHost_history.txt",
+      "historyPath": "C:\\Users\\<username>\\AppData\\Roaming\\Microsoft\\Windows\\PowerShell\\PSReadLine\\ConsoleHost_history.txt",
       "configFile": "./data/ps-history-config.json"
     },
     "fileService": {
       "enabled": true,
-      "mount": "/file"
+      "mount": "/file",
+      "directories": ["data"]
     },
     "systemMetrics": {
       "enabled": true,
       "mount": "/metrics",
-      "sampleIntervalMs": 500,
-      "historySeconds": 30,
+      "sampleIntervalMs": 1000,
+      "historySeconds": 60,
       "topN": 5,
       "allowSSE": true,
       "token": "",
@@ -55,32 +84,8 @@
       {
         "type": "dingtalk",
         "format": "markdown",
-        "url": "https://oapi.dingtalk.com/robot/send?access_token=YOUR_ACCESS_TOKEN_HERE"
-      },
-      {
-        "type": "feishu",
-        "url": "https://open.feishu.cn/open-apis/bot/v2/hook/YOUR_WEBHOOK_TOKEN_HERE"
+        "url": "https://oapi.dingtalk.com/robot/send?access_token=REPLACE_ME"
       }
     ]
-  },
-  "startpage": {
-    "searchEngines": [
-      { "name": "Google", "url": "https://www.google.com/search?q=%s", "icon": "🔍" },
-      { "name": "Bing", "url": "https://www.bing.com/search?q=%s", "icon": "🅱️" },
-      { "name": "DuckDuckGo", "url": "https://duckduckgo.com/?q=%s", "icon": "🦆" },
-      { "name": "Baidu", "url": "https://www.baidu.com/s?wd=%s", "icon": "🅱️" },
-      { "name": "站内搜索", "url": "/search?q=%s", "icon": "📄" }
-    ],
-    "defaultSearchEngine": 0,
-    "bookmarks": [
-      { "title": "文件服务", "url": "/file", "icon": "📁", "color": "#6fa3ef" },
-      { "title": "Telegram", "url": "/telegram", "icon": "📱", "color": "#0088cc" },
-      { "title": "PowerShell", "url": "/powershell", "icon": "💻", "color": "#012456" },
-      { "title": "GitHub", "url": "https://github.com", "icon": "🐙", "color": "#24292e" },
-      { "title": "Stack Overflow", "url": "https://stackoverflow.com", "icon": "📚", "color": "#f48024" }
-    ],
-    "useBingDaily": true,
-    "customBackground": ""
-  },
-  "projectName": "本地轻量级后端自用服务器"
+  }
 }
