@@ -1,171 +1,118 @@
 # 本地轻量级后端自用服务器
 
-纯 Node.js 核心模块 + 少量依赖（ws、telegram、node-cron）构建的轻量级后端，覆盖文件服务、Markdown 渲染、上传/删除、搜索、实时推送、系统监控与可选的 Telegram/PowerShell 扩展。
+纯 Node.js 核心模块 + 少量依赖（ws、telegram、node-cron）构建的轻量级后端，涵盖文件浏览、Markdown 渲染、上传/删除、实时推送、系统监控及可选的 Telegram、PowerShell 扩展。
 
-## ✨ 核心特性
+**重要提示：本后端以作者个人自用场景为主，默认配置（端口、权限、开放目录等）偏向局域网与信任环境，面向公网请务必重新审视安全策略（端口、防火墙、TLS、token、目录白名单等）并做最小化暴露。**
 
-- 多目录静态文件浏览，目录索引可开关，Markdown 渲染支持主题/原文模式，内置缓存与范围请求
-- 上传/删除 API（PicList 兼容），单文件 50MB、单次 80MB，危险扩展阻断，路径严格校验
-- WebSocket `/ws` 推送：文件监听、Telegram 状态等；指标端点 `/api/metrics`、健康检查 `/api/health`
-- 可选服务：Telegram 多账号+任务调度、PowerShell 历史管理、文件服务 UI、系统监控（支持 SSE）
-- 起始页与站内搜索：可配置搜索引擎/书签，Bing 每日壁纸代理 `/api/bing-daily`
-- TLS 支持 PFX 或 key/cert，支持并行 HTTP 或 HTTP->HTTPS 重定向
-- Windows 服务脚本（NSSM），启动/异常均写入日志并可推送通知
+## 为什么这份 README 更长
 
-## 🛠️ 运行要求
+仓库忽略了若干关键文件与目录，用户拉取代码后需要自行准备：
+- config.json：运行时配置，需从样例复制并按环境修改。
+- data/：运行时数据（Telegram 会话与任务、PowerShell 记录、上传文件等），需手动创建并备份。
+- certs/：TLS 证书目录（pfx 或 key/cert）。
+- logs/：运行日志输出目录。
+- package-lock.json：未提交，需本地生成。
+- scripts/、tests/、.github/ 等辅助目录未包含在仓库中。
+
+下文给出可操作的部署、配置与运行步骤，避免缺失文件导致的困惑。
+
+## 运行要求
 
 - Node.js >= 18
-- `npm install` 安装依赖（ws、telegram、node-cron）
+- 网络可访问 npm registry
+- 可写磁盘用于 data/ 与 logs/
 
-## 🚀 快速开始
+## 快速开始（本地）
 
-1) 复制配置样例并按需修改
-
-```powershell
-Copy-Item config.json.example config.json
-```
+1) 复制配置并编辑
+   - Windows：`Copy-Item config.json.example config.json`
+   - Linux/macOS：`cp config.json.example config.json`
+   - 按下方配置指南调整端口、目录、可选服务。
 
 2) 安装依赖并启动
-
-```bash
-npm install
-npm start
-# 或 node server.js
-```
+   - `npm install`
+   - `npm start` 或 `node server.js`
 
 3) 访问入口
+   - 起始页：http://<host>:<port>/
+   - WebSocket：ws://<host>:<port>/ws
 
-- 起始页：`http://<host>:<port>/`
-- WebSocket：`ws://<host>:<port>/ws`
+## 配置指南（config.json）
 
-## ⚙️ 配置总览（config.json）
+配置由分组字段驱动，默认值与校验逻辑见 [src/config.js](src/config.js)。建议从 [config.json.example](config.json.example) 开始：
 
-配置由分组字段驱动，访问嵌套字段前均做安全检查，TLS/服务为可选。下方示例覆盖常用字段：
+- server
+  - host/port：监听地址与端口。
+  - cors、showIndex：是否允许跨域 / 目录列表。
+  - projectName：启动日志与通知标题。
+  - tls：可选，支持 pfx 或 key/cert。`enableHttp` 可并行开启纯 HTTP，`redirectHttp` 可做 80→443 跳转（与 enableHttp 互斥）。
+- paths
+  - directories：路由与本地路径映射。示例 `/` -> `./public`，`/uploads` -> `./data/uploads`。
+  - uploadDir：上传默认落盘位置，未设定时按 directories 回落。
+  - assets：静态资源挂载点（默认 /public）。
+- features
+  - markdown：开关与默认主题，可通过 `?theme=` 或 `?raw=1` 调整。
+  - startpage：搜索引擎、书签、壁纸设置。
+- services（可选）
+  - telegram：多账号、任务调度；需 apiId/apiHash，并准备 session 与任务文件位置（data/ 目录）。
+  - powershellHistory：Windows PSReadLine 历史管理；需指定 historyPath。
+  - fileService：文件服务前端挂载。
+  - systemMetrics：进程/系统指标，支持 JSON/SSE；可设 token 限制访问。
+  - notifications：钉钉/飞书/Webhook 列表，用于启动或异常推送。
 
-```json
-{
-  "server": {
-    "port": 8080,
-    "host": "0.0.0.0",
-    "cors": true,
-    "showIndex": true,
-    "projectName": "Local Backend",
-    "tls": {
-      "enabled": false,
-      "port": 443,
-      "pfx": "./certs/localhost.pfx",
-      "passphrase": "",
-      "key": "./certs/localhost.key",
-      "cert": "./certs/localhost.crt",
-      "redirectHttp": false,
-      "enableHttp": false,
-      "httpPort": 80
-    }
-  },
-  "paths": {
-    "directories": [
-      { "route": "/", "path": "./public" },
-      { "route": "/data", "path": "./data" }
-    ],
-    "uploadDir": "./data/uploads",
-    "assets": {
-      "enabled": true,
-      "mount": "/public",
-      "path": "./public",
-      "cacheMaxAge": 3600
-    }
-  },
-  "features": {
-    "markdown": { "enabled": true, "theme": "anonymous-dark" },
-    "startpage": {
-      "searchEngines": ["https://www.bing.com/search?q=%s"],
-      "defaultSearchEngine": 0,
-      "bookmarks": [{ "name": "Docs", "url": "/docs" }],
-      "useBingDaily": true,
-      "customBackground": ""
-    }
-  },
-  "services": {
-    "telegram": {
-      "enabled": false,
-      "apiId": 123456,
-      "apiHash": "replace_me",
-      "mount": "/telegram"
-    },
-    "powershellHistory": { "enabled": false, "mount": "/psh" },
-    "fileService": { "enabled": false, "mount": "/file" },
-    "systemMetrics": {
-      "enabled": false,
-      "mount": "/metrics",
-      "sampleIntervalMs": 250,
-      "historySeconds": 60,
-      "topN": 5,
-      "allowSSE": true,
-      "token": "",
-      "netInterface": ""
-    },
-    "notifications": []
-  }
-}
-```
+TLS 证书放置示例：
+- pfx 模式：certs/localhost.pfx（可配合 passphrase）。
+- key/cert 模式：certs/localhost.key、certs/localhost.crt，可选 CA 链。
 
-更多字段默认值与验证逻辑见 [src/config.js](src/config.js)。TLS 启用时需存在 PFX 或 key/cert；`tls.enableHttp` 可并行开启纯 HTTP，`tls.redirectHttp` 可做 80→443 跳转。
+## 目录与文件约定
 
-## 🔌 核心端点速览
+- public/：默认静态资源与前端页面（Markdown 主题、Telegram 多账号 UI 等）。
+- data/：运行数据与上传文件，需手动创建；Telegram 与 PowerShell 配置/会话文件默认放在此处。
+- logs/service.log：运行日志文件，需确保目录可写。
+- certs/：自备证书；未提供默认证书。
+- nssm/、install-service-nssm.ps1 等：用于 Windows 服务安装。
 
-- 文件浏览：按 `paths.directories` 映射；Markdown 支持 `?theme=`、`?raw=1`
-- 上传：POST `/upload`，多文件 multipart，PicList 或详细格式；单文件 50MB，单次 80MB
-- 删除：POST `/delete`，仅允许映射目录内路径（含 URL/相对路径混合列表）
-- 搜索：GET `/search?q=keyword`（Markdown 内容）
-- 健康/指标：GET `/api/health`，GET `/api/metrics`，GET `/api/ws/info`
-- Bing 每日图代理：GET `/api/bing-daily`
-- WebSocket：`/ws` 单一入口
-- Telegram（可选，挂载见 `services.telegram.mount`）：多账号登录、即时发送、任务 CRUD、健康检查、UI 页面
-- PowerShell History（可选）：历史记录/规则/快捷命令管理，UI + API
-- 文件服务 UI（可选）：目录操作前端入口
-- 系统监控（可选，默认 `/metrics`）：JSON/SSE，详情见 [docs/system-metrics.md](docs/system-metrics.md)
+## 运行与部署
 
-完整参数与示例响应请查阅 [docs/api-reference.md](docs/api-reference.md)。
+- 开发/测试：`npm start`，确认端口未被占用。
+- 生产守护：可配合进程管理器（如 pm2）或使用 Windows NSSM 脚本：
+  - 安装：`./install-service-nssm.ps1 -ServiceName LocalBackendServer`
+  - 重启：`./restart-service.ps1`
+  - 卸载：`./uninstall-service.ps1`
+- 防火墙/端口：开放 server.port 以及可选 tls.port/httpPort。
 
-## 📂 目录速览
+## 核心端点与能力
 
-- [server.js](server.js) 主入口：加载配置、初始化服务与 WebSocket、处理 TLS 与通知
-- [src/routes/router.js](src/routes/router.js) 统一路由分发，含健康检查/指标/搜索/静态资源
-- [src/routes/file-routes.js](src/routes/file-routes.js) 文件与 Markdown 提供，含缓存与范围请求
-- [src/routes/upload-routes.js](src/routes/upload-routes.js) 上传限流与扩展阻断
-- [src/routes/delete-routes.js](src/routes/delete-routes.js) 删除请求与路径校验
-- [src/routes/telegram-routes.js](src/routes/telegram-routes.js) Telegram 多账号 API 与页面
-- [src/routes/powershell-history-routes.js](src/routes/powershell-history-routes.js) PowerShell 历史接口
-- [src/routes/system-metrics-routes.js](src/routes/system-metrics-routes.js) 进程/系统指标输出
-- [src/services/service-factory.js](src/services/service-factory.js) 服务初始化、挂载点解析、生命周期管理
+- 文件浏览：按 paths.directories 映射；Markdown 支持 `?theme=`、`?raw=1`。
+- 上传：POST /upload（multipart），单文件 50MB、单次 80MB，阻断危险扩展。
+- 删除：POST /delete（PicList 兼容），仅允许映射目录内路径。
+- 搜索：GET /search?q=keyword（Markdown 内容）。
+- 健康/指标：GET /api/health，GET /api/metrics，GET /api/ws/info。
+- WebSocket：/ws（文件变更、Telegram 状态等推送）。
+- 可选模块：
+  - Telegram：UI + API（多账号登录、健康检查、即时发送、任务 CRUD/执行），挂载见 services.telegram.mount。
+  - PowerShell History：历史与规则管理，挂载见 services.powershellHistory.mount。
+  - 文件服务 UI：挂载见 services.fileService.mount。
+  - 系统监控：JSON/SSE，挂载见 services.systemMetrics.mount，详见 [docs/system-metrics.md](docs/system-metrics.md)。
 
-## 🔒 安全与限制
+## 安全与运行注意
 
-- 路径安全：`path.normalize` + 基路径校验，文件名 `path.basename` 清洗
-- 上传阻断：危险扩展 (.exe/.bat/.cmd/.sh/.ps1/.js/.mjs/.cjs) 拒绝，超限返回 413
-- 目录白名单：仅 `paths.directories` 下文件可访问/删除；上传目录与映射目录均逐级校验
-- HTML 输出：统一 `escapeHtml` 防 XSS；响应默认 `application/json; charset=utf-8`
+- 路径安全：统一 path.normalize 与基路径校验，文件名使用 path.basename 清洗。
+- 上传限制：阻断 .exe/.bat/.cmd/.sh/.ps1/.js/.mjs/.cjs，超限返回 413。
+- 数据备份：备份 data/（会话、任务、上传文件）与 config.json；证书放在 certs/。
+- 日志：logs/service.log 持续追加，必要时轮转或清理。
+- CORS：根据部署场景调整 server.cors。
+- Token：为 systemMetrics 配置访问 token，避免暴露主机指标。
 
-## 🧭 Windows 服务
+## 故障排查
 
-- 安装：`./install-service-nssm.ps1 -ServiceName LocalBackendServer`
-- 重启：`./restart-service.ps1`
-- 卸载：`./uninstall-service.ps1`
+- 端口占用：启动日志若提示 EADDRINUSE，请修改 config.json 中的 port/tls.port/httpPort。
+- TLS 失败：确认 pfx 或 key/cert 路径正确且文件存在；仅启用一套证书配置。
+- WebSocket 不通：检查反向代理是否转发 upgrade；路径必须是 /ws。
+- 上传/删除失败：确认路径在 paths.directories 内，或 uploadDir 可写。
 
-## 📝 日志与数据
+## 参考
 
-- 运行日志：`logs/service.log`
-- 性能统计：`/api/metrics`（含缓存命中、请求成功率）
-- 数据文件：`data/`（Telegram 会话/任务、PowerShell 记录等），请备份
-
-## 🆕 版本提示
-
-- v0.3.x：Telegram 多账号 + 任务；文件监听推送；配置分组化；起始页/搜索；可选系统监控
-- v0.2.x：基础文件服务、Markdown、上传/删除、单账号 Telegram
-
-## 🤝 开发约定
-
-- 不使用 Express/Koa；路由/服务函数显式依赖注入（config/appRoot/logger/wsManager）
-- 路径安全、配置驱动、可选依赖降级优先；前端资源从 `paths.assets` 提供
-
-感谢 Marked.js、highlight.js、KaTeX、GramJS、node-cron、NSSM 等开源项目。
+- 配置默认值与校验：见 [src/config.js](src/config.js)。
+- 路由入口：见 [server.js](server.js)、[src/routes/router.js](src/routes/router.js)。
+- API 细节与示例：见 [docs/api-reference.md](docs/api-reference.md)。
